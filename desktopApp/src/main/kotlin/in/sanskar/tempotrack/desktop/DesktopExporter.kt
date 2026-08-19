@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JFileChooser
 import javax.swing.SwingUtilities
 import javax.swing.filechooser.FileNameExtensionFilter
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -22,7 +23,12 @@ class DesktopExporter : Exporter {
     ): ExportResult {
         val target = try {
             chooseTarget(suggestedFileName, mimeType)
-        } catch (_: RuntimeException) {
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: InterruptedException) {
+            Thread.currentThread().interrupt()
+            return ExportResult.Failure(ExportError.PLATFORM_EXPORT_UNAVAILABLE)
+        } catch (_: Exception) {
             return ExportResult.Failure(ExportError.PLATFORM_EXPORT_UNAVAILABLE)
         }
 
@@ -35,6 +41,8 @@ class DesktopExporter : Exporter {
                 target.parent?.let(Files::createDirectories)
                 Files.writeString(target, content, StandardCharsets.UTF_8)
                 ExportResult.Success(target.toAbsolutePath().toString())
+            } catch (error: CancellationException) {
+                throw error
             } catch (_: Exception) {
                 ExportResult.Failure(ExportError.WRITE_FAILED)
             }

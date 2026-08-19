@@ -27,6 +27,16 @@ python tools/check_kotlin_package_keywords.py
 
 CI runs this check before relying on the Gradle compilation matrix so an accidental unescaped `package in.sanskar...` or `import in.sanskar...` fails with a focused diagnostic.
 
+## Repository documentation coverage check
+
+Every tracked repository file must be listed with its exact path in [`repository-reference.md`](repository-reference.md). The checker compares the current Git index with that reference:
+
+```bash
+python tools/check_repository_reference.py
+```
+
+This makes the “document every tracked file” rule executable. Adding, renaming, or removing a tracked file requires updating the reference in the same change series.
+
 ## Unit tests
 
 `shared/src/commonTest` covers platform-independent rules including:
@@ -174,19 +184,21 @@ For a generated large history near supported limits, manually verify:
 
 ## Documentation checks
 
-Repository-local Markdown destinations and Kotlin namespace syntax are validated by:
+Repository-local Markdown destinations, Kotlin namespace syntax, and tracked-file documentation coverage are validated by:
 
 ```bash
 python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
 
-The Markdown checker intentionally skips external URLs and focuses on links that can be verified deterministically from a clean checkout.
+The Markdown checker intentionally skips external URLs and focuses on links that can be verified deterministically from a clean checkout. The repository-reference checker requires an actual Git checkout because it uses `git ls-files` as the tracked-file source of truth.
 
 ## Full local quality gate
 
 ```bash
 python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
 ./gradlew quality :androidApp:assembleDebug :desktopApp:packageDistributionForCurrentOS
 python tools/check_markdown_links.py
 ```
@@ -207,4 +219,4 @@ Pull requests and main-branch changes are checked by the repository secret-scan 
 
 ## Verification integrity
 
-Do not record a check as passing unless the command or CI job actually ran. If the local environment lacks Gradle, Android SDK, Xcode, or network access, record that limitation in `what_changed.md` and rely only on checks that were actually observable.
+Do not record a check as passing unless the command or CI job actually ran. If the local environment lacks Gradle, Android SDK, Xcode, Git checkout metadata, or network access, record that limitation in `what_changed.md` and rely only on checks that were actually observable.

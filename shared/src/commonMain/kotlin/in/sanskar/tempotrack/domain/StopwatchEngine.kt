@@ -14,6 +14,7 @@ class StopwatchEngine(
             val started = startedAtNanos
             val now = clock.nowNanos()
             if (started == null || started > now) {
+                accumulatedNanos = maxOf(accumulatedNanos, laps.lastOrNull()?.totalNanos ?: 0L)
                 startedAtNanos = null
                 status = StopwatchStatus.PAUSED
             }
@@ -81,12 +82,28 @@ class StopwatchEngine(
         )
     }
 
-    fun checkpoint(): StopwatchCheckpoint = StopwatchCheckpoint(
-        status = status,
-        accumulatedNanos = accumulatedNanos,
-        startedAtNanos = startedAtNanos,
-        laps = laps.toList(),
-    )
+    fun checkpoint(): StopwatchCheckpoint {
+        if (status != StopwatchStatus.RUNNING) {
+            return StopwatchCheckpoint(
+                status = status,
+                accumulatedNanos = accumulatedNanos,
+                startedAtNanos = startedAtNanos,
+                laps = laps.toList(),
+            )
+        }
+
+        val now = clock.nowNanos()
+        val elapsedAtSave = maxOf(
+            elapsedAt(now),
+            laps.lastOrNull()?.totalNanos ?: 0L,
+        )
+        return StopwatchCheckpoint(
+            status = StopwatchStatus.RUNNING,
+            accumulatedNanos = elapsedAtSave,
+            startedAtNanos = now,
+            laps = laps.toList(),
+        )
+    }
 
     private fun elapsedAt(nowNanos: Long): Long {
         val started = startedAtNanos ?: return accumulatedNanos

@@ -99,3 +99,42 @@ jobs:
         with:
           name: tempotrack-ios-arm64-framework
           path: tempotrack-ios-arm64-framework.zip
+
+  publish:
+    needs: [android, desktop, ios-framework]
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Collect release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          while IFS= read -r -d '' file; do
+            cp "$file" release-assets/
+          done < <(
+            find artifacts -type f \
+              \( -name '*.apk' -o -name '*.deb' -o -name '*.dmg' -o -name '*.msi' -o -name '*.zip' \) \
+              -print0
+          )
+          test "$(find release-assets -type f | wc -l)" -gt 0
+          (
+            cd release-assets
+            sha256sum * > SHA256SUMS.txt
+          )
+      - name: Create or update GitHub release
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" \
+              --verify-tag \
+              --generate-notes \
+              --title "TempoTrack $GITHUB_REF_NAME"
+          fi
+          gh release upload "$GITHUB_REF_NAME" release-assets/* --clobber

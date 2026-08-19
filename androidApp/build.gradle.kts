@@ -10,12 +10,19 @@ val releaseKeystorePath = providers.environmentVariable("TEMPOTRACK_KEYSTORE_PAT
 val releaseKeystorePassword = providers.environmentVariable("TEMPOTRACK_KEYSTORE_PASSWORD").orNull
 val releaseKeyAlias = providers.environmentVariable("TEMPOTRACK_KEY_ALIAS").orNull
 val releaseKeyPassword = providers.environmentVariable("TEMPOTRACK_KEY_PASSWORD").orNull
-val releaseSigningConfigured = listOf(
+val releaseSigningValues = listOf(
     releaseKeystorePath,
     releaseKeystorePassword,
     releaseKeyAlias,
     releaseKeyPassword,
-).all { !it.isNullOrBlank() }
+)
+val releaseSigningConfigured = releaseSigningValues.all { !it.isNullOrBlank() }
+val releaseSigningPartiallyConfigured = releaseSigningValues.any { !it.isNullOrBlank() } && !releaseSigningConfigured
+
+require(!releaseSigningPartiallyConfigured) {
+    "Android release signing is partially configured. Set all TEMPOTRACK_KEYSTORE_PATH, " +
+        "TEMPOTRACK_KEYSTORE_PASSWORD, TEMPOTRACK_KEY_ALIAS, and TEMPOTRACK_KEY_PASSWORD values or none of them."
+}
 
 android {
     namespace = "in.sanskar.tempotrack"
@@ -32,7 +39,9 @@ android {
     if (releaseSigningConfigured) {
         signingConfigs {
             create("release") {
-                storeFile = file(requireNotNull(releaseKeystorePath))
+                val keystore = file(requireNotNull(releaseKeystorePath))
+                require(keystore.isFile) { "Configured Android release keystore does not exist or is not a file." }
+                storeFile = keystore
                 storePassword = requireNotNull(releaseKeystorePassword)
                 keyAlias = requireNotNull(releaseKeyAlias)
                 keyPassword = requireNotNull(releaseKeyPassword)

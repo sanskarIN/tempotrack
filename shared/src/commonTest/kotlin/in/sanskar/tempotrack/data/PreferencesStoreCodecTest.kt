@@ -17,6 +17,8 @@ class PreferencesStoreCodecTest {
             largeControls = true,
             reducedMotion = true,
             onboardingCompleted = true,
+            miniStopwatchVisible = true,
+            keyboardShortcutsEnabled = false,
         )
 
         val decoded = requireNotNull(codec.decode(codec.encode(preferences)))
@@ -33,6 +35,14 @@ class PreferencesStoreCodecTest {
 
         assertEquals(preferences, decoded.preferences)
         assertTrue(decoded.needsMigration)
+    }
+
+    @Test
+    fun olderPreferencesDefaultShortcutsToEnabled() {
+        val legacy = """{"theme":"SYSTEM","onboardingCompleted":true}"""
+        val decoded = requireNotNull(codec.decode(legacy))
+
+        assertTrue(decoded.preferences.keyboardShortcutsEnabled)
     }
 
     @Test

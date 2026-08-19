@@ -32,7 +32,7 @@ class AndroidShareService(
             if (!directory.isDirectory) {
                 throw IOException("Share cache path is not a directory.")
             }
-            val target = createUniqueShareFile(directory, safeName)
+            val target = AndroidStagingFiles.createUniqueShareFile(directory, safeName)
             stagedFile = target
             target.writeText(content, Charsets.UTF_8)
 
@@ -74,16 +74,5 @@ class AndroidShareService(
             stagedFile?.delete()
             ShareResult.Failure(ShareError.PLATFORM_SHARE_UNAVAILABLE)
         }
-    }
-
-    private fun createUniqueShareFile(directory: File, safeName: String): File {
-        val extension = safeName.substringAfterLast('.', missingDelimiterValue = "")
-        val suffix = extension.takeIf { it.isNotBlank() }?.let { ".$it" } ?: ".tmp"
-        val stem = safeName
-            .removeSuffix(suffix)
-            .take(60)
-            .ifBlank { "tempotrack-export" }
-        val prefix = "$stem-".let { if (it.length >= 3) it else "tt-$it" }
-        return File.createTempFile(prefix, suffix, directory)
     }
 }

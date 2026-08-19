@@ -10,8 +10,13 @@ class StopwatchEngine(
     private val laps: MutableList<Lap> = checkpoint.laps.toMutableList()
 
     init {
-        if (status == StopwatchStatus.RUNNING && startedAtNanos == null) {
-            status = StopwatchStatus.PAUSED
+        if (status == StopwatchStatus.RUNNING) {
+            val started = startedAtNanos
+            val now = clock.nowNanos()
+            if (started == null || started > now) {
+                startedAtNanos = null
+                status = StopwatchStatus.PAUSED
+            }
         }
     }
 

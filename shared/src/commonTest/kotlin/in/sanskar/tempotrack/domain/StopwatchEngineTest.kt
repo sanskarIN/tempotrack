@@ -58,7 +58,12 @@ class StopwatchEngineTest {
         val rebootedClock = FakeClock(now = 2 * NANOS_PER_SECOND)
         val restored = StopwatchEngine(rebootedClock, stale)
 
+        assertEquals(StopwatchStatus.PAUSED, restored.snapshot().status)
         assertTrue(restored.snapshot().elapsedNanos >= 5 * NANOS_PER_SECOND)
+
+        restored.resume()
+        rebootedClock.advanceSeconds(2)
+        assertEquals(7_000L, restored.snapshot().elapsedMillis)
     }
 
     @Test

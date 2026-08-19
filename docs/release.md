@@ -9,7 +9,7 @@ Default development values live in `gradle.properties`:
 - `appVersion`
 - `appVersionCode`
 
-Android and Desktop package builds read these properties. On a `vMAJOR.MINOR.PATCH` tag, the release workflow removes the leading `v` and passes the tag version to Gradle. The Android release job uses the workflow run number as the tag-build `versionCode` override so repeated releases can move forward without committing credentials or generated build metadata.
+Android and Desktop package builds read these properties. On a `vMAJOR.MINOR.PATCH` tag, the release workflow removes the leading `v` and passes the tag version to Gradle. The Android release job uses the workflow run number as the tag-build `versionCode` override so repeated releases can move forward without committing generated build metadata.
 
 Before a release, also update:
 
@@ -23,9 +23,11 @@ Before a release, also update:
 From a clean checkout:
 
 ```bash
-./gradlew quality :androidApp:lintRelease :androidApp:assembleRelease
+./gradlew quality :androidApp:lintRelease :androidApp:assembleRelease :androidApp:bundleRelease
 python tools/check_markdown_links.py
 ```
+
+A local unsigned release can still be used for compilation/lint verification when signing environment variables are absent. It must not be distributed as a production artifact.
 
 Also run the current-OS Desktop package task:
 
@@ -43,11 +45,32 @@ Do not tag until the relevant supported-platform checks are actually green.
 
 ## Android signing
 
-Do not commit keystores, passwords, base64 keystores, or signing properties. Configure production release signing locally or through encrypted CI secrets.
+Do not commit keystores, passwords, base64 keystores, signing properties, or any production signing material.
 
-The repository's tag workflow currently verifies and packages an **unsigned** Android release APK. That artifact proves the release variant can be assembled, but it is not a Play-ready production package and should not be presented as signed production software.
+`androidApp/build.gradle.kts` supports a release signing configuration only when all four environment variables are present:
 
-Before Play/public Android distribution, add a secret-backed signing step and verify the resulting signature independently.
+- `TEMPOTRACK_KEYSTORE_PATH`
+- `TEMPOTRACK_KEYSTORE_PASSWORD`
+- `TEMPOTRACK_KEY_ALIAS`
+- `TEMPOTRACK_KEY_PASSWORD`
+
+The tag workflow requires these GitHub Actions secrets:
+
+- `TEMPOTRACK_KEYSTORE_BASE64` — base64 representation of the production keystore;
+- `TEMPOTRACK_KEYSTORE_PASSWORD`;
+- `TEMPOTRACK_KEY_ALIAS`;
+- `TEMPOTRACK_KEY_PASSWORD`.
+
+The workflow decodes the keystore into `$RUNNER_TEMP`, restricts its file mode, exposes only the temporary path to Gradle, and fails before the release build if any required secret is absent. The keystore is never written into the repository workspace as tracked source.
+
+The Android release job builds both:
+
+- signed APK via `:androidApp:assembleRelease`;
+- signed Android App Bundle via `:androidApp:bundleRelease`.
+
+It then verifies that both output types exist before uploading artifacts. This prevents the publish job from intentionally releasing an unsigned Android artifact.
+
+Repository/environment administrators must still provision the actual production secrets and protect access to them. Source code cannot manufacture or safely commit those credentials.
 
 ## Desktop packaging
 
@@ -68,7 +91,7 @@ The macOS release job runs the iOS simulator tests, links `TempoTrackShared` for
 After Android, Desktop, and iOS framework jobs succeed, the publish job:
 
 1. downloads workflow artifacts;
-2. selects APK/DEB/DMG/MSI/ZIP deliverables;
+2. selects APK/AAB/DEB/DMG/MSI/ZIP deliverables;
 3. computes `SHA256SUMS.txt`;
 4. creates the GitHub Release for the tag when one does not already exist;
 5. uploads or replaces the release assets.
@@ -77,10 +100,10 @@ This makes tag builds reproducible and gives reviewers checksums for downloaded 
 
 ## Tag
 
-Create an annotated `vMAJOR.MINOR.PATCH` tag only after the pre-release gate is green and release notes are ready.
+Create an annotated `vMAJOR.MINOR.PATCH` tag only after the pre-release gate is green, production Android signing secrets are configured for a distributable Android release, and release notes are ready.
 
 ## Release notes
 
 Start from `release-notes-template.md`, copy the relevant `CHANGELOG.md` section, and include known limitations. Do not claim a platform has been tested unless it was actually built/run.
 
-For Android, clearly label unsigned artifacts until production signing is configured. For iOS, clearly distinguish the reusable framework from a complete App Store application.
+For Android, do not describe artifacts as production-ready unless the signed tag workflow has succeeded. For iOS, clearly distinguish the reusable framework from a complete App Store application.

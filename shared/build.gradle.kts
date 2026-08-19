@@ -8,6 +8,10 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
+compose.resources {
+    packageOfResClass = "in.sanskar.tempotrack.resources"
+}
+
 kotlin {
     androidLibrary {
         namespace = "in.sanskar.tempotrack.shared"

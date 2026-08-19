@@ -88,6 +88,8 @@ class JsonSessionRepository(
     }
 
     private suspend fun persistUnlocked(sessions: List<StopwatchSession>) {
-        storage.write(storeCodec.encode(sessions))
+        val encoded = storeCodec.encode(sessions)
+        require(encoded.length <= MAX_SESSION_STORE_CHARACTERS) { "Saved session history is too large." }
+        storage.write(encoded)
     }
 }

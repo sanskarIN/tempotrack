@@ -9,9 +9,15 @@ Default development values live in `gradle.properties`:
 - `appVersion`
 - `appVersionCode`
 
-Android and Desktop package builds read these properties. On a `vMAJOR.MINOR.PATCH` tag, the release workflow removes the leading `v` and passes the tag version to Gradle. The Android release job uses the workflow run number as the tag-build `versionCode` override so repeated releases can move forward without committing generated build metadata.
+Android and Desktop package builds read these properties. On a `vMAJOR.MINOR.PATCH` tag, the release workflow removes the leading `v` and passes the tag version to Gradle. Android release versionCode is derived deterministically as:
 
-The release workflow rejects tags that do not exactly match `vMAJOR.MINOR.PATCH` and serializes release runs per tag.
+```text
+MAJOR * 10000 + MINOR * 100 + PATCH
+```
+
+For that mapping, MINOR and PATCH must each be between 0 and 99, and the resulting Android versionCode must remain in the supported `1..2100000000` range. This keeps source defaults and tagged Android artifacts on the same monotonic versioning scheme instead of tying install ordering to an unrelated workflow run number.
+
+The release workflow rejects tags that do not exactly match `vMAJOR.MINOR.PATCH`, validates the Android mapping, and serializes release runs per tag.
 
 ## Version 2.0.12 release line
 
@@ -28,7 +34,7 @@ The intended semantic release tag is:
 v2.0.12
 ```
 
-Do not create or promote that tag until the release-candidate checks described below are actually observed green and required Android signing secrets are configured. The tag workflow overrides Android `versionCode` with `GITHUB_RUN_NUMBER`, so `20012` is the source-tree development/package default rather than a promise about the final tagged Android artifact's version code.
+The tag maps to Android versionCode `20012`, matching the source-tree default. Do not create or promote that tag until the release-candidate checks described below are actually observed green and required Android signing secrets are configured.
 
 Before a release, also update:
 
@@ -92,7 +98,7 @@ Before tagging:
 5. Confirm new security/privacy behavior is reflected in `SECURITY.md`, `PRIVACY.md`, and `security-model.md`.
 6. Confirm contributor/build/release commands match actual Gradle/CI configuration.
 7. Confirm `CHANGELOG.md` contains a dated section for the intended release version.
-8. Confirm `gradle.properties`, README release marker, changelog release section, and intended tag all identify the same semantic version.
+8. Confirm `gradle.properties`, README release marker, changelog release section, intended tag, and Android versionCode mapping all identify the same release.
 9. Confirm `what_changed.md` records observed verification and unresolved environment-gated work.
 10. Do not publish placeholder screenshots as real release captures.
 

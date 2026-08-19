@@ -30,6 +30,7 @@ Android Lint runs separately because it also checks manifests/resources and Andr
 - identical session upserts do not rewrite storage;
 - renames that normalize to the existing name do not rewrite storage;
 - deletes for missing session ids do not rewrite storage;
+- full-history replacement skips persistence when the normalized imported history is unchanged;
 - validated JSON restore and stable import error codes;
 - restore limits staying aligned with persistence limits;
 - full stopwatch-to-backup-to-restore regression journeys;

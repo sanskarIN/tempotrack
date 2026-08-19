@@ -1,5 +1,5 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 set REQUIRED_GRADLE_VERSION=9.5.0
 set DIRNAME=%~dp0
 if "%DIRNAME%"=="" set DIRNAME=.
@@ -12,13 +12,13 @@ where gradle >NUL 2>&1
 if %ERRORLEVEL% equ 0 (
   set INSTALLED_GRADLE_VERSION=
   for /f "tokens=2" %%G in ('gradle --version ^| findstr /B /C:"Gradle "') do set INSTALLED_GRADLE_VERSION=%%G
-  if not "%INSTALLED_GRADLE_VERSION%"=="%REQUIRED_GRADLE_VERSION%" (
-    echo TempoTrack requires Gradle %REQUIRED_GRADLE_VERSION% when gradle-wrapper.jar is absent; found %INSTALLED_GRADLE_VERSION%.
+  if not "!INSTALLED_GRADLE_VERSION!"=="%REQUIRED_GRADLE_VERSION%" (
+    echo TempoTrack requires Gradle %REQUIRED_GRADLE_VERSION% when gradle-wrapper.jar is absent; found !INSTALLED_GRADLE_VERSION!.
     echo Install Gradle %REQUIRED_GRADLE_VERSION% or generate gradle\wrapper\gradle-wrapper.jar with "gradle wrapper --gradle-version %REQUIRED_GRADLE_VERSION%".
     exit /b 1
   )
   gradle %*
-  exit /b %ERRORLEVEL%
+  exit /b !ERRORLEVEL!
 )
 
 echo TempoTrack requires Gradle %REQUIRED_GRADLE_VERSION%. Install it or generate gradle\wrapper\gradle-wrapper.jar with "gradle wrapper --gradle-version %REQUIRED_GRADLE_VERSION%".

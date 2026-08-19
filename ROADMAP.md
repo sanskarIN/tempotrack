@@ -8,6 +8,8 @@
 - [x] Named local history
 - [x] Search
 - [x] CSV/JSON export
+- [x] JSON restore with schema validation
+- [x] Versioned local session persistence and legacy migration
 - [x] Android and Desktop entry points
 - [x] Theme/accessibility settings
 - [x] Desktop mini stopwatch
@@ -25,8 +27,9 @@
 
 ## 1.2 — Broader portability
 
-- [ ] Add an iOS entry point after validating the shared module from macOS/Xcode.
-- [ ] Add explicit JSON import/restore UI with schema validation.
+- [x] Add Kotlin/Native iOS framework targets and a Compose iOS entry point.
+- [ ] Validate the iOS framework and simulator tests in macOS CI.
+- [ ] Add native iOS document/share-sheet export bridge.
 - [ ] Add optional encrypted local backup using platform facilities where useful.
 
 Roadmap items are not promises or release dates; priorities may change based on testing and feedback.

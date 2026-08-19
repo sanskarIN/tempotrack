@@ -36,6 +36,16 @@ class PreferencesRepositoryTest {
     }
 
     @Test
+    fun oversizedPreferencesFallBackToDefaultsWithoutRewrite() = runTest {
+        val oversized = "x".repeat(MAX_PREFERENCES_STORE_CHARACTERS + 1)
+        val storage = PreferencesTestStorage(oversized)
+        val repository = JsonPreferencesRepository(storage)
+
+        assertEquals(AppPreferences(), repository.load())
+        assertEquals(oversized, storage.value)
+    }
+
+    @Test
     fun legacyPreferencesMigrateOnReadAndDefaultNewFields() = runTest {
         val legacy = """{"theme":"LIGHT","largeControls":false,"reducedMotion":false,"onboardingCompleted":true}"""
         val storage = PreferencesTestStorage(legacy)

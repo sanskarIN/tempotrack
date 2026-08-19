@@ -17,7 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import in.sanskar.tempotrack.data.AppPreferences
+import in.sanskar.tempotrack.resources.Res
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun OnboardingScreen(
@@ -32,16 +34,16 @@ fun OnboardingScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text("TempoTrack", style = MaterialTheme.typography.displaySmall)
+        Text(stringResource(Res.string.app_name), style = MaterialTheme.typography.displaySmall)
         Spacer(Modifier.height(12.dp))
         Text(
-            "A precise, privacy-first stopwatch with laps, searchable local history and portable exports.",
+            stringResource(Res.string.onboarding_value),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(24.dp))
         Text(
-            "Your sessions stay on this device unless you explicitly export them.",
+            stringResource(Res.string.onboarding_privacy),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
         )
@@ -54,9 +56,9 @@ fun OnboardingScreen(
                 onContinue()
             },
         ) {
-            Text("Start timing")
+            Text(stringResource(Res.string.onboarding_start))
         }
         Spacer(Modifier.height(20.dp))
-        Text("Made by the Sanskar", style = MaterialTheme.typography.labelLarge)
+        Text(stringResource(Res.string.made_by), style = MaterialTheme.typography.labelLarge)
     }
 }

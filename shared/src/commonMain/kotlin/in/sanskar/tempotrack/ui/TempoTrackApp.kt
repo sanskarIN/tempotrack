@@ -172,6 +172,7 @@ private fun ScreenContent(
         Destination.HISTORY -> HistoryScreen(
             sessions = dependencies.sessions,
             exporter = dependencies.exporter,
+            shareService = dependencies.shareService,
         )
 
         Destination.SETTINGS -> SettingsScreen(

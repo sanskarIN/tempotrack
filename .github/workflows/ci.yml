@@ -59,3 +59,15 @@ jobs:
         run: gradle :shared:linkDebugFrameworkIosSimulatorArm64 --stacktrace
       - name: Test iOS simulator target
         run: gradle :shared:iosSimulatorArm64Test --stacktrace
+
+  documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Compile documentation tooling
+        run: python -m py_compile tools/check_markdown_links.py
+      - name: Validate local Markdown links
+        run: python tools/check_markdown_links.py

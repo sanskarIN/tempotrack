@@ -8,6 +8,7 @@ class StopwatchEngine(
     private var accumulatedNanos: Long = checkpoint.accumulatedNanos.coerceAtLeast(0L)
     private var startedAtNanos: Long? = checkpoint.startedAtNanos
     private val laps: MutableList<Lap> = checkpoint.laps.toMutableList()
+    private var immutableLaps: List<Lap> = checkpoint.laps.toList()
 
     init {
         if (status == StopwatchStatus.RUNNING) {
@@ -24,6 +25,7 @@ class StopwatchEngine(
         if (status == StopwatchStatus.IDLE) {
             accumulatedNanos = 0L
             laps.clear()
+            immutableLaps = emptyList()
             startedAtNanos = clock.nowNanos()
             status = StopwatchStatus.RUNNING
         }
@@ -53,6 +55,7 @@ class StopwatchEngine(
         accumulatedNanos = 0L
         startedAtNanos = null
         laps.clear()
+        immutableLaps = emptyList()
         return snapshot()
     }
 
@@ -67,6 +70,7 @@ class StopwatchEngine(
             splitNanos = split,
             totalNanos = total,
         )
+        immutableLaps = laps.toList()
         return snapshot()
     }
 
@@ -76,7 +80,7 @@ class StopwatchEngine(
         return StopwatchSnapshot(
             status = status,
             elapsedNanos = elapsed.coerceAtLeast(0L),
-            laps = laps.toList(),
+            laps = immutableLaps,
         )
     }
 
@@ -84,7 +88,7 @@ class StopwatchEngine(
         status = status,
         accumulatedNanos = accumulatedNanos,
         startedAtNanos = startedAtNanos,
-        laps = laps.toList(),
+        laps = immutableLaps,
     )
 
     private fun elapsedAt(nowNanos: Long): Long {

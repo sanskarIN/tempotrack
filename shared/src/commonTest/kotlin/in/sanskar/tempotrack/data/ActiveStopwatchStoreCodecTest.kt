@@ -23,6 +23,27 @@ class ActiveStopwatchStoreCodecTest {
     }
 
     @Test
+    fun versionOneEnvelopeMigratesToCurrentSchema() {
+        val versionOne = """
+            {
+              "schemaVersion": 1,
+              "checkpoint": {
+                "status": "PAUSED",
+                "accumulatedNanos": 20,
+                "laps": []
+              }
+            }
+        """.trimIndent()
+
+        val decoded = requireNotNull(codec.decode(versionOne))
+
+        assertEquals(StopwatchStatus.PAUSED, decoded.checkpoint.status)
+        assertEquals(20L, decoded.checkpoint.accumulatedNanos)
+        assertEquals(null, decoded.checkpoint.savedAtEpochMillis)
+        assertTrue(decoded.needsMigration)
+    }
+
+    @Test
     fun legacyCheckpointIsDetectedForMigration() {
         val checkpoint = sampleCheckpoint()
         val legacy = Json.encodeToString(StopwatchCheckpoint.serializer(), checkpoint)
@@ -42,6 +63,7 @@ class ActiveStopwatchStoreCodecTest {
     private fun sampleCheckpoint(): StopwatchCheckpoint = StopwatchCheckpoint(
         status = StopwatchStatus.PAUSED,
         accumulatedNanos = 20L,
+        savedAtEpochMillis = 1_700_000_000_000L,
         laps = listOf(
             Lap(index = 1, splitNanos = 10L, totalNanos = 10L),
             Lap(index = 2, splitNanos = 10L, totalNanos = 20L),

@@ -7,13 +7,7 @@ import kotlin.test.assertContains
 class SessionCodecTest {
     @Test
     fun csvEscapesQuotesAndCommas() {
-        val session = StopwatchSession(
-            id = "id-1",
-            name = "Intervals, \"hard\"",
-            createdAtEpochMillis = 1L,
-            durationNanos = 1_000_000_000L,
-            laps = emptyList(),
-        )
+        val session = session(name = "Intervals, \"hard\"")
 
         val csv = SessionCodec.toCsv(listOf(session))
 
@@ -21,33 +15,50 @@ class SessionCodecTest {
     }
 
     @Test
-    fun jsonContainsSessionIdentity() {
-        val session = StopwatchSession(
+    fun jsonContainsSessionIdentityAndUnicode() {
+        val session = session(
             id = "id-2",
-            name = "Study sprint",
-            createdAtEpochMillis = 2L,
-            durationNanos = 2_000_000_000L,
-            laps = emptyList(),
+            name = "Study sprint — अध्ययन",
         )
 
         val json = SessionCodec.toJson(listOf(session))
 
-        assertContains(json, "Study sprint")
+        assertContains(json, "Study sprint — अध्ययन")
         assertContains(json, "id-2")
     }
 
     @Test
-    fun csvNeutralizesSpreadsheetFormulas() {
-        val session = StopwatchSession(
-            id = "id-3",
-            name = "=SUM(1,1)",
-            createdAtEpochMillis = 3L,
-            durationNanos = 3_000_000_000L,
-            laps = emptyList(),
+    fun csvNeutralizesCommonSpreadsheetFormulaPrefixes() {
+        val riskyNames = listOf(
+            "=SUM(1,1)",
+            "+1+1",
+            "-2+3",
+            "@SUM(A1:A2)",
+            "   =HYPERLINK(\"https://example.invalid\")",
         )
 
-        val csv = SessionCodec.toCsv(listOf(session))
-
-        assertContains(csv, "\"'=SUM(1,1)\"")
+        riskyNames.forEachIndexed { index, name ->
+            val csv = SessionCodec.toCsv(listOf(session(id = "formula-$index", name = name)))
+            val escaped = ("'$name").replace("\"", "\"\"")
+            assertContains(csv, "\"$escaped\"")
+        }
     }
+
+    @Test
+    fun csvKeepsBenignLeadingTextUnchanged() {
+        val csv = SessionCodec.toCsv(listOf(session(name = "  normal session")))
+
+        assertContains(csv, "\"  normal session\"")
+    }
+
+    private fun session(
+        id: String = "id-1",
+        name: String,
+    ) = StopwatchSession(
+        id = id,
+        name = name,
+        createdAtEpochMillis = 1L,
+        durationNanos = 1_000_000_000L,
+        laps = emptyList(),
+    )
 }

@@ -24,7 +24,6 @@ internal class SessionStoreCodec(
         prettyPrint = true
         ignoreUnknownKeys = true
         explicitNulls = false
-        exceptionsWithDebugInfo = false
     },
 ) {
     private val legacySerializer = ListSerializer(StopwatchSession.serializer())

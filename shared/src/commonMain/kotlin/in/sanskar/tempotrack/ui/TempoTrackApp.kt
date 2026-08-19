@@ -35,6 +35,7 @@ import in.sanskar.tempotrack.ui.screens.HistoryScreen
 import in.sanskar.tempotrack.ui.screens.OnboardingScreen
 import in.sanskar.tempotrack.ui.screens.SettingsScreen
 import in.sanskar.tempotrack.ui.screens.StopwatchScreen
+import in.sanskar.tempotrack.util.suspendResult
 import org.jetbrains.compose.resources.stringResource
 
 private val WIDE_LAYOUT_BREAKPOINT = 840.dp
@@ -66,7 +67,7 @@ fun TempoTrackApp(
     var destination by remember { mutableStateOf(Destination.STOPWATCH) }
 
     LaunchedEffect(dependencies) {
-        val loadedPreferences = runCatching { dependencies.preferences.load() }.getOrDefault(AppPreferences())
+        val loadedPreferences = suspendResult { dependencies.preferences.load() }.getOrDefault(AppPreferences())
         preferences = loadedPreferences
         if (dependencies.miniStopwatchSupported) {
             dependencies.setMiniStopwatchVisible(loadedPreferences.miniStopwatchVisible)
@@ -74,7 +75,7 @@ fun TempoTrackApp(
         if (dependencies.keyboardShortcutsSupported) {
             dependencies.setKeyboardShortcutsEnabled(loadedPreferences.keyboardShortcutsEnabled)
         }
-        val checkpoint = runCatching { dependencies.activeStopwatch.load() }.getOrNull()
+        val checkpoint = suspendResult { dependencies.activeStopwatch.load() }.getOrNull()
         engine = StopwatchEngine(dependencies.monotonicClock, checkpoint ?: StopwatchCheckpoint())
         onEngineReady(requireNotNull(engine))
         loaded = true
@@ -94,7 +95,7 @@ fun TempoTrackApp(
                     preferences = preferences.copy(onboardingCompleted = true)
                 },
                 onPersist = { next ->
-                    runCatching { dependencies.preferences.save(next) }.isSuccess
+                    suspendResult { dependencies.preferences.save(next) }.isSuccess
                 },
                 preferences = preferences,
             )

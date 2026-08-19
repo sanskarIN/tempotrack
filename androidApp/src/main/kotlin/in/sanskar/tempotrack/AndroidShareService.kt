@@ -8,6 +8,7 @@ import in.sanskar.tempotrack.data.ShareError
 import in.sanskar.tempotrack.data.ShareResult
 import in.sanskar.tempotrack.data.ShareService
 import java.io.File
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -19,7 +20,7 @@ class AndroidShareService(
         mimeType: String,
         content: String,
     ): ShareResult = withContext(Dispatchers.IO) {
-        runCatching {
+        val shareIntent = try {
             val safeName = ExportFileName.sanitize(suggestedFileName)
             val directory = File(context.cacheDir, "shared-exports").apply { mkdirs() }
             val target = File(directory, safeName)
@@ -31,20 +32,31 @@ class AndroidShareService(
                 target,
             )
 
-            val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                type = mimeType
-                putExtra(Intent.EXTRA_STREAM, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            val chooser = Intent.createChooser(sendIntent, "Share TempoTrack data").apply {
+            Intent.createChooser(
+                Intent(Intent.ACTION_SEND).apply {
+                    type = mimeType
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                },
+                "Share TempoTrack data",
+            ).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
+            return@withContext ShareResult.Failure(ShareError.PREPARE_FAILED)
+        }
+
+        try {
             withContext(Dispatchers.Main) {
-                context.startActivity(chooser)
+                context.startActivity(shareIntent)
             }
             ShareResult.Started
-        }.getOrElse {
-            ShareResult.Failure(ShareError.PREPARE_FAILED)
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
+            ShareResult.Failure(ShareError.PLATFORM_SHARE_UNAVAILABLE)
         }
     }
 }

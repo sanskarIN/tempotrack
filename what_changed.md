@@ -523,3 +523,210 @@ When an environment capable of running the complete toolchain is available, cont
 Source-level functional gaps identified during this continuation have been addressed with atomic commits, regression tests, platform-specific recovery rules, native iOS data portability, safer storage, bounded persistence/import contracts, single-flight UI writes, no-op history write avoidance, serialized History mutations, release-signing support and synchronized documentation.
 
 The remaining blockers are verification/environment/credential/binary-artifact tasks rather than knowingly unfinished `TODO`/`FIXME` source work.
+
+---
+
+## Continuation checkpoint — 2026-08-19 comprehensive documentation and compile-syntax audit
+
+### Critical Kotlin namespace compile blocker fixed
+
+A direct Kotlin syntax audit identified a repository-wide compile blocker that earlier source-only review had not surfaced: the runtime namespace begins with `in.sanskar...`, but `in` is a Kotlin keyword. Kotlin source written as `package in.sanskar...` or `import in.sanskar...` is invalid syntax.
+
+The intended runtime/application namespace was preserved. Every known Kotlin production/test source was corrected to use escaped source syntax:
+
+```kotlin
+package `in`.sanskar.tempotrack...
+import `in`.sanskar.tempotrack...
+```
+
+This correction was applied across:
+
+- Android application entry/adapters/staging tests;
+- all shared common domain/data/UI/utility production files;
+- all shared common tests;
+- iOS Kotlin/Native production and simulator-test files;
+- Desktop entry/export/storage files.
+
+Residual GitHub source searches for the exact unescaped declaration/import forms returned no indexed matches after the correction.
+
+A repository-local guard was added at `tools/check_kotlin_package_keywords.py`, and `.github/workflows/ci.yml` runs it in the documentation job so this specific syntax regression cannot silently return.
+
+### Stale active-schema regression assertion fixed
+
+During the namespace test pass, `ActiveStopwatchRepositoryTest` was found still asserting an active-store schema-v1 envelope even though production persistence had already moved to schema v2.
+
+The test now expects schema v2 both for current saves and migrated legacy checkpoints. The dedicated codec test continues to verify schema-v1 migration into the current schema.
+
+### Android data-portability hardening completed
+
+Android sharing/export was audited beyond the earlier baseline:
+
+- `AndroidShareService` now attaches the granted `content://` URI through both `EXTRA_STREAM` and `ClipData` while retaining `FLAG_GRANT_READ_URI_PERMISSION`.
+- Each share operation stages a unique cache file, preventing a later share from overwriting bytes behind an earlier recipient's granted URI.
+- Share staging handles very short sanitized filenames without violating Java temporary-file prefix requirements.
+- If coroutine cancellation races chooser launch, the staged file is intentionally retained because a target application may already possess/read the URI.
+- Android 10+ MediaStore export now checks that the `IS_PENDING=0` finalization update affects exactly one row; failure deletes the incomplete item and reports write failure.
+- Pre-Android-10 app-specific exports now reserve collision-safe filenames (`name.ext`, `name (1).ext`, …) with `createNewFile()` instead of overwriting an existing backup.
+- Filesystem-only staging logic was extracted to `AndroidStagingFiles.kt` for local JVM testing.
+- `AndroidExportStagingTest.kt` covers direct reservation, collisions, extensionless names, bounded exhaustion, and preservation of existing bytes.
+- `AndroidShareStagingTest.kt` covers unique per-operation files, extension retention, and short filenames.
+- JUnit 4.13.2 was added to the version catalog/Android local-test dependency.
+- `PRIVACY.md` and `docs/testing.md` document the unique-cache-file behavior and manual Android verification cases.
+
+### Comprehensive documentation set added
+
+The documentation is now organized around `docs/README.md`, with role-based reading paths for users, contributors, maintainers, persistence/recovery work, and release maintainers.
+
+New deep guides:
+
+- `docs/repository-reference.md` — exhaustive tracked-file inventory with responsibility/maintenance notes for root files, GitHub automation, Gradle metadata, Android source/resources/tests, Desktop source, shared production/tests/resources, iOS source/tests, tools, assets, ADRs, and all documentation.
+- `docs/code-reference.md` — source/API reference for clocks, models, engine, validation/recovery, repositories/codecs, shared Compose UI, Android/Desktop/iOS adapters, tests, and Python tools.
+- `docs/state-and-recovery.md` — state machine, pause/resume arithmetic, lap semantics, overflow behavior, checkpoint rebasing, active schema v2, Android/iOS uptime-vs-wall recovery, Desktop process-local recovery, heartbeat behavior, startup normalization, and failure matrix.
+- `docs/data-model-and-storage.md` — models, persistence limits, session/preference/active schemas, migration policies, JSON backup, restore validation order, CSV schema/formula safety, platform storage locations, atomic writes, concurrency, corruption philosophy, and migration checklist.
+- `docs/platforms.md` — Android/Desktop/iOS capability matrix and detailed platform-specific clock/storage/export/share/recovery/packaging behavior.
+- `docs/user-guide.md` — complete user workflow for onboarding, stopwatch, laps, session saving, History, export/share/restore, Settings, recovery, privacy, and accessibility.
+- `docs/maintainer-guide.md` — safe change recipes for domain rules, preferences, schemas, limits, restore/CSV, Android/Desktop/iOS adapters, localization, accessibility, dependencies, versions/signing, release preparation, documentation, and handoff discipline.
+- `docs/build-and-ci.md` — Gradle modules/toolchain versions, bootstrap behavior, module builds, deterministic checks, CI jobs, CodeQL/dependency review/secret scan/Dependabot, release jobs, signing secrets, artifact publishing, and CI integrity rules.
+- `docs/security-model.md` — trust boundaries, persistence integrity, malformed import controls, CSV formula injection, filename/path handling, Android FileProvider/MediaStore, iOS staging, atomicity, concurrency, cancellation, backup, signing, supply chain, and security review checklist.
+
+Existing documentation was also deeply synchronized:
+
+- root `README.md` now links the comprehensive docs and includes the repository integrity checks;
+- `docs/development.md` now documents the namespace rule, quality workflow, persistence/concurrency/platform boundaries, and documentation ownership;
+- `docs/setup.md` now covers Git/Python guards, exact Gradle bootstrap state, Android/Desktop/iOS setup, signing, IDE recommendations, and validation order;
+- `docs/troubleshooting.md` was substantially expanded and corrected for package syntax, wrapper/JDK/SDK failures, current checkpoint recovery, durable-history corruption behavior, Android export/share, iOS native presentation, settings rollback, signing, and CI status interpretation;
+- `docs/testing.md` now documents the namespace guard, exhaustive tracked-file coverage guard, Android staging JVM tests, current schema-v2 expectations, and complete manual platform matrix;
+- `docs/release.md` now includes all deterministic repository guards and a documentation release audit;
+- `docs/github.md` now describes the actual CI/security/release automation, repository-reference policy, namespace policy, secrets, permissions, artifacts, branch protection, PR expectations, and missing-status troubleshooting;
+- `CONTRIBUTING.md` and `.github/pull_request_template.md` now require all repository integrity checks and explicit documentation coverage for tracked-file changes;
+- `ROADMAP.md` now records the comprehensive documentation/maintainability milestone and keeps observed clean-checkout execution explicitly open;
+- `CHANGELOG.md` now records the namespace compile fix, schema-v2 assertion correction, Android portability hardening, exhaustive documentation, and new guards.
+
+### “Do not skip files” is now mechanically enforced
+
+A new tool, `tools/check_repository_reference.py`, uses `git ls-files` as the source of truth and requires every tracked path to appear exactly in backticks in `docs/repository-reference.md`.
+
+CI now compiles and runs:
+
+```bash
+python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
+python tools/check_markdown_links.py
+```
+
+The repository reference itself includes the coverage checker and all documentation added in this continuation. This turns exhaustive file documentation from a manual convention into a CI contract.
+
+### Documentation commits in this continuation
+
+- `409575830d3883a30bb4111865cafce4d416517b` — `docs: add complete documentation index`.
+- `2945df6775a0d1164848e6692e4cc2c459e337cc` — `docs: document every repository file`.
+- `978fd6a249ffb8ebdeee007a68a5f55e80efee00` — `docs: add deep source code reference`.
+- `4a68fa0c18d52013c3db06cc11b3f096bb11df65` — `docs: explain stopwatch state and recovery model`.
+- `1cf6bc0693adcda057919ac5bd02ee761693fe41` — `docs: document data model and storage lifecycle`.
+- `37d698dff57532d1f1068c062c42b472a2e971f5` — `docs: document platform-specific behavior`.
+- `d61ecf9c8bff0131f98887c7120328b06aa7fa44` — `docs: add complete user guide`.
+- `817d0ef83aa15c6fd6eec06f58ee5ecec7702ffc` — `docs: add deep maintainer workflow guide`.
+- `971e48ca670a16de4932687004c4293b01276398` — `docs: document build and CI system`.
+- `f6ebd599e99aa5c84f8c31bff88772d55f517ab1` — `docs: add detailed security model`.
+- `de6588f04dda751c2acd2ccdd61647579a3be8e0` — `docs: expand documentation navigation`.
+- `2551efa604449961dcf99a418488935fe19c261e` — `docs: link comprehensive project documentation`.
+- `8dd36956e7bc962d9a30563672ce93ba0a1aeaa7` — `docs: deepen development workflow guidance`.
+- `8045a87479894971e5d7a5562f0eeb8d3eafeebd` — `docs: correct and expand troubleshooting guidance`.
+- `72b45588c4e98ca2ac679abbcdd654ebceae0afb` — `docs: expand development environment setup`.
+- `f6e478b69524bb7609d480f0bc29bda15eafad4c` — `tools: verify repository file documentation coverage`.
+- `ae6258aab48b735890b1a26b0eda0e45793eedc0` — `docs: keep tracked file reference exhaustive`.
+- `1befd51b1ecaf055f706ba01ca448ce7d1bbd6b8` — `ci: enforce repository documentation coverage`.
+- `0b288d1267a982b56c8d3e72b872586db605e0bb` — `docs: enforce exhaustive repository documentation checks`.
+- `6ecb7324628ab8e31bd6941401117105532fade6` — `docs: document tracked file coverage CI`.
+- `9a4c9b2440f7c9b9f4f99222c19226089810c3b6` — `docs: add exhaustive file coverage guard to index`.
+- `b0ab3feeb82a2ec257157f0ae8c37bd4040b2508` — `docs: require repository integrity guards for contributions`.
+- `09d2272fdfd7a5ff0825f6a13cf8f042518bb7f0` — `docs: expand pull request verification checklist`.
+- `d4ab094d758e07c419507dd2f5ef4f717c727426` — `docs: include exhaustive documentation guard in quick checks`.
+- `d97771ca2e4ac6d13e18ec7d41fa5ac3f2678a2e` — `docs: add repository integrity checks to release gate`.
+- `8c01cd7b7f202acb5f495fb35b1befc149c5103d` — `docs: document current repository automation`.
+- `cc74b35eba92c1b0c4a2542a52a8538255af6aa4` — `docs: include repository reference guard in setup`.
+- `c36a08dcd324ba9318aa9d48ce63080bd2de2ce7` — `docs: record comprehensive documentation milestone`.
+- `4802d4b7d508fae7735c577c72a16c785d6627b5` — `docs: record namespace Android and documentation hardening`.
+
+### Namespace/guard commit highlights
+
+The namespace correction was intentionally granular. Representative/critical commits include:
+
+- `6b8ec25fb89d7fa5ecd8819e9329200d663475c3` — `tools: detect unescaped Kotlin package keywords`.
+- `d6cbdc565de520e5a256f8049c7d624ea2ec961e` — `ci: reject unescaped Kotlin package keywords`.
+- `fc3e603f742f02028fc85709f15df808ba5bc5c9` — `docs: document Kotlin package keyword guard`.
+- `759b5463f4c5b78e9cc16fca5a06cc70c8597d0b` — `test: align active repository expectations with schema v2`.
+- `7de8ab6983535ef7dd7abc73d44af0ff796d66aa` — Desktop entry-point keyword fix.
+- `34ddbe17ef6f538c16c7a4448902d3bbcd81e5c8` — iOS entry-point keyword fix.
+- `99fb820264fed887bd3f96e14c0e51b97795fc0` — History screen keyword fix.
+- `69f598ef842494619bd3f96e14c0e51b97795fc0` — Stopwatch screen keyword fix.
+- `3d71996dd018dada5a3a4a88669e351f66e00603` — shared app-shell keyword fix.
+- `4f7fe4ce1c7473d564cbf8e9451952d6655c272a` — session repository keyword fix.
+- `fa44269af4c7f61adf9138558925eca0eb48a7d2` — stopwatch engine test keyword fix.
+
+The commit history contains the remaining per-file keyword fixes for domain, data, UI, tests, Android, iOS, and Desktop source sets.
+
+### Verification observed in this continuation
+
+Observed directly through the connected GitHub source/tree interfaces:
+
+- A fresh recursive repository tree was inspected after the documentation additions.
+- The new documentation files and repository-reference checker are present in `main`.
+- The repository reference was rebuilt from the tracked-tree inventory and now explicitly lists the new documentation and checker paths.
+- Residual GitHub source searches after the namespace correction returned no indexed exact unescaped `package in.sanskar...` or `import in.sanskar...` directives.
+- Current `CHANGELOG.md`, `ROADMAP.md`, setup/testing/release/GitHub/contributor/PR documentation was re-read before synchronization writes.
+- The latest queried commit combined-status endpoint returned an empty status list; no CI success is inferred from that.
+
+Attempted execution-container verification:
+
+```text
+git clone --depth 1 https://github.com/sanskarIN/tempotrack.git /tmp/tempotrack-audit
+```
+
+failed with:
+
+```text
+Could not resolve host: github.com
+```
+
+Therefore the clean-checkout Python guards and Gradle tasks could not actually execute in that container. They remain configured and documented, but this handoff does **not** mark them as observed passing.
+
+### Current deterministic verification commands
+
+From a real clean Git checkout with network/toolchain access:
+
+```bash
+python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
+python tools/check_markdown_links.py
+```
+
+Then:
+
+```bash
+./gradlew quality
+./gradlew :androidApp:testDebugUnitTest :androidApp:lintRelease :androidApp:assembleRelease :androidApp:bundleRelease
+./gradlew :desktopApp:test :desktopApp:compileKotlin :desktopApp:packageDistributionForCurrentOS
+```
+
+On macOS/Xcode:
+
+```bash
+./gradlew :shared:iosSimulatorArm64Test :shared:linkDebugFrameworkIosSimulatorArm64 :shared:linkReleaseFrameworkIosArm64
+```
+
+### Remaining externally gated work after the documentation pass
+
+1. Generate and verify the standard Gradle 9.5.0 wrapper JAR from a trusted installation if self-contained wrapper bootstrap is required.
+2. Observe all three repository-local Python guards from a clean checkout; the current execution container could not resolve GitHub for cloning.
+3. Observe the full Gradle quality/Android/Desktop build matrix on a capable host/CI run.
+4. Observe iOS simulator tests/framework linking on macOS/Xcode and manually exercise native document picker/activity-sheet lifecycle paths.
+5. Provision protected production Android signing secrets before a distributable Android tag release.
+6. Capture real Android/Desktop/iOS release screenshots from verified builds.
+7. Complete target-device accessibility/lifecycle/large-history testing.
+
+### Documentation state conclusion
+
+TempoTrack now has both broad and deep documentation rather than only a README-level overview. The repository contains an indexed user/contributor/maintainer documentation set, an exhaustive tracked-file reference, detailed source/data/state/platform/security/build guides, corrected troubleshooting, synchronized contribution/release guidance, and CI enforcement that prevents future tracked files from being silently omitted from the repository reference.
+
+The authoritative current file inventory is `docs/repository-reference.md`; the historical file lists earlier in this handoff are intentionally preserved as prior checkpoints and may refer to structures that were subsequently consolidated or renamed.

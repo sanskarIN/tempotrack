@@ -109,6 +109,7 @@ fun HistoryScreen(
     var importJson by remember { mutableStateOf("") }
     var importError by remember { mutableStateOf<String?>(null) }
     var importing by remember { mutableStateOf(false) }
+    var dataOperationInProgress by remember { mutableStateOf(false) }
     var renamingSession by remember { mutableStateOf<StopwatchSession?>(null) }
     var renameText by remember { mutableStateOf("") }
     var renameError by remember { mutableStateOf<String?>(null) }
@@ -123,6 +124,19 @@ fun HistoryScreen(
         suspendResult { sessions.all() }
             .onSuccess { allSessions = it }
             .onFailure { message = readFailedMessage }
+    }
+
+    fun launchDataOperation(block: suspend () -> String) {
+        if (dataOperationInProgress || importing) return
+        dataOperationInProgress = true
+        message = null
+        scope.launch {
+            try {
+                message = block()
+            } finally {
+                dataOperationInProgress = false
+            }
+        }
     }
 
     LaunchedEffect(sessions) { reload() }
@@ -151,12 +165,12 @@ fun HistoryScreen(
         ) {
             OutlinedButton(
                 modifier = Modifier.weight(1f),
-                enabled = allSessions.isNotEmpty(),
+                enabled = allSessions.isNotEmpty() && !dataOperationInProgress && !importing,
                 onClick = {
                     val snapshot = allSessions
-                    scope.launch {
+                    launchDataOperation {
                         val content = withContext(Dispatchers.Default) { SessionCodec.toJson(snapshot) }
-                        message = export(
+                        export(
                             exporter,
                             "tempotrack-sessions.json",
                             "application/json",
@@ -167,12 +181,12 @@ fun HistoryScreen(
             ) { Text(stringResource(Res.string.history_export_json)) }
             OutlinedButton(
                 modifier = Modifier.weight(1f),
-                enabled = allSessions.isNotEmpty(),
+                enabled = allSessions.isNotEmpty() && !dataOperationInProgress && !importing,
                 onClick = {
                     val snapshot = allSessions
-                    scope.launch {
+                    launchDataOperation {
                         val content = withContext(Dispatchers.Default) { SessionCodec.toCsv(snapshot) }
-                        message = export(
+                        export(
                             exporter,
                             "tempotrack-sessions.csv",
                             "text/csv",
@@ -191,12 +205,12 @@ fun HistoryScreen(
             ) {
                 OutlinedButton(
                     modifier = Modifier.weight(1f),
-                    enabled = allSessions.isNotEmpty(),
+                    enabled = allSessions.isNotEmpty() && !dataOperationInProgress && !importing,
                     onClick = {
                         val snapshot = allSessions
-                        scope.launch {
+                        launchDataOperation {
                             val content = withContext(Dispatchers.Default) { SessionCodec.toJson(snapshot) }
-                            message = share(
+                            share(
                                 shareService,
                                 "tempotrack-sessions.json",
                                 "application/json",
@@ -207,12 +221,12 @@ fun HistoryScreen(
                 ) { Text(stringResource(Res.string.history_share_json)) }
                 OutlinedButton(
                     modifier = Modifier.weight(1f),
-                    enabled = allSessions.isNotEmpty(),
+                    enabled = allSessions.isNotEmpty() && !dataOperationInProgress && !importing,
                     onClick = {
                         val snapshot = allSessions
-                        scope.launch {
+                        launchDataOperation {
                             val content = withContext(Dispatchers.Default) { SessionCodec.toCsv(snapshot) }
-                            message = share(
+                            share(
                                 shareService,
                                 "tempotrack-sessions.csv",
                                 "text/csv",
@@ -227,6 +241,7 @@ fun HistoryScreen(
         Spacer(Modifier.height(8.dp))
         OutlinedButton(
             modifier = Modifier.fillMaxWidth(),
+            enabled = !dataOperationInProgress && !importing,
             onClick = {
                 importJson = ""
                 importError = null

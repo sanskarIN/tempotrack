@@ -1,7 +1,5 @@
 package in.sanskar.tempotrack.ui.screens
 
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.weight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import in.sanskar.tempotrack.data.AppPreferences
 import in.sanskar.tempotrack.data.PreferencesRepository
 import in.sanskar.tempotrack.data.ThemePreference
+import in.sanskar.tempotrack.ui.EnglishTempoTrackStrings
+import in.sanskar.tempotrack.ui.TempoTrackStrings
 import kotlinx.coroutines.launch
 
 @Composable
@@ -35,6 +37,7 @@ fun SettingsScreen(
     onPreferencesChanged: (AppPreferences) -> Unit,
     miniStopwatchSupported: Boolean,
     setMiniStopwatchVisible: (Boolean) -> Unit,
+    strings: TempoTrackStrings = EnglishTempoTrackStrings,
 ) {
     val scope = rememberCoroutineScope()
     var miniVisible by remember { mutableStateOf(false) }
@@ -45,9 +48,9 @@ fun SettingsScreen(
     }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
-        Text("Settings", style = MaterialTheme.typography.headlineMedium)
+        Text(strings.settings, style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(16.dp))
-        Text("Appearance", style = MaterialTheme.typography.titleMedium)
+        Text(strings.appearance, style = MaterialTheme.typography.titleMedium)
 
         ThemePreference.entries.forEach { option ->
             Row(
@@ -58,31 +61,37 @@ fun SettingsScreen(
                     selected = preferences.theme == option,
                     onClick = { update(preferences.copy(theme = option)) },
                 )
-                Text(option.name.lowercase().replaceFirstChar { it.uppercase() })
+                Text(
+                    when (option) {
+                        ThemePreference.SYSTEM -> strings.system
+                        ThemePreference.LIGHT -> strings.light
+                        ThemePreference.DARK -> strings.dark
+                    },
+                )
             }
         }
 
         Spacer(Modifier.height(16.dp))
-        Text("Accessibility", style = MaterialTheme.typography.titleMedium)
+        Text(strings.accessibility, style = MaterialTheme.typography.titleMedium)
         ToggleRow(
-            title = "Large controls",
-            subtitle = "Increase primary touch target and timer sizes.",
+            title = strings.largeControls,
+            subtitle = strings.largeControlsDescription,
             checked = preferences.largeControls,
             onCheckedChange = { update(preferences.copy(largeControls = it)) },
         )
         ToggleRow(
-            title = "Reduced motion",
-            subtitle = "Prefer minimal motion where animations are used.",
+            title = strings.reducedMotion,
+            subtitle = strings.reducedMotionDescription,
             checked = preferences.reducedMotion,
             onCheckedChange = { update(preferences.copy(reducedMotion = it)) },
         )
 
         if (miniStopwatchSupported) {
             Spacer(Modifier.height(16.dp))
-            Text("Desktop", style = MaterialTheme.typography.titleMedium)
+            Text(strings.desktop, style = MaterialTheme.typography.titleMedium)
             ToggleRow(
-                title = "Floating mini stopwatch",
-                subtitle = "Show a compact always-on-top timer window.",
+                title = strings.floatingStopwatch,
+                subtitle = strings.floatingStopwatchDescription,
                 checked = miniVisible,
                 onCheckedChange = {
                     miniVisible = it
@@ -92,32 +101,20 @@ fun SettingsScreen(
         }
 
         Spacer(Modifier.height(20.dp))
-        Text("Privacy", style = MaterialTheme.typography.titleMedium)
-        Text(
-            "TempoTrack does not require an account and does not transmit session data.",
-            style = MaterialTheme.typography.bodyMedium,
-        )
+        Text(strings.privacy, style = MaterialTheme.typography.titleMedium)
+        Text(strings.privacyDescription, style = MaterialTheme.typography.bodyMedium)
 
         Spacer(Modifier.height(16.dp))
-        Text("Data", style = MaterialTheme.typography.titleMedium)
-        Text(
-            "Saved sessions and preferences use application-private local storage. Use History to export JSON backups or CSV data.",
-            style = MaterialTheme.typography.bodyMedium,
-        )
+        Text(strings.data, style = MaterialTheme.typography.titleMedium)
+        Text(strings.dataDescription, style = MaterialTheme.typography.bodyMedium)
 
         Spacer(Modifier.height(16.dp))
-        Text("Updates", style = MaterialTheme.typography.titleMedium)
-        Text(
-            "Release information is published at https://github.com/sanskarIN/tempotrack/releases",
-            style = MaterialTheme.typography.bodyMedium,
-        )
+        Text(strings.updates, style = MaterialTheme.typography.titleMedium)
+        Text(strings.updatesDescription, style = MaterialTheme.typography.bodyMedium)
 
         Spacer(Modifier.height(16.dp))
-        Text("About", style = MaterialTheme.typography.titleMedium)
-        Text(
-            "Open-source MIT project • Made by the Sanskar",
-            style = MaterialTheme.typography.bodyMedium,
-        )
+        Text(strings.about, style = MaterialTheme.typography.titleMedium)
+        Text(strings.openSourceCredit, style = MaterialTheme.typography.bodyMedium)
     }
 }
 

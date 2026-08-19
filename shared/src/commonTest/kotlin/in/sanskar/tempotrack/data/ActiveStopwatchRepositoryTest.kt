@@ -24,7 +24,7 @@ class ActiveStopwatchRepositoryTest {
         repository.save(checkpoint)
 
         assertEquals(checkpoint, repository.load())
-        assertTrue(storage.value.orEmpty().contains("\"schemaVersion\":1"))
+        assertTrue(storage.value.orEmpty().contains("\"schemaVersion\":2"))
     }
 
     @Test
@@ -62,7 +62,7 @@ class ActiveStopwatchRepositoryTest {
         val repository = JsonActiveStopwatchRepository(storage)
 
         assertNotNull(repository.load())
-        assertTrue(storage.value.orEmpty().contains("\"schemaVersion\":1"))
+        assertTrue(storage.value.orEmpty().contains("\"schemaVersion\":2"))
     }
 
     @Test

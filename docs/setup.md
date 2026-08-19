@@ -8,6 +8,7 @@
 - Android Studio compatible with AGP 9.3 for Android work
 - Android SDK Platform 37
 - A supported desktop OS for Compose Desktop packaging
+- macOS with Xcode for Kotlin/Native iOS framework builds
 
 ## Clone
 
@@ -55,6 +56,17 @@ Open the repository in Android Studio, install API 37 when prompted, then run th
 ```bash
 ./gradlew :androidApp:assembleDebug
 ```
+
+## Build the iOS shared framework
+
+On macOS with Xcode installed:
+
+```bash
+./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
+./gradlew :shared:iosSimulatorArm64Test
+```
+
+The framework exposes the shared `MainViewController()` entry point. See `docs/ios.md` for host-app wiring and the native export bridge requirement.
 
 ## Local Android SDK path
 

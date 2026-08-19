@@ -53,7 +53,7 @@ When updating one item, review compatibility with Kotlin compiler, Compose compi
 - `:androidApp:lintDebug`;
 - ktlint for shared/Desktop/Android.
 
-This is the primary local cross-module verification task but it is not a substitute for platform packaging, release lint, iOS linking, or manual lifecycle/accessibility checks.
+This is the primary local cross-module verification task but it is not a substitute for platform packaging, release lint, iOS linking, repository-local Python guards, or manual lifecycle/accessibility checks.
 
 ## Gradle performance/configuration flags
 
@@ -182,6 +182,7 @@ These run without a full Gradle dependency resolution:
 
 ```bash
 python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
 
@@ -200,6 +201,14 @@ package `in`.sanskar.tempotrack
 ```
 
 CI compiles the checker with Python and runs it in the documentation job.
+
+### Repository reference coverage check
+
+`tools/check_repository_reference.py` uses `git ls-files` as the source of truth for tracked repository files. Every tracked path must appear exactly in backticks in `docs/repository-reference.md`.
+
+This turns the project's “do not skip files in documentation” requirement into an executable check. A file addition, rename, or deletion must be accompanied by a repository-reference update or CI fails.
+
+The checker requires Git metadata because it distinguishes tracked files from generated/untracked build output.
 
 ### Markdown link check
 
@@ -250,10 +259,13 @@ This verifies shared iOS framework linkage/simulator tests, not a complete signe
 Ubuntu + Python 3.13:
 
 ```text
-python -m py_compile tools/check_markdown_links.py tools/check_kotlin_package_keywords.py
+python -m py_compile tools/check_markdown_links.py tools/check_kotlin_package_keywords.py tools/check_repository_reference.py
 python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
+
+The job therefore checks Python syntax, Kotlin namespace source syntax, exhaustive tracked-file documentation coverage, and local Markdown navigation.
 
 ## CodeQL workflow
 
@@ -398,6 +410,7 @@ If the connected API/tool cannot expose a job result, record it as **not observe
 5. Pin to intentional action major versions.
 6. Keep build tool versions aligned with repository catalog/wrapper.
 7. Update `testing.md`, `github.md`, this document, and PR template if contributors must satisfy a new requirement.
+8. If the check adds a tracked file, update `repository-reference.md` before enabling its coverage guard.
 
 ## Related documentation
 

@@ -19,25 +19,43 @@ The shared iOS composition root provides:
 - local JSON state backed by `NSUserDefaults`;
 - host bundle version display from `CFBundleShortVersionString`;
 - native JSON/CSV sharing through `UIActivityViewController`;
+- direct JSON/CSV document export through `UIDocumentPickerViewController`;
 - the same stopwatch, history, settings, onboarding and About UI used by Android/Desktop.
+
+## Temporary export-file policy
+
+`IosTemporaryExportFile.kt` is the common staging boundary used by native share and direct export flows. Each operation:
+
+1. sanitizes the user-visible filename using the shared export filename policy;
+2. creates a unique operation directory below `NSTemporaryDirectory()`;
+3. writes the UTF-8 JSON/CSV payload atomically using the sanitized filename;
+4. removes the entire operation directory when the platform flow completes, is dismissed, is cancelled, or fails to present.
+
+Using a unique directory preserves the requested filename while preventing simultaneous operations from overwriting one another.
 
 ## Native share bridge
 
 `IosShareService` implements the shared `ShareService` contract. When the user chooses a History share action it:
 
-1. sanitizes the suggested filename using the shared export filename policy;
-2. writes the UTF-8 JSON/CSV payload atomically to the app's temporary directory;
-3. creates a file URL for that temporary file;
-4. presents `UIActivityViewController` from the Compose host controller;
-5. configures a source view/source rectangle when UIKit provides a popover presentation controller, so the activity sheet has an anchor on iPad-class presentations.
+1. prepares a temporary export file;
+2. presents `UIActivityViewController` from the Compose host controller;
+3. configures a source view/source rectangle when UIKit provides a popover presentation controller;
+4. removes the temporary operation directory from the activity controller completion handler.
 
-The destination remains under operating-system/user control. Temporary files are not a cloud-sync mechanism and are not created unless the user explicitly starts sharing.
+Only one activity sheet is presented by the service at a time. The destination remains under operating-system/user control.
 
 ## Direct document export
 
-The shared `Exporter` boundary still returns `PLATFORM_EXPORT_UNAVAILABLE` on iOS. The History share actions are functional through the native share service, but a separate direct "save/export to a chosen document location" path remains host work.
+`IosDocumentExporter` implements the shared `Exporter` contract. It prepares a temporary source file and presents `UIDocumentPickerViewController(forExportingURLs:)` so the user chooses a document destination outside the app sandbox.
 
-A future direct export implementation should use a native document picker/export flow and preserve the shared `Exporter` result contract, including explicit user cancellation. Do not silently substitute an app-private file path and report it as a user-selected export.
+The exporter keeps the picker delegate strongly referenced for the lifetime of the operation and returns:
+
+- `ExportResult.Success` after the picker reports a selected destination;
+- `ExportError.USER_CANCELLED` when the picker delegate reports cancellation;
+- `ExportError.WRITE_FAILED` if the temporary source file cannot be prepared or the picker reports no destination;
+- `ExportError.PLATFORM_EXPORT_UNAVAILABLE` if the native picker cannot be presented.
+
+The exporter serializes picker operations with a mutex and removes its temporary source directory in a non-cancellable cleanup section.
 
 ## Build examples
 
@@ -56,12 +74,16 @@ Kotlin/Native iOS compilation requires macOS/Xcode. Linux and Windows validation
 Run the containing iOS host on both compact and regular-width presentations where practical and verify:
 
 - start/pause/resume/lap/reset and active-checkpoint recovery;
-- History JSON and CSV share actions present the system activity sheet;
+- History Export JSON and Export CSV present the system document picker;
+- choosing a destination produces a readable file with the sanitized suggested filename;
+- cancelling the document picker returns to History without a false write-failure message;
+- History Share JSON and Share CSV present the system activity sheet;
 - the activity sheet is anchored correctly on iPad/regular-width presentation;
 - canceling/dismissing the system activity sheet leaves app history unchanged;
+- temporary operation directories are cleaned after picker/share completion;
 - the About screen displays the host app's bundle version;
-- no share file is created before an explicit user share action.
+- no export/share file is created before an explicit user action.
 
 ## Privacy
 
-TempoTrack does not require an account or network service for stopwatch data. The iOS adapter keeps app state local to the application container. Native sharing only prepares a temporary file after an explicit user action; the service selected in the system activity sheet has its own privacy behavior and terms.
+TempoTrack does not require an account or network service for stopwatch data. The iOS adapter keeps app state local to the application container. Native export/share operations stage temporary files only after explicit user actions. The user-selected document destination or system-share service has its own privacy behavior and terms.

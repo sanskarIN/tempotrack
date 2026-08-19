@@ -20,15 +20,22 @@ class DesktopExporter : Exporter {
         mimeType: String,
         content: String,
     ): ExportResult {
-        val target = chooseTarget(suggestedFileName, mimeType)
-            ?: return ExportResult.Failure(ExportError.USER_CANCELLED)
+        val target = try {
+            chooseTarget(suggestedFileName, mimeType)
+        } catch (_: RuntimeException) {
+            return ExportResult.Failure(ExportError.PLATFORM_EXPORT_UNAVAILABLE)
+        }
+
+        if (target == null) {
+            return ExportResult.Failure(ExportError.USER_CANCELLED)
+        }
 
         return withContext(Dispatchers.IO) {
-            runCatching {
+            try {
                 target.parent?.let(Files::createDirectories)
                 Files.writeString(target, content, StandardCharsets.UTF_8)
                 ExportResult.Success(target.toAbsolutePath().toString())
-            }.getOrElse {
+            } catch (_: Exception) {
                 ExportResult.Failure(ExportError.WRITE_FAILED)
             }
         }

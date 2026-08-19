@@ -65,6 +65,13 @@
     <string name="history_rename_label">New session name</string>
     <string name="history_rename_failed">Could not rename this session.</string>
     <string name="history_renamed">Renamed session to “%1$s”.</string>
+    <string name="history_import_empty">The selected backup is empty.</string>
+    <string name="history_import_too_large">The selected backup is too large to import safely.</string>
+    <string name="history_import_invalid_json">The selected file is not a valid TempoTrack JSON backup.</string>
+    <string name="history_import_invalid_data">The selected file contains invalid data.</string>
+    <string name="history_import_too_many_sessions">The backup contains too many sessions.</string>
+    <string name="history_import_duplicate_ids">The backup contains duplicate session ids.</string>
+    <string name="history_import_invalid_session">Session %1$s is invalid and cannot be restored.</string>
 
     <string name="settings_title">Settings</string>
     <string name="settings_appearance">Appearance</string>

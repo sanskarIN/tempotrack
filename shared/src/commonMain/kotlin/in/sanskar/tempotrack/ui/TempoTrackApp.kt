@@ -88,6 +88,7 @@ fun TempoTrackApp(
         engine = StopwatchEngine(
             clock = dependencies.monotonicClock,
             checkpoint = recoveredCheckpoint ?: StopwatchCheckpoint(),
+            wallClock = dependencies.wallClock,
         )
         onEngineReady(requireNotNull(engine))
         loaded = true

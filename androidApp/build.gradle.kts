@@ -6,6 +6,16 @@ plugins {
 
 val tempoTrackVersion = providers.gradleProperty("appVersion").get()
 val tempoTrackVersionCode = providers.gradleProperty("appVersionCode").get().toInt()
+val releaseKeystorePath = providers.environmentVariable("TEMPOTRACK_KEYSTORE_PATH").orNull
+val releaseKeystorePassword = providers.environmentVariable("TEMPOTRACK_KEYSTORE_PASSWORD").orNull
+val releaseKeyAlias = providers.environmentVariable("TEMPOTRACK_KEY_ALIAS").orNull
+val releaseKeyPassword = providers.environmentVariable("TEMPOTRACK_KEY_PASSWORD").orNull
+val releaseSigningConfigured = listOf(
+    releaseKeystorePath,
+    releaseKeystorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword,
+).all { !it.isNullOrBlank() }
 
 android {
     namespace = "in.sanskar.tempotrack"
@@ -17,6 +27,26 @@ android {
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
         versionCode = tempoTrackVersionCode
         versionName = tempoTrackVersion
+    }
+
+    if (releaseSigningConfigured) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(requireNotNull(releaseKeystorePath))
+                storePassword = requireNotNull(releaseKeystorePassword)
+                keyAlias = requireNotNull(releaseKeyAlias)
+                keyPassword = requireNotNull(releaseKeyPassword)
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = false
+            if (releaseSigningConfigured) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
     }
 
     buildFeatures {

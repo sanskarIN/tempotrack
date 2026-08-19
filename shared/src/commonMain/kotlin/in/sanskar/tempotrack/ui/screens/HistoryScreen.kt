@@ -39,7 +39,10 @@ import in.sanskar.tempotrack.data.SessionRepository
 import in.sanskar.tempotrack.domain.DurationFormatter
 import in.sanskar.tempotrack.domain.LapStatistics
 import in.sanskar.tempotrack.domain.StopwatchSession
+import in.sanskar.tempotrack.resources.Res
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun HistoryScreen(
@@ -53,11 +56,15 @@ fun HistoryScreen(
     var showImportDialog by remember { mutableStateOf(false) }
     var importJson by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
+    val readFailedMessage = stringResource(Res.string.history_read_failed)
+    val restoreDeletedFailedMessage = stringResource(Res.string.history_restore_deleted_failed)
+    val deleteFailedMessage = stringResource(Res.string.history_delete_failed)
+    val restoreFailedMessage = stringResource(Res.string.history_restore_failed)
 
     suspend fun reload() {
         runCatching { sessions.all() }
             .onSuccess { allSessions = it }
-            .onFailure { message = "Could not read saved sessions." }
+            .onFailure { message = readFailedMessage }
     }
 
     LaunchedEffect(sessions) { reload() }
@@ -69,14 +76,14 @@ fun HistoryScreen(
     }
 
     Column(Modifier.fillMaxSize().padding(20.dp)) {
-        Text("History", style = MaterialTheme.typography.headlineMedium)
+        Text(stringResource(Res.string.history_title), style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(10.dp))
         OutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
             value = query,
             onValueChange = { query = it.take(100) },
             singleLine = true,
-            label = { Text("Search sessions") },
+            label = { Text(stringResource(Res.string.history_search)) },
         )
 
         Spacer(Modifier.height(10.dp))
@@ -97,7 +104,7 @@ fun HistoryScreen(
                         )
                     }
                 },
-            ) { Text("Export JSON") }
+            ) { Text(stringResource(Res.string.history_export_json)) }
             OutlinedButton(
                 modifier = Modifier.weight(1f),
                 enabled = allSessions.isNotEmpty(),
@@ -111,7 +118,7 @@ fun HistoryScreen(
                         )
                     }
                 },
-            ) { Text("Export CSV") }
+            ) { Text(stringResource(Res.string.history_export_csv)) }
         }
         Spacer(Modifier.height(8.dp))
         OutlinedButton(
@@ -121,7 +128,7 @@ fun HistoryScreen(
                 showImportDialog = true
             },
         ) {
-            Text("Restore from JSON backup")
+            Text(stringResource(Res.string.history_restore_json))
         }
 
         message?.let {
@@ -139,18 +146,22 @@ fun HistoryScreen(
                                 lastDeleted = null
                                 reload()
                             }
-                            .onFailure { message = "Could not restore the deleted session." }
+                            .onFailure { message = restoreDeletedFailedMessage }
                     }
                 },
             ) {
-                Text("Undo delete “${deleted.name}”")
+                Text(stringResource(Res.string.history_undo_delete, deleted.name))
             }
         }
 
         Spacer(Modifier.height(12.dp))
         if (filtered.isEmpty()) {
             Text(
-                if (query.isBlank()) "No saved sessions yet." else "No sessions match your search.",
+                if (query.isBlank()) {
+                    stringResource(Res.string.history_empty)
+                } else {
+                    stringResource(Res.string.history_no_search_results)
+                },
                 style = MaterialTheme.typography.bodyLarge,
             )
         } else {
@@ -168,7 +179,7 @@ fun HistoryScreen(
                                         lastDeleted = session
                                         reload()
                                     }
-                                    .onFailure { message = "Could not delete this session." }
+                                    .onFailure { message = deleteFailedMessage }
                             }
                         },
                     )
@@ -180,10 +191,10 @@ fun HistoryScreen(
     if (showImportDialog) {
         AlertDialog(
             onDismissRequest = { showImportDialog = false },
-            title = { Text("Restore JSON backup") },
+            title = { Text(stringResource(Res.string.history_restore_dialog_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Paste a TempoTrack JSON export. Restoring replaces the current saved history.")
+                    Text(stringResource(Res.string.history_restore_dialog_body))
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = importJson,
@@ -192,7 +203,7 @@ fun HistoryScreen(
                         },
                         minLines = 6,
                         maxLines = 12,
-                        label = { Text("Backup JSON") },
+                        label = { Text(stringResource(Res.string.history_backup_json_label)) },
                     )
                 }
             },
@@ -209,18 +220,23 @@ fun HistoryScreen(
                                             lastDeleted = null
                                             importJson = ""
                                             showImportDialog = false
-                                            message = "Restored ${result.sessions.size} saved session(s)."
+                                            message = getString(
+                                                Res.string.history_restored_count,
+                                                result.sessions.size.toString(),
+                                            )
                                             reload()
                                         }
-                                        .onFailure { message = "Could not restore this backup." }
+                                        .onFailure { message = restoreFailedMessage }
                                 }
                             }
                         }
                     },
-                ) { Text("Replace history") }
+                ) { Text(stringResource(Res.string.history_replace)) }
             },
             dismissButton = {
-                TextButton(onClick = { showImportDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showImportDialog = false }) {
+                    Text(stringResource(Res.string.action_cancel))
+                }
             },
         )
     }
@@ -232,7 +248,7 @@ private suspend fun export(
     mimeType: String,
     content: String,
 ): String = when (val result = exporter.export(name, mimeType, content)) {
-    is ExportResult.Success -> "Exported to ${result.destination}"
+    is ExportResult.Success -> getString(Res.string.history_exported_to, result.destination)
     is ExportResult.Failure -> result.userMessage
 }
 
@@ -242,6 +258,7 @@ private fun SessionCard(
     onDelete: () -> Unit,
 ) {
     val stats = remember(session.laps) { LapStatistics.from(session.laps) }
+    val fastest = stats.fastest?.let { DurationFormatter.formatNanos(it.splitNanos) } ?: "—"
 
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.fillMaxWidth().padding(14.dp)) {
@@ -252,13 +269,15 @@ private fun SessionCard(
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
-                "${session.laps.size} laps • fastest ${
-                    stats.fastest?.let { DurationFormatter.formatNanos(it.splitNanos) } ?: "—"
-                }",
+                stringResource(
+                    Res.string.history_session_summary,
+                    session.laps.size.toString(),
+                    fastest,
+                ),
                 style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(8.dp))
-            Button(onClick = onDelete) { Text("Delete") }
+            Button(onClick = onDelete) { Text(stringResource(Res.string.action_delete)) }
         }
     }
 }

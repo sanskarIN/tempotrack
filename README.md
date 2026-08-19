@@ -151,6 +151,7 @@ The complete documentation index is [docs/README.md](docs/README.md). High-value
 
 ```bash
 python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
 ./gradlew :shared:allTests
 ./gradlew :desktopApp:test
 ./gradlew :androidApp:testDebugUnitTest
@@ -158,7 +159,7 @@ python tools/check_kotlin_package_keywords.py
 python tools/check_markdown_links.py
 ```
 
-CI also performs Android/Desktop builds, iOS simulator framework verification, documentation-link checks, Kotlin namespace syntax checks, and security scanning. See [docs/testing.md](docs/testing.md).
+CI also performs Android/Desktop builds, iOS simulator framework verification, documentation-link checks, Kotlin namespace syntax checks, exhaustive tracked-file documentation coverage, and security scanning. See [docs/testing.md](docs/testing.md).
 
 Kotlin source uses `` `in`.sanskar... `` rather than unescaped `in.sanskar...` because `in` is a Kotlin keyword; the compiled/runtime package is still `in.sanskar...`.
 

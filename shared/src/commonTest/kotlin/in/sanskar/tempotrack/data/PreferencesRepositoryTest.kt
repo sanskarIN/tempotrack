@@ -3,7 +3,10 @@ package in.sanskar.tempotrack.data
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 
 class PreferencesRepositoryTest {
@@ -44,6 +47,26 @@ class PreferencesRepositoryTest {
         assertTrue(loaded.onboardingCompleted)
         assertFalse(loaded.miniStopwatchVisible)
         assertTrue(storage.value.orEmpty().contains("\"schemaVersion\": 1"))
+    }
+
+    @Test
+    fun concurrentSavesDoNotOverlapStorageWrites() = runTest {
+        val storage = ConcurrentWriteDetectingStorage()
+        val repository = JsonPreferencesRepository(storage)
+
+        List(20) { index ->
+            launch {
+                repository.save(
+                    AppPreferences(
+                        theme = ThemePreference.entries[index % ThemePreference.entries.size],
+                        largeControls = index % 2 == 0,
+                        onboardingCompleted = true,
+                    ),
+                )
+            }
+        }.joinAll()
+
+        assertNotNull(PreferencesStoreCodec().decode(requireNotNull(storage.value)))
     }
 }
 

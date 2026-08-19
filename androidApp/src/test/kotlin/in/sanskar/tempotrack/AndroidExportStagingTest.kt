@@ -2,10 +2,10 @@ package in.sanskar.tempotrack
 
 import java.io.IOException
 import java.nio.file.Files
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 class AndroidExportStagingTest {
     @Test
@@ -40,7 +40,7 @@ class AndroidExportStagingTest {
         Files.writeString(directory.toPath().resolve("backup.json"), "first")
         Files.writeString(directory.toPath().resolve("backup (1).json"), "second")
 
-        assertFailsWith<IOException> {
+        assertThrows(IOException::class.java) {
             AndroidStagingFiles.reserveUniqueExportTarget(
                 directory = directory,
                 safeName = "backup.json",

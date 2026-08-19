@@ -16,6 +16,7 @@ fun MainViewController(): UIViewController {
     val sessionsStorage = IosStringStorage("tempotrack.sessions")
     val preferencesStorage = IosStringStorage("tempotrack.preferences")
     val activeStorage = IosStringStorage("tempotrack.active-stopwatch")
+    var hostController: UIViewController? = null
 
     val dependencies = TempoTrackDependencies(
         monotonicClock = iosMonotonicClock(),
@@ -24,13 +25,16 @@ fun MainViewController(): UIViewController {
         preferences = JsonPreferencesRepository(preferencesStorage),
         activeStopwatch = JsonActiveStopwatchRepository(activeStorage),
         exporter = IosHostExporter,
+        shareService = IosShareService { requireNotNull(hostController) },
         platformName = "iOS",
         versionName = iosVersionName(),
     )
 
-    return ComposeUIViewController {
+    val controller = ComposeUIViewController {
         TempoTrackApp(dependencies = dependencies)
     }
+    hostController = controller
+    return controller
 }
 
 private fun iosVersionName(): String =

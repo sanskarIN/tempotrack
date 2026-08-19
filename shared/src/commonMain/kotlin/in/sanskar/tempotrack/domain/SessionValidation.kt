@@ -1,4 +1,4 @@
-package in.sanskar.tempotrack.domain
+package `in`.sanskar.tempotrack.domain
 
 object SessionValidation {
     const val MAX_SESSION_NAME_LENGTH = 80

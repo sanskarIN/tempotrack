@@ -27,6 +27,17 @@ class StopwatchCheckpointValidationTest {
     }
 
     @Test
+    fun acceptsNegativeMonotonicTimestampOrigin() {
+        val checkpoint = StopwatchCheckpoint(
+            status = StopwatchStatus.RUNNING,
+            accumulatedNanos = 10L,
+            startedAtNanos = -500L,
+        )
+
+        assertTrue(StopwatchCheckpointValidation.isValid(checkpoint))
+    }
+
+    @Test
     fun rejectsRunningCheckpointWithoutStartTimestamp() {
         val checkpoint = StopwatchCheckpoint(
             status = StopwatchStatus.RUNNING,

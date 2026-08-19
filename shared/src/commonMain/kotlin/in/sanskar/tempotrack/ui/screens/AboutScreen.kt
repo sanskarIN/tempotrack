@@ -14,7 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
-import in.sanskar.tempotrack.resources.Res
+import in.sanskar.tempotrack.resources.*
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

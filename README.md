@@ -133,9 +133,24 @@ The iOS export/share bridges stage each operation in a unique temporary director
 
 The internal persistence format is independently versioned and migrated; portable JSON exports remain plain session lists so backups are not coupled to the internal storage envelope. Restore limits are deliberately aligned with local persistence limits so a valid self-export is not rejected merely by a smaller importer cap.
 
+## Documentation
+
+The complete documentation index is [docs/README.md](docs/README.md). High-value references include:
+
+- [User guide](docs/user-guide.md) — stopwatch, laps, history, export/share/restore, settings, and recovery behavior.
+- [Repository file reference](docs/repository-reference.md) — tracked-file-by-file ownership and maintenance notes.
+- [Source code reference](docs/code-reference.md) — classes, interfaces, functions, invariants, and platform adapters.
+- [State and recovery](docs/state-and-recovery.md) — state machine, rebased checkpoints, reboot/process recovery.
+- [Data model and storage](docs/data-model-and-storage.md) — schemas, limits, migrations, JSON/CSV portability, storage locations.
+- [Platform behavior](docs/platforms.md) — Android/Desktop/iOS differences and native boundaries.
+- [Build system and CI](docs/build-and-ci.md) — Gradle modules/toolchain, CI, CodeQL, signing, and release jobs.
+- [Security model](docs/security-model.md) — trust boundaries, malformed input, sharing, storage integrity, and supply chain.
+- [Maintainer guide](docs/maintainer-guide.md) — safe change recipes and documentation/test update matrix.
+
 ## Testing
 
 ```bash
+python tools/check_kotlin_package_keywords.py
 ./gradlew :shared:allTests
 ./gradlew :desktopApp:test
 ./gradlew :androidApp:testDebugUnitTest
@@ -143,7 +158,9 @@ The internal persistence format is independently versioned and migrated; portabl
 python tools/check_markdown_links.py
 ```
 
-CI also performs Android/Desktop builds, iOS simulator framework verification, documentation-link checks, and security scanning. See [docs/testing.md](docs/testing.md).
+CI also performs Android/Desktop builds, iOS simulator framework verification, documentation-link checks, Kotlin namespace syntax checks, and security scanning. See [docs/testing.md](docs/testing.md).
+
+Kotlin source uses `` `in`.sanskar... `` rather than unescaped `in.sanskar...` because `in` is a Kotlin keyword; the compiled/runtime package is still `in.sanskar...`.
 
 ## Build and release
 
@@ -155,17 +172,17 @@ Desktop packages:
 
 Android release builds require production signing configuration before public distribution. Signing secrets are intentionally not committed. Tag builds derive package versions from strict `vMAJOR.MINOR.PATCH` tags, package platform artifacts, generate SHA-256 checksums, and publish GitHub Release assets after the jobs succeed.
 
-See [docs/release.md](docs/release.md).
+See [docs/release.md](docs/release.md) and [docs/build-and-ci.md](docs/build-and-ci.md).
 
 ## Privacy and security
 
 TempoTrack is local-first. The application includes no analytics, ads, authentication service, or app-managed cloud synchronization. Export and sharing happen only after explicit user actions. Android sharing uses an app-cache file exposed through a non-exported `FileProvider` with temporary read permission. iOS export/share flows use isolated app-temporary staging files and native system destination UI. Android platform backup/device-transfer behavior is documented separately because it is controlled by the operating system.
 
-Read [PRIVACY.md](PRIVACY.md) and [SECURITY.md](SECURITY.md).
+Read [PRIVACY.md](PRIVACY.md), [SECURITY.md](SECURITY.md), and [docs/security-model.md](docs/security-model.md).
 
 ## Contributing
 
-Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md), run the quality suite, and keep changes focused.
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md), [docs/maintainer-guide.md](docs/maintainer-guide.md), run the quality suite, and keep changes focused.
 
 ## License
 

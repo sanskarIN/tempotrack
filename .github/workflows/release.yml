@@ -78,7 +78,7 @@ jobs:
           set -euo pipefail
           test -n "$(find androidApp/build/outputs/apk/release -type f -name '*.apk' -print -quit)"
           test -n "$(find androidApp/build/outputs/bundle/release -type f -name '*.aab' -print -quit)"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: tempotrack-android-release
           path: |
@@ -110,7 +110,7 @@ jobs:
             :shared:allTests \
             :desktopApp:packageDistributionForCurrentOS \
             --stacktrace
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: tempotrack-desktop-${{ runner.os }}
           path: desktopApp/build/compose/binaries/main/**
@@ -142,7 +142,7 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent \
             shared/build/bin/iosArm64/releaseFramework/TempoTrackShared.framework \
             tempotrack-ios-arm64-framework.zip
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: tempotrack-ios-arm64-framework
           path: tempotrack-ios-arm64-framework.zip

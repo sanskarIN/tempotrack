@@ -89,7 +89,9 @@ import in.sanskar.tempotrack.resources.history_share_unavailable
 import in.sanskar.tempotrack.resources.history_title
 import in.sanskar.tempotrack.resources.history_undo_delete
 import in.sanskar.tempotrack.util.suspendResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
@@ -106,6 +108,7 @@ fun HistoryScreen(
     var showImportDialog by remember { mutableStateOf(false) }
     var importJson by remember { mutableStateOf("") }
     var importError by remember { mutableStateOf<String?>(null) }
+    var importing by remember { mutableStateOf(false) }
     var renamingSession by remember { mutableStateOf<StopwatchSession?>(null) }
     var renameText by remember { mutableStateOf("") }
     var renameError by remember { mutableStateOf<String?>(null) }
@@ -150,12 +153,14 @@ fun HistoryScreen(
                 modifier = Modifier.weight(1f),
                 enabled = allSessions.isNotEmpty(),
                 onClick = {
+                    val snapshot = allSessions
                     scope.launch {
+                        val content = withContext(Dispatchers.Default) { SessionCodec.toJson(snapshot) }
                         message = export(
                             exporter,
                             "tempotrack-sessions.json",
                             "application/json",
-                            SessionCodec.toJson(allSessions),
+                            content,
                         )
                     }
                 },
@@ -164,12 +169,14 @@ fun HistoryScreen(
                 modifier = Modifier.weight(1f),
                 enabled = allSessions.isNotEmpty(),
                 onClick = {
+                    val snapshot = allSessions
                     scope.launch {
+                        val content = withContext(Dispatchers.Default) { SessionCodec.toCsv(snapshot) }
                         message = export(
                             exporter,
                             "tempotrack-sessions.csv",
                             "text/csv",
-                            SessionCodec.toCsv(allSessions),
+                            content,
                         )
                     }
                 },
@@ -186,12 +193,14 @@ fun HistoryScreen(
                     modifier = Modifier.weight(1f),
                     enabled = allSessions.isNotEmpty(),
                     onClick = {
+                        val snapshot = allSessions
                         scope.launch {
+                            val content = withContext(Dispatchers.Default) { SessionCodec.toJson(snapshot) }
                             message = share(
                                 shareService,
                                 "tempotrack-sessions.json",
                                 "application/json",
-                                SessionCodec.toJson(allSessions),
+                                content,
                             )
                         }
                     },
@@ -200,12 +209,14 @@ fun HistoryScreen(
                     modifier = Modifier.weight(1f),
                     enabled = allSessions.isNotEmpty(),
                     onClick = {
+                        val snapshot = allSessions
                         scope.launch {
+                            val content = withContext(Dispatchers.Default) { SessionCodec.toCsv(snapshot) }
                             message = share(
                                 shareService,
                                 "tempotrack-sessions.csv",
                                 "text/csv",
-                                SessionCodec.toCsv(allSessions),
+                                content,
                             )
                         }
                     },
@@ -290,8 +301,10 @@ fun HistoryScreen(
     if (showImportDialog) {
         AlertDialog(
             onDismissRequest = {
-                showImportDialog = false
-                importError = null
+                if (!importing) {
+                    showImportDialog = false
+                    importError = null
+                }
             },
             title = { Text(stringResource(Res.string.history_restore_dialog_title)) },
             text = {
@@ -301,13 +314,14 @@ fun HistoryScreen(
                         modifier = Modifier.fillMaxWidth(),
                         value = importJson,
                         onValueChange = {
-                            if (it.length <= SessionImporter.MAX_IMPORT_CHARACTERS) {
+                            if (!importing && it.length <= SessionImporter.MAX_IMPORT_CHARACTERS) {
                                 importJson = it
                                 importError = null
                             }
                         },
                         minLines = 6,
                         maxLines = 12,
+                        enabled = !importing,
                         isError = importError != null,
                         label = { Text(stringResource(Res.string.history_backup_json_label)) },
                     )
@@ -322,29 +336,40 @@ fun HistoryScreen(
             },
             confirmButton = {
                 Button(
-                    enabled = importJson.isNotBlank(),
+                    enabled = importJson.isNotBlank() && !importing,
                     onClick = {
-                        when (val result = SessionImporter.fromJson(importJson)) {
-                            is SessionImportResult.Failure -> {
-                                scope.launch { importError = importFailureMessage(result) }
-                            }
+                        val content = importJson
+                        importing = true
+                        importError = null
+                        scope.launch {
+                            try {
+                                when (
+                                    val result = withContext(Dispatchers.Default) {
+                                        SessionImporter.fromJson(content)
+                                    }
+                                ) {
+                                    is SessionImportResult.Failure -> {
+                                        importError = importFailureMessage(result)
+                                    }
 
-                            is SessionImportResult.Success -> {
-                                scope.launch {
-                                    suspendResult { sessions.replaceAll(result.sessions) }
-                                        .onSuccess {
-                                            lastDeleted = null
-                                            importJson = ""
-                                            importError = null
-                                            showImportDialog = false
-                                            message = getString(
-                                                Res.string.history_restored_count,
-                                                result.sessions.size.toString(),
-                                            )
-                                            reload()
-                                        }
-                                        .onFailure { importError = restoreFailedMessage }
+                                    is SessionImportResult.Success -> {
+                                        suspendResult { sessions.replaceAll(result.sessions) }
+                                            .onSuccess {
+                                                lastDeleted = null
+                                                importJson = ""
+                                                importError = null
+                                                showImportDialog = false
+                                                message = getString(
+                                                    Res.string.history_restored_count,
+                                                    result.sessions.size.toString(),
+                                                )
+                                                reload()
+                                            }
+                                            .onFailure { importError = restoreFailedMessage }
+                                    }
                                 }
+                            } finally {
+                                importing = false
                             }
                         }
                     },
@@ -352,6 +377,7 @@ fun HistoryScreen(
             },
             dismissButton = {
                 TextButton(
+                    enabled = !importing,
                     onClick = {
                         showImportDialog = false
                         importError = null

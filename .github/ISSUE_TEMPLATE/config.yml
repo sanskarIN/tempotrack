@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/sanskarIN/tempotrack/security/policy
+    about: Report vulnerabilities privately using the security policy.
+  - name: Support
+    url: https://github.com/sanskarIN/tempotrack/blob/main/SUPPORT.md
+    about: Read support options before opening an issue.

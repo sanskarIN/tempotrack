@@ -23,11 +23,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "9.5.0"
-      - run: gradle :shared:allTests :androidApp:lintDebug :androidApp:assembleDebug
+      - name: Verify and build Android release
+        run: gradle :shared:allTests :androidApp:lintRelease :androidApp:testDebugUnitTest :androidApp:assembleRelease --stacktrace
       - uses: actions/upload-artifact@v4
         with:
-          name: tempotrack-android-debug
-          path: androidApp/build/outputs/apk/debug/*.apk
+          name: tempotrack-android-release-unsigned
+          path: androidApp/build/outputs/apk/release/*.apk
 
   desktop:
     strategy:
@@ -45,7 +46,7 @@ jobs:
         with:
           gradle-version: "9.5.0"
       - shell: bash
-        run: gradle :shared:allTests :desktopApp:packageDistributionForCurrentOS
+        run: gradle :shared:allTests :desktopApp:packageDistributionForCurrentOS --stacktrace
       - uses: actions/upload-artifact@v4
         with:
           name: tempotrack-desktop-${{ runner.os }}

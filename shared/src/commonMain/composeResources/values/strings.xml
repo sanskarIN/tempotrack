@@ -63,6 +63,7 @@
     <string name="history_exported_to">Exported to %1$s</string>
     <string name="history_export_write_failed">Could not write the export file.</string>
     <string name="history_export_unavailable">File export is not available on this platform host yet.</string>
+    <string name="history_export_cancelled">Export cancelled.</string>
     <string name="history_session_summary">%1$s laps • fastest %2$s</string>
     <string name="history_rename_title">Rename session</string>
     <string name="history_rename_label">New session name</string>

@@ -3,6 +3,7 @@ package in.sanskar.tempotrack.data
 import in.sanskar.tempotrack.domain.StopwatchSession
 import kotlin.test.Test
 import kotlin.test.assertContains
+import kotlin.test.assertEquals
 
 class SessionCodecTest {
     @Test
@@ -18,6 +19,23 @@ class SessionCodecTest {
         val csv = SessionCodec.toCsv(listOf(session))
 
         assertContains(csv, "\"Intervals, \"\"hard\"\"\"")
+    }
+
+    @Test
+    fun emptyLapCsvRowMatchesSevenColumnHeader() {
+        val session = StopwatchSession(
+            id = "id-empty",
+            name = "No laps",
+            createdAtEpochMillis = 10L,
+            durationNanos = 1_000_000_000L,
+            laps = emptyList(),
+        )
+
+        val lines = SessionCodec.toCsv(listOf(session)).lineSequence().filter(String::isNotBlank).toList()
+
+        assertEquals(2, lines.size)
+        assertEquals(6, lines[0].count { it == ',' })
+        assertEquals(6, lines[1].count { it == ',' })
     }
 
     @Test

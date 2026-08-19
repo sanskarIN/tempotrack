@@ -1,5 +1,6 @@
 package in.sanskar.tempotrack
 
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
@@ -42,6 +43,7 @@ class AndroidShareService(
             Intent.createChooser(
                 Intent(Intent.ACTION_SEND).apply {
                     type = mimeType
+                    clipData = ClipData.newRawUri("TempoTrack export", uri)
                     putExtra(Intent.EXTRA_STREAM, uri)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 },

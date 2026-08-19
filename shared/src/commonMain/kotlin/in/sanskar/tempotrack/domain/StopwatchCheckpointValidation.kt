@@ -1,4 +1,4 @@
-package in.sanskar.tempotrack.domain
+package `in`.sanskar.tempotrack.domain
 
 object StopwatchCheckpointValidation {
     const val MAX_LAPS: Int = SessionValidation.MAX_LAPS_PER_SESSION

@@ -14,7 +14,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
-import in.sanskar.tempotrack.resources.*
+import in.sanskar.tempotrack.resources.Res
+import in.sanskar.tempotrack.resources.about_bmc
+import in.sanskar.tempotrack.resources.about_business_gmail
+import in.sanskar.tempotrack.resources.about_business_outlook
+import in.sanskar.tempotrack.resources.about_github
+import in.sanskar.tempotrack.resources.about_license
+import in.sanskar.tempotrack.resources.about_privacy
+import in.sanskar.tempotrack.resources.about_support
+import in.sanskar.tempotrack.resources.about_tagline
+import in.sanskar.tempotrack.resources.about_version_platform
+import in.sanskar.tempotrack.resources.app_name
+import in.sanskar.tempotrack.resources.made_by
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

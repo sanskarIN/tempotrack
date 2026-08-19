@@ -122,3 +122,4 @@ No unreleased changes are recorded after the 2.0.12 release-preparation freeze.
 - Preserve coroutine cancellation in shared UI persistence and platform export/share boundaries.
 - Exclude generated Compose/resource Kotlin from ktlint so repository style checks evaluate only source owned by the project instead of failing on generated output.
 - Upgrade Android setup in CI, CodeQL, and release jobs so current command-line tools can resolve Android SDK Platform 37 instead of failing during SDK installation.
+- Derive tagged Android `versionCode` from semantic version components instead of an unrelated GitHub Actions run number, keeping `v2.0.12` aligned with source versionCode `20012` and preserving upgrade ordering.

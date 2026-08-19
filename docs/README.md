@@ -7,6 +7,7 @@ This directory is the maintainer and contributor reference for TempoTrack. The r
 | Goal | Read |
 |---|---|
 | Understand the product quickly | [`../README.md`](../README.md) |
+| Learn how to use every product feature | [`user-guide.md`](user-guide.md) |
 | Set up a development machine | [`setup.md`](setup.md) |
 | Learn the module and dependency architecture | [`architecture.md`](architecture.md) |
 | Understand every tracked repository file | [`repository-reference.md`](repository-reference.md) |
@@ -14,6 +15,8 @@ This directory is the maintainer and contributor reference for TempoTrack. The r
 | Understand stopwatch states and recovery behavior | [`state-and-recovery.md`](state-and-recovery.md) |
 | Understand persistence, schemas, import/export, and limits | [`data-model-and-storage.md`](data-model-and-storage.md) |
 | Understand Android/Desktop/iOS differences | [`platforms.md`](platforms.md) |
+| Understand Gradle, CI, security automation, and release jobs | [`build-and-ci.md`](build-and-ci.md) |
+| Understand engineering security boundaries | [`security-model.md`](security-model.md) |
 | Develop and maintain the repository | [`maintainer-guide.md`](maintainer-guide.md) |
 | Run tests and quality gates | [`testing.md`](testing.md) |
 | Package and publish releases | [`release.md`](release.md) |
@@ -23,6 +26,39 @@ This directory is the maintainer and contributor reference for TempoTrack. The r
 | Review performance contracts | [`performance.md`](performance.md) |
 | Understand GitHub automation | [`github.md`](github.md) |
 | Integrate the iOS framework | [`ios.md`](ios.md) |
+
+## Suggested reading paths
+
+### New user
+
+1. [`../README.md`](../README.md)
+2. [`user-guide.md`](user-guide.md)
+3. [`../PRIVACY.md`](../PRIVACY.md)
+
+### New contributor
+
+1. [`setup.md`](setup.md)
+2. [`architecture.md`](architecture.md)
+3. [`code-reference.md`](code-reference.md)
+4. [`testing.md`](testing.md)
+5. [`../CONTRIBUTING.md`](../CONTRIBUTING.md)
+
+### Maintainer working on persistence/recovery
+
+1. [`state-and-recovery.md`](state-and-recovery.md)
+2. [`data-model-and-storage.md`](data-model-and-storage.md)
+3. [`security-model.md`](security-model.md)
+4. [`adr/0004-versioned-session-storage.md`](adr/0004-versioned-session-storage.md)
+5. [`adr/0005-platform-checkpoint-recovery.md`](adr/0005-platform-checkpoint-recovery.md)
+6. [`maintainer-guide.md`](maintainer-guide.md)
+
+### Release maintainer
+
+1. [`build-and-ci.md`](build-and-ci.md)
+2. [`testing.md`](testing.md)
+3. [`release.md`](release.md)
+4. [`github.md`](github.md)
+5. [`../CHANGELOG.md`](../CHANGELOG.md)
 
 ## Architecture decisions
 

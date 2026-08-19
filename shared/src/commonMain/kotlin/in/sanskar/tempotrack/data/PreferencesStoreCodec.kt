@@ -1,4 +1,4 @@
-package in.sanskar.tempotrack.data
+package `in`.sanskar.tempotrack.data
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException

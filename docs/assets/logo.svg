@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">TempoTrack</title>
+  <desc id="desc">Rounded blue square containing a white stopwatch.</desc>
+  <rect width="256" height="256" rx="56" fill="#1D4ED8"/>
+  <rect x="105" y="34" width="46" height="18" rx="6" fill="#fff"/>
+  <circle cx="128" cy="138" r="68" fill="none" stroke="#fff" stroke-width="18"/>
+  <path d="M128 92v50l38 22" fill="none" stroke="#fff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

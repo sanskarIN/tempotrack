@@ -1,46 +1,62 @@
-# Contributing to TempoTrack
+# Contributing
 
-Thanks for helping improve TempoTrack.
+Thank you for helping improve TempoTrack.
 
-## Development setup
+## Development requirements
 
-Read `docs/setup.md` and `docs/development.md`.
+- JDK 17 or newer.
+- Gradle 9.5.0.
+- Android SDK 37 for Android work.
+- A supported Desktop host for Compose Desktop work.
+- macOS with Xcode for iOS framework/host verification.
 
-Configure the requested project commit identity locally:
+The repository currently does not commit the standard binary `gradle-wrapper.jar`. Until a trusted Gradle 9.5.0 installation generates it, `gradlew`/`gradlew.bat` deliberately require an installed Gradle exactly matching 9.5.0.
+
+## Before opening a pull request
+
+Run the checks relevant to your change:
+
+```bash
+./gradlew quality
+./gradlew :androidApp:testDebugUnitTest :androidApp:lintDebug :androidApp:assembleDebug
+./gradlew :desktopApp:test :desktopApp:compileKotlin
+python tools/check_markdown_links.py
+```
+
+On macOS for iOS/shared Native changes:
+
+```bash
+./gradlew :shared:iosSimulatorArm64Test :shared:linkDebugFrameworkIosSimulatorArm64
+```
+
+For Desktop packaging changes, also run:
+
+```bash
+./gradlew :desktopApp:packageDistributionForCurrentOS
+```
+
+Follow the manual lifecycle/export/share/accessibility guidance in `docs/testing.md` when your change affects those areas.
+
+## Commit style
+
+Keep commits focused and describe the behavior changed. Maintainers using the project identity should configure:
 
 ```bash
 git config user.email "sanskarin@outlook.in"
 ```
 
-Use your own GitHub-associated name unless you are the project maintainer.
+Do not mix unrelated formatting/refactors with behavior changes unless required for the implementation.
 
-## Before opening a pull request
+## Rules
 
-Run:
-
-```bash
-./gradlew quality
-```
-
-Also build the platform you changed when practical.
-
-## Commit style
-
-Prefer small Conventional Commits, for example:
-
-- `feat: add lap sorting`
-- `fix: preserve elapsed time after pause`
-- `test: cover restored running checkpoint`
-- `docs: clarify Android setup`
-
-Do not create empty or artificial commits.
-
-## Pull requests
-
-- Explain user-visible behavior changes.
-- Include regression tests for bug fixes.
-- Keep secrets and personal data out of fixtures.
-- Update documentation for new behavior.
-- Add screenshots for meaningful visual changes.
-
-By contributing, you agree that your contribution is licensed under the repository's MIT License.
+- Do not commit credentials, production signing material, generated secrets, local SDK paths, or private user data.
+- Preserve monotonic live-time calculations; wall time is recovery/session metadata, not the live elapsed-time source.
+- Keep persistence/import limits aligned when changing portable-data constraints.
+- Preserve schema migration/fail-closed behavior when changing persisted models.
+- Preserve coroutine cancellation when adding suspend error handling.
+- Add regression tests for bug fixes when practical.
+- Keep user-visible strings in Compose resources instead of hardcoding shared UI copy.
+- Keep platform filesystem/share/export permissions as narrow as possible.
+- Update documentation when behavior, setup, security, privacy, recovery or release steps change.
+- Do not claim a platform/build/check passed unless it actually ran.
+- Keep third-party assets license-compatible with MIT distribution.

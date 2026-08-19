@@ -57,6 +57,8 @@ The format follows Keep a Changelog concepts and the project uses semantic versi
 - Lap averages use integer quotient/remainder arithmetic instead of floating-point averaging.
 - Large JSON/CSV serialization and JSON restore parsing run off the UI dispatcher.
 - History export/share launches, restore confirmation, Settings writes, and stopwatch session saves use single-flight state to avoid duplicate operations.
+- History delete, undo, and rename actions are serialized with data-portability work, and conflicting controls disable while a history mutation is active.
+- Session-history persistence skips rewrites for identical upserts, same-name renames, missing-id deletes, and unchanged full-history replacements.
 - Settings controls temporarily disable during persistence and failed writes revert both visible state and platform side effects.
 - Stopwatch saved feedback clears when the timer/name changes and session-name input uses the shared validation limit.
 - Export cancellation is distinguished from write failures so Desktop and iOS users can cancel native destination pickers without receiving a false error.

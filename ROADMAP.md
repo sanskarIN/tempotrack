@@ -1,5 +1,20 @@
 # Roadmap
 
+## 2.0.12 — Release hardening
+
+- [x] Set canonical application defaults to `2.0.12` / Android development versionCode `20012`.
+- [x] Freeze a dated 2.0.12 changelog section.
+- [x] Synchronize README toolchain metadata with Compose Multiplatform 1.11.1 and Android Gradle Plugin 9.3.1.
+- [x] Document the exact `v2.0.12` release/tag contract.
+- [x] Harden CI for Android SDK 37 and maintained Node 24-compatible action majors.
+- [x] Keep generated Compose/resource Kotlin outside repository-owned ktlint checks.
+- [x] Keep Gradle 9.5.0, bootstrap scripts, CI installation, wrapper properties, and documentation aligned for this release freeze.
+- [ ] Observe the complete 2.0.12 CI/build/test matrix on supported runners before tagging.
+- [ ] Provision protected production Android signing secrets before a distributable `v2.0.12` tag.
+- [ ] Inspect actual signed release artifacts and generated SHA-256 checksums.
+- [ ] Capture real release screenshots from verified builds.
+- [ ] Complete target-device accessibility/lifecycle checks and native iOS picker/share verification.
+
 ## 1.0 — Reliable local stopwatch
 
 - [x] Monotonic stopwatch engine

@@ -5,7 +5,6 @@ import in.sanskar.tempotrack.domain.StopwatchSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertTrue
 
 class SessionImportTest {
     @Test
@@ -44,15 +43,33 @@ class SessionImportTest {
         val result = SessionImporter.fromJson(SessionCodec.toJson(listOf(repeated, repeated)))
 
         val failure = assertIs<SessionImportResult.Failure>(result)
-        assertTrue(failure.userMessage.contains("duplicate"))
+        assertEquals(SessionImportError.DUPLICATE_SESSION_IDS, failure.error)
     }
 
     @Test
-    fun rejectsMalformedJsonWithoutEchoingInput() {
-        val secretLookingInput = "[{\"token\":\"do-not-repeat\""
-        val result = SessionImporter.fromJson(secretLookingInput)
+    fun rejectsMalformedJsonWithoutRetainingInput() {
+        val result = SessionImporter.fromJson("[{\"token\":\"do-not-repeat\"")
 
         val failure = assertIs<SessionImportResult.Failure>(result)
-        assertTrue("do-not-repeat" !in failure.userMessage)
+        assertEquals(SessionImportError.INVALID_JSON, failure.error)
+        assertEquals(null, failure.invalidSessionNumber)
+    }
+
+    @Test
+    fun reportsInvalidSessionPositionWithoutExposingValidationDetails() {
+        val invalid = StopwatchSession(
+            id = "invalid",
+            name = "Broken",
+            createdAtEpochMillis = 100L,
+            durationNanos = 1L,
+            laps = listOf(Lap(index = 2, splitNanos = 1L, totalNanos = 1L)),
+        )
+
+        val failure = assertIs<SessionImportResult.Failure>(
+            SessionImporter.fromJson(SessionCodec.toJson(listOf(invalid))),
+        )
+
+        assertEquals(SessionImportError.INVALID_SESSION, failure.error)
+        assertEquals(1, failure.invalidSessionNumber)
     }
 }

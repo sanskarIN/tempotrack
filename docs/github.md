@@ -14,6 +14,21 @@ Enable branch protection or a ruleset with these safeguards:
 
 Do not make a status check required until that workflow has successfully reported at least once, otherwise GitHub can leave pull requests permanently waiting for a check name that does not exist.
 
+## Actions secrets for signed Android releases
+
+The tag release workflow intentionally refuses to publish Android release artifacts until production signing material is configured through encrypted GitHub Actions secrets.
+
+Configure these repository or protected-environment secrets:
+
+- `TEMPOTRACK_KEYSTORE_BASE64` — base64 representation of the production Android keystore;
+- `TEMPOTRACK_KEYSTORE_PASSWORD`;
+- `TEMPOTRACK_KEY_ALIAS`;
+- `TEMPOTRACK_KEY_PASSWORD`.
+
+Do not place any real value in source files, workflow YAML, issue text, pull-request comments, logs, `.env.example`, or documentation. Limit permission to edit Actions secrets and release environments to trusted maintainers.
+
+For a stricter release process, place the secrets in a protected GitHub Environment and require manual approval for tag-release jobs before that environment becomes available.
+
 ## Suggested labels
 
 - `bug`
@@ -21,11 +36,13 @@ Do not make a status check required until that workflow has successfully reporte
 - `accessibility`
 - `android`
 - `desktop`
+- `ios`
 - `documentation`
 - `dependencies`
 - `performance`
 - `security`
 - `testing`
+- `release`
 
 ## Suggested milestones
 
@@ -48,4 +65,6 @@ Security reports must not be posted to Discussions; use `SECURITY.md`.
 
 ## Releases
 
-Tag only after the release gate in `docs/release.md` succeeds. Attach artifacts produced by the release workflow and base notes on `CHANGELOG.md` plus `docs/release-notes-template.md`.
+Tag only after the release gate in `docs/release.md` succeeds. The Android tag job requires signing secrets and produces both APK and AAB artifacts; Desktop runners package their native installers; the macOS job packages the iOS framework. The publish job collects supported artifacts, creates checksums, and attaches them to the GitHub Release.
+
+Base release notes on `CHANGELOG.md` plus `docs/release-notes-template.md`. Never mark an artifact or platform as verified unless its build/test job actually completed successfully.

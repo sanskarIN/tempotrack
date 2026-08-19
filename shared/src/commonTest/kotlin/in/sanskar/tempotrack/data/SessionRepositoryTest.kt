@@ -53,6 +53,18 @@ class SessionRepositoryTest {
     }
 
     @Test
+    fun renameSameNameDoesNotRewriteStorage() = runTest {
+        val storage = InMemoryStringStorage()
+        val repository = JsonSessionRepository(storage)
+        repository.upsert(session(id = "one", createdAt = 10L))
+        val writesAfterSave = storage.writeCount
+
+        assertTrue(repository.rename("one", "  Session one  "))
+
+        assertEquals(writesAfterSave, storage.writeCount)
+    }
+
+    @Test
     fun renameReturnsFalseForMissingSession() = runTest {
         val repository = JsonSessionRepository(InMemoryStringStorage())
 
@@ -119,9 +131,13 @@ class SessionRepositoryTest {
 private class InMemoryStringStorage(
     var value: String? = null,
 ) : StringStorage {
+    var writeCount: Int = 0
+        private set
+
     override suspend fun read(): String? = value
 
     override suspend fun write(content: String) {
+        writeCount += 1
         value = content
     }
 

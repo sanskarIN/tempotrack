@@ -21,7 +21,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import in.sanskar.tempotrack.data.AppPreferences
-import in.sanskar.tempotrack.resources.*
+import in.sanskar.tempotrack.resources.Res
+import in.sanskar.tempotrack.resources.app_name
+import in.sanskar.tempotrack.resources.made_by
+import in.sanskar.tempotrack.resources.onboarding_privacy
+import in.sanskar.tempotrack.resources.onboarding_save_failed
+import in.sanskar.tempotrack.resources.onboarding_start
+import in.sanskar.tempotrack.resources.onboarding_value
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 

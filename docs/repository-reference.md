@@ -2,7 +2,7 @@
 
 This document inventories every tracked TempoTrack file and explains why it exists. Directory entries are omitted because Git tracks files, not empty directories; every tracked file in the current repository layout is covered below.
 
-When a file is added, renamed, or removed, update this reference in the same change series.
+When a file is added, renamed, or removed, update this reference in the same change series. `tools/check_repository_reference.py` enforces this contract in CI by comparing `git ls-files` with exact backticked paths in this document.
 
 ## Root repository files
 
@@ -38,7 +38,7 @@ When a file is added, renamed, or removed, update this reference in the same cha
 | `.github/ISSUE_TEMPLATE/feature_request.yml` | Structured feature proposals. | Encourage problem/use-case descriptions, not only implementation requests. |
 | `.github/dependabot.yml` | Automated dependency update configuration. | Review cadence/ecosystems when build tooling changes. |
 | `.github/pull_request_template.md` | Pull-request quality/security/documentation checklist. | Keep required checks synchronized with `docs/testing.md`. |
-| `.github/workflows/ci.yml` | Main Android/Desktop/shared/iOS/documentation CI matrix. | Includes the Kotlin package-keyword guard; keep tool versions aligned with Gradle/version catalog. |
+| `.github/workflows/ci.yml` | Main Android/Desktop/shared/iOS/documentation CI matrix. | Includes Kotlin package-keyword, repository-reference, and Markdown guards; keep tool versions aligned with Gradle/version catalog. |
 | `.github/workflows/codeql.yml` | CodeQL static analysis. | Maintain least-privilege permissions and supported build behavior. |
 | `.github/workflows/dependency-review.yml` | Pull-request dependency risk review. | Runs only where dependency diffs are available. |
 | `.github/workflows/release.yml` | Semantic-tag build/package/checksum/publish workflow. | Android release requires protected signing secrets; release tags must remain strict semantic versions. |
@@ -197,21 +197,25 @@ Kotlin source uses ``package `in`.sanskar...`` because `in` is a Kotlin keyword.
 |---|---|---|
 | `tools/check_kotlin_package_keywords.py` | Fails on unescaped `package in.sanskar...` / `import in.sanskar...` Kotlin source. | Required because `in` is a Kotlin keyword; CI runs it. |
 | `tools/check_markdown_links.py` | Checks deterministic repository-local Markdown link destinations. | External URLs are intentionally not treated as deterministic local checks. |
+| `tools/check_repository_reference.py` | Compares `git ls-files` against exact backticked paths in this document and fails when any tracked file is undocumented. | Run whenever tracked files change; CI enforces complete file-documentation coverage. |
 
 ## Documentation files
 
 | File | Purpose |
 |---|---|
-| `docs/README.md` | Documentation index and maintenance rule. |
+| `docs/README.md` | Documentation index, reading paths, and documentation maintenance rule. |
 | `docs/repository-reference.md` | This complete tracked-file inventory. |
 | `docs/code-reference.md` | Deeper source/API responsibility reference. |
 | `docs/state-and-recovery.md` | Stopwatch state machine, checkpoint semantics, platform recovery. |
 | `docs/data-model-and-storage.md` | Models, schemas, limits, backup/restore, data lifecycle. |
 | `docs/platforms.md` | Android/Desktop/iOS behavior and platform adapter contracts. |
+| `docs/user-guide.md` | End-user workflow for stopwatch, history, export/share/restore, settings, and recovery. |
 | `docs/maintainer-guide.md` | Common change recipes and repository maintenance procedures. |
+| `docs/build-and-ci.md` | Gradle modules/toolchain, deterministic guards, CI/security workflows, release pipeline. |
+| `docs/security-model.md` | Engineering trust boundaries, malformed-input controls, sharing/storage security, signing/supply chain. |
 | `docs/accessibility.md` | Accessibility implementation and manual verification guidance. |
 | `docs/architecture.md` | Module/dependency architecture and core invariants. |
-| `docs/development.md` | Short development workflow reference. |
+| `docs/development.md` | Day-to-day development workflow reference. |
 | `docs/github.md` | GitHub Actions/Dependabot/templates/repository automation. |
 | `docs/ios.md` | iOS framework integration and native bridge verification. |
 | `docs/localization.md` | Compose-resource localization conventions/review. |
@@ -220,7 +224,7 @@ Kotlin source uses ``package `in`.sanskar...`` because `in` is a Kotlin keyword.
 | `docs/release.md` | Signing, semantic tags, packaging, checksums, release procedure. |
 | `docs/setup.md` | Toolchain installation/setup and first build commands. |
 | `docs/testing.md` | Automated/manual test matrix and verification-integrity policy. |
-| `docs/troubleshooting.md` | Known setup/build/runtime failure diagnosis. |
+| `docs/troubleshooting.md` | Setup/build/runtime/persistence/platform/release failure diagnosis. |
 | `docs/screenshots/README.md` | Screenshot capture policy/placeholders; real release captures remain environment-gated. |
 | `docs/assets/logo.svg` | Repository/product documentation logo artwork. |
 | `docs/adr/0001-monotonic-time.md` | ADR: monotonic elapsed-time source. |
@@ -240,4 +244,4 @@ Use this map to avoid partial changes:
 - **Change iOS export/share** → iOS staging + bridge, iOS tests, `ios.md`, privacy/testing/platform docs.
 - **Change Desktop shortcut/mini-window behavior** → Desktop `Main.kt`, shared preference/dependency/UI files, resource strings, tests/docs where applicable.
 - **Change build dependency/tool version** → `libs.versions.toml`, affected module build scripts, setup/testing/release docs, CI/release workflow if the runner/tool installation must change.
-- **Add a tracked file** → update this document and ensure local Markdown checks can resolve any new links.
+- **Add a tracked file** → update this document, run `tools/check_repository_reference.py`, and ensure local Markdown checks can resolve any new links.

@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import in.sanskar.tempotrack.data.AppPreferences
 import in.sanskar.tempotrack.data.PreferencesRepository
 import in.sanskar.tempotrack.data.ThemePreference
-import in.sanskar.tempotrack.resources.Res
+import in.sanskar.tempotrack.resources.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 

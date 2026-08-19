@@ -38,6 +38,25 @@ class SessionValidationTest {
     }
 
     @Test
+    fun rejectsNegativeLapTotalsWithoutUnsafeArithmetic() {
+        val session = StopwatchSession(
+            id = "session-negative",
+            name = "Broken negative total",
+            createdAtEpochMillis = 1L,
+            durationNanos = Long.MAX_VALUE,
+            laps = listOf(
+                Lap(index = 1, splitNanos = 0L, totalNanos = Long.MIN_VALUE),
+                Lap(index = 2, splitNanos = Long.MAX_VALUE, totalNanos = Long.MAX_VALUE),
+            ),
+        )
+
+        val errors = SessionValidation.validate(session)
+
+        assertTrue(errors.any { it.contains("must not be negative") })
+        assertTrue(errors.isNotEmpty())
+    }
+
+    @Test
     fun rejectsLapBeyondSessionDuration() {
         val session = StopwatchSession(
             id = "session-3",

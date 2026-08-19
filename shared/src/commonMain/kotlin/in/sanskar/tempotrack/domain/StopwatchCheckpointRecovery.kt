@@ -1,4 +1,4 @@
-package in.sanskar.tempotrack.domain
+package `in`.sanskar.tempotrack.domain
 
 object StopwatchCheckpointRecovery {
     const val DEFAULT_UPTIME_WALL_TOLERANCE_MILLIS = 120_000L

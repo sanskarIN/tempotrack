@@ -20,6 +20,7 @@ data class TempoTrackDependencies(
     val versionName: String,
     val shareService: ShareService? = null,
     val recoverCheckpoint: (StopwatchCheckpoint) -> StopwatchCheckpoint = { it },
+    val runningCheckpointHeartbeatMillis: Long? = null,
     val miniStopwatchSupported: Boolean = false,
     val setMiniStopwatchVisible: (Boolean) -> Unit = {},
     val keyboardShortcutsSupported: Boolean = false,

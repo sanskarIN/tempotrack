@@ -25,6 +25,8 @@ import in.sanskar.tempotrack.util.suspendResult
 import java.nio.file.Paths
 import kotlinx.coroutines.launch
 
+private const val DESKTOP_CHECKPOINT_HEARTBEAT_MILLIS = 5_000L
+
 fun main() = application {
     val home = Paths.get(System.getProperty("user.home"), ".tempotrack")
     val sessionsStorage = remember { JvmStringStorage(home.resolve("sessions.json")) }
@@ -48,6 +50,7 @@ fun main() = application {
             platformName = "Desktop",
             versionName = versionName,
             recoverCheckpoint = StopwatchCheckpointRecovery::pauseRunningAtLastSavedElapsed,
+            runningCheckpointHeartbeatMillis = DESKTOP_CHECKPOINT_HEARTBEAT_MILLIS,
             miniStopwatchSupported = true,
             setMiniStopwatchVisible = { miniVisible = it },
             keyboardShortcutsSupported = true,

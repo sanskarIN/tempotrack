@@ -8,6 +8,25 @@
 
 Android Lint runs separately because it also checks manifests/resources and Android-specific correctness.
 
+## Kotlin namespace syntax check
+
+TempoTrack's runtime namespace starts with `in.sanskar...`, but `in` is a Kotlin keyword. Kotlin source must therefore spell the leading segment with backticks, for example:
+
+```kotlin
+package `in`.sanskar.tempotrack.domain
+import `in`.sanskar.tempotrack.data.SessionRepository
+```
+
+The backticks affect only Kotlin source syntax; the compiled package remains `in.sanskar.tempotrack...`.
+
+Run the repository guard with:
+
+```bash
+python tools/check_kotlin_package_keywords.py
+```
+
+CI runs this check before relying on the Gradle compilation matrix so an accidental unescaped `package in.sanskar...` or `import in.sanskar...` fails with a focused diagnostic.
+
 ## Unit tests
 
 `shared/src/commonTest` covers platform-independent rules including:
@@ -19,6 +38,7 @@ Android Lint runs separately because it also checks manifests/resources and Andr
 - platform recovery pauses unsafe/legacy checkpoints while retaining known elapsed/lap time;
 - Android/iOS-style uptime recovery keeps a running checkpoint only when monotonic and wall elapsed deltas remain consistent;
 - active-checkpoint schema v1 migrates to v2 and future schema versions fail closed;
+- active repository save/migration assertions expect the current schema-v2 envelope;
 - negative monotonic timestamp origins remain valid;
 - lap split/cumulative math and the live lap-count ceiling;
 - overflow-safe, integer-accurate lap-average calculation;
@@ -154,17 +174,19 @@ For a generated large history near supported limits, manually verify:
 
 ## Documentation checks
 
-Repository-local Markdown destinations are validated by:
+Repository-local Markdown destinations and Kotlin namespace syntax are validated by:
 
 ```bash
+python tools/check_kotlin_package_keywords.py
 python tools/check_markdown_links.py
 ```
 
-The checker intentionally skips external URLs and focuses on links that can be verified deterministically from a clean checkout.
+The Markdown checker intentionally skips external URLs and focuses on links that can be verified deterministically from a clean checkout.
 
 ## Full local quality gate
 
 ```bash
+python tools/check_kotlin_package_keywords.py
 ./gradlew quality :androidApp:assembleDebug :desktopApp:packageDistributionForCurrentOS
 python tools/check_markdown_links.py
 ```

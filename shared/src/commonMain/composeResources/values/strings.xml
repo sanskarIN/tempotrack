@@ -1,0 +1,100 @@
+<resources>
+    <string name="app_name">TempoTrack</string>
+    <string name="made_by">Made by the Sanskar</string>
+
+    <string name="nav_stopwatch">Stopwatch</string>
+    <string name="nav_history">History</string>
+    <string name="nav_settings">Settings</string>
+    <string name="nav_about">About</string>
+
+    <string name="onboarding_value">A precise, privacy-first stopwatch with laps, searchable local history and portable exports.</string>
+    <string name="onboarding_privacy">Your sessions stay on this device unless you explicitly export them.</string>
+    <string name="onboarding_start">Start timing</string>
+
+    <string name="action_start">Start</string>
+    <string name="action_pause">Pause</string>
+    <string name="action_lap">Lap</string>
+    <string name="action_resume">Resume</string>
+    <string name="action_reset">Reset</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_rename">Rename</string>
+    <string name="action_save">Save</string>
+
+    <string name="elapsed_time_description">Elapsed time %1$s</string>
+    <string name="session_name_label">Session name</string>
+    <string name="session_name_support">Optional; defaults to a timestamp-based name</string>
+    <string name="save_session">Save session</string>
+    <string name="session_default_name">Session %1$s</string>
+    <string name="session_saved">Saved “%1$s”</string>
+    <string name="session_save_failed">Could not save this session.</string>
+    <string name="lap_empty">Record a lap while the stopwatch is running to compare splits.</string>
+    <string name="lap_sort_recorded">Recorded</string>
+    <string name="lap_sort_fastest">Fastest</string>
+    <string name="lap_sort_slowest">Slowest</string>
+    <string name="lap_fastest_value">Fastest %1$s</string>
+    <string name="lap_average_value">Average %1$s</string>
+    <string name="lap_slowest_value">Slowest %1$s</string>
+    <string name="lap_number">Lap %1$s</string>
+    <string name="lap_total">Total %1$s</string>
+    <string name="lap_descriptor_fastest">Fastest</string>
+    <string name="lap_descriptor_slowest">Slowest</string>
+
+    <string name="history_title">History</string>
+    <string name="history_search">Search sessions</string>
+    <string name="history_export_json">Export JSON</string>
+    <string name="history_export_csv">Export CSV</string>
+    <string name="history_restore_json">Restore from JSON backup</string>
+    <string name="history_read_failed">Could not read saved sessions.</string>
+    <string name="history_undo_delete">Undo delete “%1$s”</string>
+    <string name="history_restore_deleted_failed">Could not restore the deleted session.</string>
+    <string name="history_empty">No saved sessions yet.</string>
+    <string name="history_no_search_results">No sessions match your search.</string>
+    <string name="history_delete_failed">Could not delete this session.</string>
+    <string name="history_restore_dialog_title">Restore JSON backup</string>
+    <string name="history_restore_dialog_body">Paste a TempoTrack JSON export. Restoring replaces the current saved history.</string>
+    <string name="history_backup_json_label">Backup JSON</string>
+    <string name="history_replace">Replace history</string>
+    <string name="history_restored_count">Restored %1$s saved session(s).</string>
+    <string name="history_restore_failed">Could not restore this backup.</string>
+    <string name="history_exported_to">Exported to %1$s</string>
+    <string name="history_session_summary">%1$s laps • fastest %2$s</string>
+    <string name="history_rename_title">Rename session</string>
+    <string name="history_rename_label">New session name</string>
+    <string name="history_rename_failed">Could not rename this session.</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_accessibility">Accessibility</string>
+    <string name="settings_large_controls">Large controls</string>
+    <string name="settings_large_controls_summary">Increase primary touch target and timer sizes.</string>
+    <string name="settings_reduced_motion">Reduced motion</string>
+    <string name="settings_reduced_motion_summary">Prefer minimal motion where animations are used.</string>
+    <string name="settings_desktop">Desktop</string>
+    <string name="settings_mini_stopwatch">Floating mini stopwatch</string>
+    <string name="settings_mini_stopwatch_summary">Show a compact always-on-top timer window.</string>
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_privacy_summary">TempoTrack does not require an account and does not transmit session data.</string>
+    <string name="settings_data">Data</string>
+    <string name="settings_data_summary">Saved sessions and preferences use application-private local storage. Use History to export JSON backups or CSV data.</string>
+    <string name="settings_updates">Updates</string>
+    <string name="settings_updates_summary">Release information is published on the TempoTrack GitHub Releases page.</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_summary">Open-source MIT project • Made by the Sanskar</string>
+
+    <string name="about_tagline">Precise timing. Local-first history. Portable data.</string>
+    <string name="about_version_platform">Version %1$s • %2$s</string>
+    <string name="about_license">License: MIT</string>
+    <string name="about_github">GitHub</string>
+    <string name="about_bmc">Buy Me a Coffee</string>
+    <string name="about_business_outlook">Business: sanskarin@outlook.in</string>
+    <string name="about_business_gmail">Business: sanskarin.business@gmail.com</string>
+    <string name="about_support">Support: supportramsandesh@gmail.com</string>
+    <string name="about_privacy">TempoTrack stores stopwatch sessions locally. Nothing is uploaded unless you choose to export and share a file.</string>
+
+    <string name="keyboard_shortcuts_title">Keyboard shortcuts</string>
+    <string name="keyboard_shortcuts_body">Space: start, pause or resume\nL: record a lap while running\nR: reset the stopwatch</string>
+</resources>

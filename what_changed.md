@@ -83,6 +83,14 @@ Decision documentation: `docs/adr/0005-platform-checkpoint-recovery.md`.
 - Corrupt stored history fails closed without silently rewriting the original data.
 - Bounded stored-session count and encoded character size.
 - Session names/IDs/lap records use shared validation contracts.
+- Repository writes are serialized with a mutex.
+- Identical upserts do not rewrite the session store.
+- Renames that normalize to the existing session name do not rewrite the session store.
+- Deletes for missing session IDs do not rewrite the session store.
+- Full-history replacement skips persistence when the normalized replacement is already identical to current history.
+- History delete, undo, and rename actions are single-flight at the UI boundary.
+- History mutations cannot overlap export/share/restore preparation, and conflicting controls disable while a mutation is active.
+- Rename input, save, cancel, and dialog dismissal are locked while the rename mutation is running.
 
 ### Data portability
 
@@ -96,6 +104,7 @@ Decision documentation: `docs/adr/0005-platform-checkpoint-recovery.md`.
 - Large JSON/CSV serialization and JSON import parsing execute off the UI dispatcher.
 - Restore submission is single-flight.
 - History export/share preparation is single-flight and cannot overlap restore parsing.
+- Export/share/restore actions are also blocked while a history mutation is active.
 - Shared `ExportFileName` sanitization is used by platform file/share operations.
 
 ### Android export/share
@@ -271,6 +280,7 @@ Actual production signing secrets still have to be provisioned in protected repo
 - `shared/src/commonMain/kotlin/in/sanskar/tempotrack/ui/screens/StopwatchScreen.kt`
 - `shared/src/commonMain/kotlin/in/sanskar/tempotrack/ui/screens/HistoryScreen.kt`
 - `shared/src/commonMain/kotlin/in/sanskar/tempotrack/ui/screens/SettingsScreen.kt`
+- `shared/src/commonTest/kotlin/in/sanskar/tempotrack/data/SessionRepositoryTest.kt`
 - shared Compose resources.
 - common persistence/domain regression tests.
 - `androidApp/build.gradle.kts`
@@ -306,6 +316,19 @@ Actual production signing secrets still have to be provisioned in protected repo
 
 The latest continuation intentionally used granular commits rather than one bulk change. Commit messages include:
 
+- `perf: skip no-op session renames`
+- `perf: avoid writes for missing session deletes`
+- `test: cover no-op session rename persistence`
+- `test: cover missing session delete persistence`
+- `perf: skip identical session upserts`
+- `test: cover identical session upsert persistence`
+- `fix: serialize history mutation actions`
+- `docs: document no-op history write avoidance`
+- `docs: expand history persistence regression checks`
+- `perf: skip identical history replacements`
+- `test: cover identical history replacement persistence`
+- `docs: record history reliability improvements`
+- `docs: cover unchanged history restore writes`
 - `fix: avoid implicit button lambda return label`
 - `fix: serialize history export and share launches`
 - `a11y: describe mini stopwatch elapsed time`
@@ -386,15 +409,63 @@ The latest continuation intentionally used granular commits rather than one bulk
 
 This list is intentionally detailed because the project instruction asks for many small commits and a durable handoff instead of chat-heavy narration.
 
+## Continuation checkpoint — 2026-08-19 14:32 IST
+
+### Repository/history hardening completed
+
+- `JsonSessionRepository.upsert` now loads the normalized current history and skips persistence if the resulting model list is unchanged.
+- `JsonSessionRepository.rename` returns success without serializing/writing when trimming the requested name yields the existing name.
+- `JsonSessionRepository.delete` skips persistence when the requested ID does not exist.
+- `JsonSessionRepository.replaceAll` validates and normalizes the replacement, loads the current validated history, and skips persistence if both are equal.
+- `SessionRepositoryTest` tracks write counts in its in-memory storage helper and now locks all four no-op persistence contracts with regression tests.
+- `HistoryScreen` now tracks `historyMutationInProgress` independently of restore/export/share state.
+- Delete, undo, and rename now run through one `launchHistoryMutation` single-flight boundary.
+- History mutation controls disable during a mutation.
+- Export/share/restore controls disable while a history mutation is running.
+- Data portability launch guards reject work while a history mutation is running.
+- Rename dialog editing, dismissal, save, and cancel are disabled while the rename persistence operation is active.
+- Performance, testing, and changelog documentation now describe these guarantees.
+
+### Audit correction recorded
+
+A repository code-search query did not surface the existing `ConcurrentWriteDetectingStorage.kt` helper, so the first audit pass incorrectly treated the helper as missing and created commit `afe9de6556377b92a991c276f388f07b94322851` (`fix: restore concurrent session storage test helper`).
+
+A directory-level source inspection immediately found the existing dedicated helper file. Commit `8f45f5b5641409283c14066949af2d61124a6711` (`fix: remove duplicate session test helper`) restored `SessionRepositoryTest.kt` to the correct structure before subsequent reliability changes. The final repository does not contain the duplicate helper introduced by that false positive.
+
+This correction is intentionally retained in the handoff rather than hidden so later maintainers can understand the two adjacent commits.
+
+### New commits in this continuation
+
+- `afe9de6556377b92a991c276f388f07b94322851` — `fix: restore concurrent session storage test helper` — audit false positive; corrected immediately by the next commit.
+- `8f45f5b5641409283c14066949af2d61124a6711` — `fix: remove duplicate session test helper` — restores the pre-audit helper layout.
+- `d41ae5bffcd9c2274be1f46d8a28cfe9c5ea2dd3` — `perf: skip no-op session renames`.
+- `b3ecca42df46641b306530403e4ebc1985bba767` — `perf: avoid writes for missing session deletes`.
+- `3f0343e3a8024a49ef1e205f576bde6f03534a95` — `test: cover no-op session rename persistence`.
+- `af113fad5d7a79d5815a9eb61be0ab72535f9975` — `test: cover missing session delete persistence`.
+- `f9b9bcee5c948985212e1f81e4534bb1fb9d43cd` — `perf: skip identical session upserts`.
+- `3a22e68688f199e752b0ea1d096b3fa164a001c0` — `test: cover identical session upsert persistence`.
+- `801c787d33b22e876495b284ea6237f5245b3f21` — `fix: serialize history mutation actions`.
+- `7c63bf13ad08560c18ca33f1145505fd5abeceda` — `docs: document no-op history write avoidance`.
+- `5719ea6346d66d8b462bd3f17bc428fa6ba330b8` — `docs: expand history persistence regression checks`.
+- `6ebf113080062119d6545c662e8d8b130306e1f6` — `perf: skip identical history replacements`.
+- `f467c21c1978b6d80fff075e1cd13bc3252c8b33` — `test: cover identical history replacement persistence`.
+- `e6e9d30a6910a34bdcc711b6a80134aafea0b9a0` — `docs: record history reliability improvements`.
+- `3c27c46745f236187f6f5e237ac38617a9d8dd78` — `docs: cover unchanged history restore writes`.
+
+The commit that updates this handoff follows the list above and should be treated as the documentation checkpoint for this continuation.
+
 ## Verification performed
 
 - Current repository tree and relevant source/config/document files were inspected through the connected GitHub API.
 - Changed files were re-fetched before sequential writes when a current blob SHA was required.
+- `HistoryScreen.kt` was re-fetched after the mutation-serialization commit, including the modified operation guards, rename dialog, and `SessionCard` signature/control wiring, to verify that the intended source structure was present in `main`.
+- `SessionRepository.kt` and `SessionRepositoryTest.kt` were re-fetched during the continuation before subsequent sequential edits.
 - Repository search for `TODO`, `FIXME`, `runCatching`, stale iOS-export placeholder wording, and related obsolete terms returned no indexed results in the final sweep used for this handoff.
 - Earlier stale-SHA conflicts were resolved by re-fetching current content instead of force-overwriting concurrent repository changes.
-- GitHub combined-status checks have not exposed a usable passing status matrix for the latest push commits through this connector.
+- GitHub combined-status checks have not exposed a usable passing status matrix for the latest push commits through this connector; a queried newest-commit status returned no status entries.
 - A clean local clone/build attempt from the execution container could not resolve `github.com`, so a full Gradle dependency/build/test run could not be executed in that container.
-- The native iOS bridge was source-audited and `iosTest` coverage was added, but no macOS/Xcode compiler result is claimed from this chat environment.
+- No Gradle test/lint/package command is represented as passing from this continuation because none was actually observable through this execution environment.
+- The native iOS bridge was source-audited and `iosTest` coverage was added in earlier continuation work, but no macOS/Xcode compiler result is claimed from this chat environment.
 
 ## Verification integrity / current release status
 
@@ -417,7 +488,7 @@ On macOS with Xcode:
 ./gradlew :shared:iosSimulatorArm64Test :shared:linkDebugFrameworkIosSimulatorArm64 :shared:linkReleaseFrameworkIosArm64
 ```
 
-Also complete the manual lifecycle/export/share/accessibility checks documented in `docs/testing.md`.
+Also complete the manual lifecycle/export/share/accessibility checks documented in `docs/testing.md`, including the new History mutation single-flight checks.
 
 ## Remaining externally gated items
 
@@ -432,8 +503,23 @@ These items cannot be honestly completed only by editing repository text/source 
 
 Optional roadmap items such as per-action Desktop key rebinding and encrypted backup remain intentionally optional and should not be implemented merely to mark boxes without user demand/threat-model justification.
 
+## Next exact tasks
+
+When an environment capable of running the complete toolchain is available, continue in this order:
+
+1. Generate/verify the standard Gradle 9.5.0 wrapper JAR from a trusted installation and commit the binary only after verifying the official wrapper/distribution chain.
+2. Run `./gradlew quality` and fix any compiler, ktlint, unit-test, or Android Lint failure before adding new product scope.
+3. Run Android debug/release assembly and bundle checks with a real Android SDK.
+4. Run Desktop test/compile/package checks on each intended packaging host.
+5. Run the iOS simulator tests and debug/release framework link tasks on macOS/Xcode; fix any Kotlin/Native/UIKit interop compiler errors before a release tag.
+6. Exercise History delete/undo/rename repeatedly during slow or instrumented storage writes to confirm the new control locking and single-flight behavior manually.
+7. Exercise large-history export/share/restore while attempting conflicting mutations to confirm no overlapping operation reaches the repository/platform boundary.
+8. Provision protected Android production signing secrets using repository/environment controls; do not commit keystore material or passwords.
+9. Create a semantic test tag only after the build matrix is observed green, inspect generated APK/AAB/Desktop/iOS/checksum artifacts, then remove/replace the tag if it was only a release rehearsal.
+10. Capture real Android/Desktop/iOS screenshots only from verified builds and then close the screenshot roadmap item.
+
 ## Repository state conclusion
 
-Source-level functional gaps identified during this continuation have been addressed with atomic commits, regression tests, platform-specific recovery rules, native iOS data portability, safer storage, bounded persistence/import contracts, single-flight UI writes, release-signing support and synchronized documentation.
+Source-level functional gaps identified during this continuation have been addressed with atomic commits, regression tests, platform-specific recovery rules, native iOS data portability, safer storage, bounded persistence/import contracts, single-flight UI writes, no-op history write avoidance, serialized History mutations, release-signing support and synchronized documentation.
 
 The remaining blockers are verification/environment/credential/binary-artifact tasks rather than knowingly unfinished `TODO`/`FIXME` source work.

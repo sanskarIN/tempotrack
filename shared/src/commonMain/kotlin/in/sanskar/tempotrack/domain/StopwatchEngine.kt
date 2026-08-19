@@ -91,6 +91,9 @@ class StopwatchEngine(
     private fun elapsedAt(nowNanos: Long): Long {
         val started = startedAtNanos ?: return accumulatedNanos
         val activeDelta = (nowNanos - started).coerceAtLeast(0L)
-        return accumulatedNanos + activeDelta
+        return saturatingAddNonNegative(accumulatedNanos, activeDelta)
     }
+
+    private fun saturatingAddNonNegative(left: Long, right: Long): Long =
+        if (right > Long.MAX_VALUE - left) Long.MAX_VALUE else left + right
 }

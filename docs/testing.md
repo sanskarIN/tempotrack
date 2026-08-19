@@ -27,6 +27,9 @@ Android Lint runs separately because it also checks manifests/resources and Andr
 - CSV escaping, spreadsheet-formula neutralization, seven-column row consistency and JSON export content;
 - bounded export-filename sanitization and traversal-like filename normalization;
 - overflow-safe session validation, rename behavior, sorting and duplicate-id rejection;
+- identical session upserts do not rewrite storage;
+- renames that normalize to the existing name do not rewrite storage;
+- deletes for missing session ids do not rewrite storage;
 - validated JSON restore and stable import error codes;
 - restore limits staying aligned with persistence limits;
 - full stopwatch-to-backup-to-restore regression journeys;
@@ -125,6 +128,10 @@ Manually verify that:
 - a failed Settings write reverts both visible preference state and Desktop side effects such as mini-window/shortcut enablement;
 - the session Save button cannot queue duplicate writes and stale saved feedback clears when the timer or session name changes;
 - History JSON/CSV serialization launches one export/share operation at a time;
+- delete, undo, and rename history mutations cannot be submitted again while the current history mutation is running;
+- history row rename/delete controls and the undo action disable while a history mutation is in flight;
+- export/share/restore actions cannot start while a history mutation is running, and a history mutation cannot start while export/share/restore work is in progress;
+- the rename dialog cannot be dismissed or edited while its save mutation is running;
 - the restore dialog cannot be opened while a data portability operation is being prepared;
 - restore confirmation cannot be submitted twice while parsing/replacement is running.
 

@@ -9,6 +9,9 @@ object StopwatchCheckpointValidation {
         if (checkpoint.accumulatedNanos < 0L) {
             errors += "accumulatedNanos must be non-negative"
         }
+        if (checkpoint.savedAtEpochMillis != null && checkpoint.savedAtEpochMillis < 0L) {
+            errors += "savedAtEpochMillis must be non-negative when present"
+        }
         if (checkpoint.laps.size > MAX_LAPS) {
             errors += "lap count exceeds $MAX_LAPS"
         }

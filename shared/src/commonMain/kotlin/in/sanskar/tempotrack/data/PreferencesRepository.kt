@@ -1,8 +1,6 @@
 package in.sanskar.tempotrack.data
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
 
 @Serializable
 enum class ThemePreference {
@@ -26,24 +24,18 @@ interface PreferencesRepository {
 
 class JsonPreferencesRepository(
     private val storage: StringStorage,
-    private val json: Json = Json {
-        prettyPrint = true
-        ignoreUnknownKeys = true
-        explicitNulls = false
-    },
+    private val codec: PreferencesStoreCodec = PreferencesStoreCodec(),
 ) : PreferencesRepository {
     override suspend fun load(): AppPreferences {
         val raw = storage.read()?.takeIf { it.isNotBlank() } ?: return AppPreferences()
-        return try {
-            json.decodeFromString(AppPreferences.serializer(), raw)
-        } catch (_: SerializationException) {
-            AppPreferences()
-        } catch (_: IllegalArgumentException) {
-            AppPreferences()
+        val decoded = codec.decode(raw) ?: return AppPreferences()
+        if (decoded.needsMigration) {
+            storage.write(codec.encode(decoded.preferences))
         }
+        return decoded.preferences
     }
 
     override suspend fun save(preferences: AppPreferences) {
-        storage.write(json.encodeToString(AppPreferences.serializer(), preferences))
+        storage.write(codec.encode(preferences))
     }
 }

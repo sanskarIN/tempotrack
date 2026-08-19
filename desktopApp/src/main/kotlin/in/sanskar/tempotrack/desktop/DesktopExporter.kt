@@ -1,5 +1,6 @@
 package in.sanskar.tempotrack.desktop
 
+import in.sanskar.tempotrack.data.ExportError
 import in.sanskar.tempotrack.data.Exporter
 import in.sanskar.tempotrack.data.ExportResult
 import java.nio.charset.StandardCharsets
@@ -22,7 +23,7 @@ class DesktopExporter : Exporter {
             Files.writeString(target, content, StandardCharsets.UTF_8)
             ExportResult.Success(target.toAbsolutePath().toString())
         }.getOrElse {
-            ExportResult.Failure("Could not write the export file.")
+            ExportResult.Failure(ExportError.WRITE_FAILED)
         }
     }
 }

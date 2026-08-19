@@ -1,7 +1,7 @@
 package in.sanskar.tempotrack.domain
 
 object StopwatchCheckpointValidation {
-    const val MAX_LAPS: Int = 10_000
+    const val MAX_LAPS: Int = SessionValidation.MAX_LAPS_PER_SESSION
 
     fun validate(checkpoint: StopwatchCheckpoint): List<String> {
         val errors = mutableListOf<String>()

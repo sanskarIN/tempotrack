@@ -1,6 +1,7 @@
 package in.sanskar.tempotrack.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import in.sanskar.tempotrack.data.AppPreferences
 import in.sanskar.tempotrack.domain.StopwatchCheckpoint
 import in.sanskar.tempotrack.domain.StopwatchEngine
@@ -30,6 +32,8 @@ import in.sanskar.tempotrack.ui.screens.OnboardingScreen
 import in.sanskar.tempotrack.ui.screens.SettingsScreen
 import in.sanskar.tempotrack.ui.screens.StopwatchScreen
 import org.jetbrains.compose.resources.stringResource
+
+private val WIDE_LAYOUT_BREAKPOINT = 840.dp
 
 private enum class Destination(val glyph: String) {
     STOPWATCH("⏱"),
@@ -88,34 +92,13 @@ fun TempoTrackApp(
             return@TempoTrackTheme
         }
 
-        if (wideLayout) {
-            Row(Modifier.fillMaxSize()) {
-                NavigationRail {
-                    Destination.entries.forEach { item ->
-                        NavigationRailItem(
-                            selected = destination == item,
-                            onClick = { destination = item },
-                            icon = { Text(item.glyph) },
-                            label = { Text(item.label()) },
-                        )
-                    }
-                }
-                Column(Modifier.weight(1f).fillMaxSize()) {
-                    ScreenContent(
-                        destination = destination,
-                        engine = requireNotNull(engine),
-                        dependencies = dependencies,
-                        preferences = preferences,
-                        onPreferencesChanged = { preferences = it },
-                    )
-                }
-            }
-        } else {
-            Scaffold(
-                bottomBar = {
-                    NavigationBar {
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            val useWideLayout = wideLayout || maxWidth >= WIDE_LAYOUT_BREAKPOINT
+            if (useWideLayout) {
+                Row(Modifier.fillMaxSize()) {
+                    NavigationRail {
                         Destination.entries.forEach { item ->
-                            NavigationBarItem(
+                            NavigationRailItem(
                                 selected = destination == item,
                                 onClick = { destination = item },
                                 icon = { Text(item.glyph) },
@@ -123,16 +106,40 @@ fun TempoTrackApp(
                             )
                         }
                     }
-                },
-            ) { padding ->
-                Box(Modifier.fillMaxSize().padding(padding)) {
-                    ScreenContent(
-                        destination = destination,
-                        engine = requireNotNull(engine),
-                        dependencies = dependencies,
-                        preferences = preferences,
-                        onPreferencesChanged = { preferences = it },
-                    )
+                    Column(Modifier.weight(1f).fillMaxSize()) {
+                        ScreenContent(
+                            destination = destination,
+                            engine = requireNotNull(engine),
+                            dependencies = dependencies,
+                            preferences = preferences,
+                            onPreferencesChanged = { preferences = it },
+                        )
+                    }
+                }
+            } else {
+                Scaffold(
+                    bottomBar = {
+                        NavigationBar {
+                            Destination.entries.forEach { item ->
+                                NavigationBarItem(
+                                    selected = destination == item,
+                                    onClick = { destination = item },
+                                    icon = { Text(item.glyph) },
+                                    label = { Text(item.label()) },
+                                )
+                            }
+                        }
+                    },
+                ) { padding ->
+                    Box(Modifier.fillMaxSize().padding(padding)) {
+                        ScreenContent(
+                            destination = destination,
+                            engine = requireNotNull(engine),
+                            dependencies = dependencies,
+                            preferences = preferences,
+                            onPreferencesChanged = { preferences = it },
+                        )
+                    }
                 }
             }
         }

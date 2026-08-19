@@ -14,7 +14,12 @@ interface Exporter {
     ): ExportResult
 }
 
+enum class ExportError {
+    WRITE_FAILED,
+    PLATFORM_EXPORT_UNAVAILABLE,
+}
+
 sealed interface ExportResult {
     data class Success(val destination: String) : ExportResult
-    data class Failure(val userMessage: String) : ExportResult
+    data class Failure(val error: ExportError) : ExportResult
 }

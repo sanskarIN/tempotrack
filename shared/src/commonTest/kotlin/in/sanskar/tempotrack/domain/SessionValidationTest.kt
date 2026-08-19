@@ -1,4 +1,4 @@
-package in.sanskar.tempotrack.domain
+package `in`.sanskar.tempotrack.domain
 
 import kotlin.test.Test
 import kotlin.test.assertFailsWith

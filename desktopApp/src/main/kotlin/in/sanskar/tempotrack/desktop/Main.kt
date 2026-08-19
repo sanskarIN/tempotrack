@@ -1,4 +1,4 @@
-package in.sanskar.tempotrack.desktop
+package `in`.sanskar.tempotrack.desktop
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -11,17 +11,18 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import in.sanskar.tempotrack.data.JsonActiveStopwatchRepository
-import in.sanskar.tempotrack.data.JsonPreferencesRepository
-import in.sanskar.tempotrack.data.JsonSessionRepository
-import in.sanskar.tempotrack.domain.MonotonicClock
-import in.sanskar.tempotrack.domain.StopwatchCheckpointRecovery
-import in.sanskar.tempotrack.domain.StopwatchEngine
-import in.sanskar.tempotrack.domain.WallClock
-import in.sanskar.tempotrack.ui.MiniStopwatch
-import in.sanskar.tempotrack.ui.TempoTrackApp
-import in.sanskar.tempotrack.ui.TempoTrackDependencies
-import in.sanskar.tempotrack.util.suspendResult
+import `in`.sanskar.tempotrack.data.JsonActiveStopwatchRepository
+import `in`.sanskar.tempotrack.data.JsonPreferencesRepository
+import `in`.sanskar.tempotrack.data.JsonSessionRepository
+import `in`.sanskar.tempotrack.domain.MonotonicClock
+import `in`.sanskar.tempotrack.domain.StopwatchCheckpointRecovery
+import `in`.sanskar.tempotrack.domain.StopwatchEngine
+import `in`.sanskar.tempotrack.domain.StopwatchStatus
+import `in`.sanskar.tempotrack.domain.WallClock
+import `in`.sanskar.tempotrack.ui.MiniStopwatch
+import `in`.sanskar.tempotrack.ui.TempoTrackApp
+import `in`.sanskar.tempotrack.ui.TempoTrackDependencies
+import `in`.sanskar.tempotrack.util.suspendResult
 import java.nio.file.Paths
 import kotlinx.coroutines.launch
 
@@ -70,9 +71,9 @@ fun main() = application {
                     engine == null -> false
                     event.key == Key.Spacebar -> {
                         when (engine.snapshot().status) {
-                            in.sanskar.tempotrack.domain.StopwatchStatus.IDLE -> engine.start()
-                            in.sanskar.tempotrack.domain.StopwatchStatus.RUNNING -> engine.pause()
-                            in.sanskar.tempotrack.domain.StopwatchStatus.PAUSED -> engine.resume()
+                            StopwatchStatus.IDLE -> engine.start()
+                            StopwatchStatus.RUNNING -> engine.pause()
+                            StopwatchStatus.PAUSED -> engine.resume()
                         }
                         scope.launch { suspendResult { dependencies.activeStopwatch.save(engine.checkpoint()) } }
                         true

@@ -28,11 +28,20 @@ Do not create a release from a machine silently using another Gradle version. Ei
 
 ## Pre-release gate
 
-From a clean checkout:
+From a clean Git checkout, first verify deterministic repository integrity:
+
+```bash
+python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
+python tools/check_markdown_links.py
+```
+
+The repository-reference check uses `git ls-files`; it ensures every tracked file is covered by `docs/repository-reference.md` before a release is declared fully documented.
+
+Then run the build/test gate:
 
 ```bash
 ./gradlew quality :androidApp:lintRelease :androidApp:assembleRelease :androidApp:bundleRelease
-python tools/check_markdown_links.py
 ```
 
 A local unsigned release can still be used for compilation/lint verification when signing environment variables are absent. It must not be distributed as a production artifact.
@@ -52,6 +61,20 @@ On macOS with Xcode:
 Before tagging, manually verify the platform lifecycle/export/share scenarios in [testing.md](testing.md), including Android/iOS checkpoint recovery and Desktop restart heartbeat recovery.
 
 Do not tag until the relevant supported-platform checks are actually green.
+
+## Documentation release audit
+
+Before tagging:
+
+1. Run all three repository-local Python guards.
+2. Confirm `README.md` and `docs/README.md` point to the current documentation set.
+3. Confirm every tracked file is present in `docs/repository-reference.md`.
+4. Confirm persistence/recovery/platform behavior matches `state-and-recovery.md`, `data-model-and-storage.md`, and `platforms.md`.
+5. Confirm new security/privacy behavior is reflected in `SECURITY.md`, `PRIVACY.md`, and `security-model.md`.
+6. Confirm contributor/build/release commands match actual Gradle/CI configuration.
+7. Confirm `CHANGELOG.md` contains the release-relevant fixes/features.
+8. Confirm `what_changed.md` records observed verification and unresolved environment-gated work.
+9. Do not publish placeholder screenshots as real release captures.
 
 ## Android signing
 
@@ -121,3 +144,20 @@ Create an annotated `vMAJOR.MINOR.PATCH` tag only after the pre-release gate is 
 Start from `release-notes-template.md`, copy the relevant `CHANGELOG.md` section, and include known limitations. Do not claim a platform has been tested unless it was actually built/run.
 
 For Android, do not describe artifacts as production-ready unless the signed tag workflow has succeeded. For iOS, clearly distinguish the reusable framework from a signed/packaged App Store application.
+
+## Verification record
+
+For a release candidate, preserve the commit SHA and actual observable results for:
+
+- repository-local Python guards;
+- shared tests;
+- Android unit/lint/release APK/AAB;
+- Desktop tests/packaging by host;
+- iOS simulator tests/framework links;
+- manual lifecycle/export/share/accessibility checks;
+- Android signing;
+- generated checksums/artifact inspection.
+
+Configured workflows are not evidence that a specific commit passed. If a result cannot be observed, record it as **not observed** and do not promote that platform/artifact as verified.
+
+See [`build-and-ci.md`](build-and-ci.md) for workflow internals and [`maintainer-guide.md`](maintainer-guide.md) for safe change procedures.

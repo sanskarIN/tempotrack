@@ -44,6 +44,9 @@
 
 - [x] Derive Android/Desktop package versions from release tags.
 - [x] Produce checksummed tag artifacts and publish them to GitHub Releases.
-- [ ] Configure production Android signing secrets in repository/environment settings before distributing Play-ready APK/AAB artifacts.
+- [x] Add environment-backed Android release signing configuration.
+- [x] Require signed APK/AAB outputs before the tag workflow can publish Android release artifacts.
+- [x] Scope Android signing secrets to only the workflow steps that require them.
+- [ ] Provision the actual production Android signing secrets in protected repository/environment settings before creating a distributable Android tag release.
 
 Roadmap items are not promises or release dates. Items that require private signing credentials, a macOS/Xcode host, physical/emulated devices, or release screenshots remain intentionally open until they can be verified in the correct environment.

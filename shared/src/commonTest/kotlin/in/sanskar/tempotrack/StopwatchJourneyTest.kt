@@ -1,5 +1,6 @@
 package in.sanskar.tempotrack
 
+import in.sanskar.tempotrack.data.JsonActiveStopwatchRepository
 import in.sanskar.tempotrack.data.JsonSessionRepository
 import in.sanskar.tempotrack.data.SessionCodec
 import in.sanskar.tempotrack.data.SessionImportResult
@@ -59,6 +60,30 @@ class StopwatchJourneyTest {
         assertEquals(2L * NANOS_PER_SECOND, restored.single().laps[0].splitNanos)
         assertEquals(3L * NANOS_PER_SECOND, restored.single().laps[1].splitNanos)
         assertTrue(SessionCodec.toCsv(restored).contains("Five second regression journey"))
+    }
+
+    @Test
+    fun pausedCheckpointSurvivesRepositoryRestartAndResumes() = runTest {
+        val clock = JourneyClock()
+        val activeStorage = MemoryStringStorage()
+        val activeRepository = JsonActiveStopwatchRepository(activeStorage)
+        val firstEngine = StopwatchEngine(clock)
+
+        firstEngine.start()
+        clock.advanceSeconds(4)
+        firstEngine.pause()
+        activeRepository.save(firstEngine.checkpoint())
+
+        val restoredCheckpoint = requireNotNull(activeRepository.load())
+        val restoredEngine = StopwatchEngine(clock, restoredCheckpoint)
+        assertEquals(StopwatchStatus.PAUSED, restoredEngine.snapshot().status)
+        assertEquals(4L * NANOS_PER_SECOND, restoredEngine.snapshot().elapsedNanos)
+
+        restoredEngine.resume()
+        clock.advanceSeconds(2)
+        restoredEngine.pause()
+
+        assertEquals(6L * NANOS_PER_SECOND, restoredEngine.snapshot().elapsedNanos)
     }
 }
 

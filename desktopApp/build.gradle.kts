@@ -24,6 +24,7 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "in.sanskar.tempotrack.desktop.MainKt"
+        jvmArgs += "-Dtempotrack.version=$tempoTrackVersion"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)

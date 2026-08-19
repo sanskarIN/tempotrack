@@ -62,7 +62,6 @@ import in.sanskar.tempotrack.resources.settings_title
 import in.sanskar.tempotrack.resources.settings_updates
 import in.sanskar.tempotrack.resources.settings_updates_summary
 import in.sanskar.tempotrack.util.suspendResult
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -80,29 +79,30 @@ fun SettingsScreen(
     val uriHandler = LocalUriHandler.current
     var showShortcutHelp by remember { mutableStateOf(false) }
     var saveFailed by remember { mutableStateOf(false) }
-    var saveJob by remember { mutableStateOf<Job?>(null) }
-    var lastPersistedPreferences by remember(repository) { mutableStateOf(preferences) }
+    var savingPreferences by remember { mutableStateOf(false) }
 
     fun update(
         next: AppPreferences,
         onApplied: () -> Unit = {},
         onRollback: (AppPreferences) -> Unit = {},
     ) {
+        if (savingPreferences) return
+        val previous = preferences
         onPreferencesChanged(next)
         onApplied()
         saveFailed = false
-        saveJob?.cancel()
-        saveJob = scope.launch {
+        savingPreferences = true
+        scope.launch {
             suspendResult { repository.save(next) }
                 .onSuccess {
-                    lastPersistedPreferences = next
                     saveFailed = false
+                    savingPreferences = false
                 }
                 .onFailure {
-                    val rollback = lastPersistedPreferences
-                    onPreferencesChanged(rollback)
-                    onRollback(rollback)
+                    onPreferencesChanged(previous)
+                    onRollback(previous)
                     saveFailed = true
+                    savingPreferences = false
                 }
         }
     }
@@ -127,6 +127,7 @@ fun SettingsScreen(
             ) {
                 RadioButton(
                     selected = preferences.theme == option,
+                    enabled = !savingPreferences,
                     onClick = { update(preferences.copy(theme = option)) },
                 )
                 Text(option.localizedLabel())
@@ -139,12 +140,14 @@ fun SettingsScreen(
             title = stringResource(Res.string.settings_large_controls),
             subtitle = stringResource(Res.string.settings_large_controls_summary),
             checked = preferences.largeControls,
+            enabled = !savingPreferences,
             onCheckedChange = { update(preferences.copy(largeControls = it)) },
         )
         ToggleRow(
             title = stringResource(Res.string.settings_reduced_motion),
             subtitle = stringResource(Res.string.settings_reduced_motion_summary),
             checked = preferences.reducedMotion,
+            enabled = !savingPreferences,
             onCheckedChange = { update(preferences.copy(reducedMotion = it)) },
         )
 
@@ -158,6 +161,7 @@ fun SettingsScreen(
                 title = stringResource(Res.string.settings_mini_stopwatch),
                 subtitle = stringResource(Res.string.settings_mini_stopwatch_summary),
                 checked = preferences.miniStopwatchVisible,
+                enabled = !savingPreferences,
                 onCheckedChange = { visible ->
                     val next = preferences.copy(miniStopwatchVisible = visible)
                     update(
@@ -174,6 +178,7 @@ fun SettingsScreen(
                 title = stringResource(Res.string.settings_shortcuts_enabled),
                 subtitle = stringResource(Res.string.settings_shortcuts_enabled_summary),
                 checked = preferences.keyboardShortcutsEnabled,
+                enabled = !savingPreferences,
                 onCheckedChange = { enabled ->
                     val next = preferences.copy(keyboardShortcutsEnabled = enabled)
                     update(
@@ -251,6 +256,7 @@ private fun ToggleRow(
     title: String,
     subtitle: String,
     checked: Boolean,
+    enabled: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
     Row(
@@ -261,6 +267,10 @@ private fun ToggleRow(
             Text(title)
             Text(subtitle, style = MaterialTheme.typography.bodySmall)
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Switch(
+            checked = checked,
+            enabled = enabled,
+            onCheckedChange = onCheckedChange,
+        )
     }
 }

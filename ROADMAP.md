@@ -38,7 +38,7 @@
 - [x] Add iOS framework and simulator verification jobs to macOS CI.
 - [x] Package an iOS arm64 framework on release tags.
 - [x] Add native iOS JSON/CSV sharing through `UIActivityViewController`.
-- [ ] Add direct iOS document-picker export destination support in the host layer.
+- [x] Add direct iOS document-picker export destination support through `UIDocumentPickerViewController`.
 - [ ] Add optional encrypted local backup using platform facilities only if a concrete threat model requires it.
 
 ## Release engineering
@@ -50,4 +50,4 @@
 - [x] Scope Android signing secrets to only the workflow steps that require them.
 - [ ] Provision the actual production Android signing secrets in protected repository/environment settings before creating a distributable Android tag release.
 
-Roadmap items are not promises or release dates. Items that require private signing credentials, a macOS/Xcode host, physical/emulated devices, direct iOS document-picker verification, or release screenshots remain intentionally open until they can be verified in the correct environment.
+Roadmap items are not promises or release dates. Items that require private signing credentials, a macOS/Xcode host, physical/emulated devices, verified iOS picker/share behavior, or release screenshots remain intentionally open until they can be verified in the correct environment.

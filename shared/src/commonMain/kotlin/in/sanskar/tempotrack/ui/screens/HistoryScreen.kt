@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import in.sanskar.tempotrack.data.Exporter
+import in.sanskar.tempotrack.data.ExportError
 import in.sanskar.tempotrack.data.ExportResult
 import in.sanskar.tempotrack.data.SessionCodec
 import in.sanskar.tempotrack.data.SessionImportError
@@ -316,7 +317,10 @@ private suspend fun export(
     content: String,
 ): String = when (val result = exporter.export(name, mimeType, content)) {
     is ExportResult.Success -> getString(Res.string.history_exported_to, result.destination)
-    is ExportResult.Failure -> result.userMessage
+    is ExportResult.Failure -> when (result.error) {
+        ExportError.WRITE_FAILED -> getString(Res.string.history_export_write_failed)
+        ExportError.PLATFORM_EXPORT_UNAVAILABLE -> getString(Res.string.history_export_unavailable)
+    }
 }
 
 @Composable

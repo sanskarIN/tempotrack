@@ -30,6 +30,7 @@ fun main() = application {
     val activeStorage = remember { JvmStringStorage(home.resolve("active-stopwatch.json")) }
     val monotonicClock = remember { MonotonicClock { System.nanoTime() } }
     var miniVisible by remember { mutableStateOf(false) }
+    var shortcutsEnabled by remember { mutableStateOf(true) }
     var sharedEngine by remember { mutableStateOf<StopwatchEngine?>(null) }
     val scope = rememberCoroutineScope()
 
@@ -46,6 +47,7 @@ fun main() = application {
             miniStopwatchSupported = true,
             setMiniStopwatchVisible = { miniVisible = it },
             keyboardShortcutsSupported = true,
+            setKeyboardShortcutsEnabled = { shortcutsEnabled = it },
         )
     }
 
@@ -53,7 +55,7 @@ fun main() = application {
         onCloseRequest = ::exitApplication,
         title = "TempoTrack",
         onKeyEvent = { event ->
-            if (event.type != KeyEventType.KeyDown) {
+            if (!shortcutsEnabled || event.type != KeyEventType.KeyDown) {
                 false
             } else {
                 val engine = sharedEngine

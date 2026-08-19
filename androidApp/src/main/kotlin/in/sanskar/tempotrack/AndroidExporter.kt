@@ -87,7 +87,7 @@ class AndroidExporter(
             throw IOException("TempoTrack export path is not a directory.")
         }
 
-        val target = createUniqueExportTarget(directory, safeName)
+        val target = AndroidStagingFiles.reserveUniqueExportTarget(directory, safeName)
         try {
             target.writeText(content, Charsets.UTF_8)
         } catch (error: Exception) {
@@ -95,22 +95,5 @@ class AndroidExporter(
             throw error
         }
         return ExportResult.Success(target.absolutePath)
-    }
-
-    private fun createUniqueExportTarget(directory: File, safeName: String): File {
-        val extensionStart = safeName.lastIndexOf('.').takeIf { it in 1 until safeName.lastIndex }
-        val stem = extensionStart?.let { safeName.substring(0, it) } ?: safeName
-        val extension = extensionStart?.let { safeName.substring(it) }.orEmpty()
-
-        repeat(MAX_EXPORT_NAME_ATTEMPTS) { index ->
-            val candidateName = if (index == 0) safeName else "$stem ($index)$extension"
-            val candidate = File(directory, candidateName)
-            if (candidate.createNewFile()) return candidate
-        }
-        throw IOException("Could not reserve a unique TempoTrack export filename.")
-    }
-
-    private companion object {
-        const val MAX_EXPORT_NAME_ATTEMPTS = 10_000
     }
 }

@@ -1,6 +1,7 @@
 package in.sanskar.tempotrack.ios
 
 import androidx.compose.ui.window.ComposeUIViewController
+import in.sanskar.tempotrack.data.ExportError
 import in.sanskar.tempotrack.data.ExportResult
 import in.sanskar.tempotrack.data.Exporter
 import in.sanskar.tempotrack.data.JsonActiveStopwatchRepository
@@ -36,7 +37,5 @@ private object IosHostExporter : Exporter {
         suggestedFileName: String,
         mimeType: String,
         content: String,
-    ): ExportResult = ExportResult.Failure(
-        "The iOS host must provide a document/share-sheet export bridge before exporting files.",
-    )
+    ): ExportResult = ExportResult.Failure(ExportError.PLATFORM_EXPORT_UNAVAILABLE)
 }

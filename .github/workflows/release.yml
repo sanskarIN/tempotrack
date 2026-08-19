@@ -24,7 +24,17 @@ jobs:
         with:
           gradle-version: "9.5.0"
       - name: Verify and build Android release
-        run: gradle :shared:allTests :androidApp:lintRelease :androidApp:testDebugUnitTest :androidApp:assembleRelease --stacktrace
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          gradle \
+            -PappVersion="$VERSION" \
+            -PappVersionCode="$GITHUB_RUN_NUMBER" \
+            :shared:allTests \
+            :androidApp:lintRelease \
+            :androidApp:testDebugUnitTest \
+            :androidApp:assembleRelease \
+            --stacktrace
       - uses: actions/upload-artifact@v4
         with:
           name: tempotrack-android-release-unsigned
@@ -45,8 +55,15 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "9.5.0"
-      - shell: bash
-        run: gradle :shared:allTests :desktopApp:packageDistributionForCurrentOS --stacktrace
+      - name: Verify and package desktop
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          gradle \
+            -PappVersion="$VERSION" \
+            :shared:allTests \
+            :desktopApp:packageDistributionForCurrentOS \
+            --stacktrace
       - uses: actions/upload-artifact@v4
         with:
           name: tempotrack-desktop-${{ runner.os }}
@@ -65,7 +82,14 @@ jobs:
         with:
           gradle-version: "9.5.0"
       - name: Verify and link iOS framework
-        run: gradle :shared:iosSimulatorArm64Test :shared:linkReleaseFrameworkIosArm64 --stacktrace
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          gradle \
+            -PappVersion="$VERSION" \
+            :shared:iosSimulatorArm64Test \
+            :shared:linkReleaseFrameworkIosArm64 \
+            --stacktrace
       - name: Archive iOS framework
         run: |
           ditto -c -k --sequesterRsrc --keepParent \

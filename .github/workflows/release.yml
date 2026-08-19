@@ -27,6 +27,12 @@ jobs:
 
           VERSION="${GITHUB_REF_NAME#v}"
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+
+          if (( ${#MAJOR} > 6 || ${#MINOR} > 2 || ${#PATCH} > 2 )); then
+            echo "Release version components are too large for the Android versionCode mapping." >&2
+            exit 1
+          fi
+
           MAJOR_DEC=$((10#$MAJOR))
           MINOR_DEC=$((10#$MINOR))
           PATCH_DEC=$((10#$PATCH))

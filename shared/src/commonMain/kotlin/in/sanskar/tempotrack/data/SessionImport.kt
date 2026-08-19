@@ -18,7 +18,6 @@ object SessionImporter {
     private val json = Json {
         ignoreUnknownKeys = true
         explicitNulls = false
-        exceptionsWithDebugInfo = false
     }
     private val serializer = ListSerializer(StopwatchSession.serializer())
 

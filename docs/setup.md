@@ -4,11 +4,28 @@
 
 - Git
 - JDK 17 or newer
-- Gradle 9.5.0 (the bootstrap scripts use a standard wrapper JAR if one is present, otherwise they delegate to an installed `gradle`)
+- Gradle 9.5.0
 - Android Studio compatible with AGP 9.3 for Android work
 - Android SDK Platform 37
 - A supported desktop OS for Compose Desktop packaging
-- macOS with Xcode for Kotlin/Native iOS framework builds
+- macOS with Xcode for Kotlin/Native iOS framework builds and iOS host verification
+
+## Gradle bootstrap state
+
+`gradle/wrapper/gradle-wrapper.properties` pins Gradle 9.5.0 and its binary distribution SHA-256. The standard binary `gradle-wrapper.jar` is not committed in the current repository state.
+
+Therefore:
+
+- if a trusted standard wrapper JAR is generated/added later, `gradlew`/`gradlew.bat` will use it and Gradle can validate the pinned distribution checksum;
+- while that JAR is absent, the bootstrap scripts require an installed **Gradle 9.5.0** and reject a different installed Gradle version instead of silently changing the toolchain.
+
+Generate the wrapper binary only from a trusted Gradle 9.5.0 installation:
+
+```bash
+gradle wrapper --gradle-version 9.5.0
+```
+
+Do not hand-create or copy an unverified wrapper binary.
 
 ## Clone
 
@@ -36,6 +53,8 @@ Windows:
 ```powershell
 .\gradlew.bat --version
 ```
+
+The command should report Gradle 9.5.0.
 
 ## Build shared tests
 
@@ -66,7 +85,7 @@ On macOS with Xcode installed:
 ./gradlew :shared:iosSimulatorArm64Test
 ```
 
-The framework exposes the shared `MainViewController()` entry point. See `docs/ios.md` for host-app wiring and the native export bridge requirement.
+The framework exposes the shared `MainViewController()` entry point. The iOS composition root includes native document-picker export and activity-sheet sharing. See [ios.md](ios.md) for host-app wiring and verification guidance.
 
 ## Local Android SDK path
 

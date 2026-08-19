@@ -45,14 +45,28 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
     var showShortcutHelp by remember { mutableStateOf(false) }
+    var saveFailed by remember { mutableStateOf(false) }
 
     fun update(next: AppPreferences) {
         onPreferencesChanged(next)
-        scope.launch { runCatching { repository.save(next) } }
+        saveFailed = false
+        scope.launch {
+            runCatching { repository.save(next) }
+                .onSuccess { saveFailed = false }
+                .onFailure { saveFailed = true }
+        }
     }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
         Text(stringResource(Res.string.settings_title), style = MaterialTheme.typography.headlineMedium)
+        if (saveFailed) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                stringResource(Res.string.settings_save_failed),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
         Spacer(Modifier.height(16.dp))
         Text(stringResource(Res.string.settings_appearance), style = MaterialTheme.typography.titleMedium)
 

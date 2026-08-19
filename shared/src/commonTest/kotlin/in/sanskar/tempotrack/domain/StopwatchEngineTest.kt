@@ -34,6 +34,22 @@ class StopwatchEngineTest {
     }
 
     @Test
+    fun elapsedTimeSaturatesInsteadOfWrappingNegative() {
+        val nearMaximum = StopwatchCheckpoint(
+            status = StopwatchStatus.RUNNING,
+            accumulatedNanos = Long.MAX_VALUE - 5L,
+            startedAtNanos = 100L,
+        )
+        val saturated = StopwatchEngine(
+            clock = FakeClock(now = 110L),
+            checkpoint = nearMaximum,
+        )
+
+        assertEquals(Long.MAX_VALUE, saturated.snapshot().elapsedNanos)
+        assertEquals(Long.MAX_VALUE, saturated.pause().elapsedNanos)
+    }
+
+    @Test
     fun lapsUseSplitAndCumulativeTime() {
         engine.start()
         clock.advanceSeconds(2)

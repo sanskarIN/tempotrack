@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import in.sanskar.tempotrack.data.ExportError
+import in.sanskar.tempotrack.data.ExportFileName
 import in.sanskar.tempotrack.data.Exporter
 import in.sanskar.tempotrack.data.ExportResult
 import java.io.File
@@ -21,7 +22,7 @@ class AndroidExporter(
         content: String,
     ): ExportResult = withContext(Dispatchers.IO) {
         runCatching {
-            val safeName = suggestedFileName.replace(Regex("[^A-Za-z0-9._-]"), "_")
+            val safeName = ExportFileName.sanitize(suggestedFileName)
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val values = ContentValues().apply {

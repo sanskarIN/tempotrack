@@ -29,6 +29,7 @@ import in.sanskar.tempotrack.resources.action_pause
 import in.sanskar.tempotrack.resources.action_reset
 import in.sanskar.tempotrack.resources.action_resume
 import in.sanskar.tempotrack.resources.action_start
+import in.sanskar.tempotrack.util.suspendResult
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -51,7 +52,7 @@ fun MiniStopwatch(
     }
 
     fun persist() {
-        scope.launch { runCatching { activeStopwatch.save(engine.checkpoint()) } }
+        scope.launch { suspendResult { activeStopwatch.save(engine.checkpoint()) } }
     }
 
     Column(Modifier.padding(12.dp)) {
@@ -97,7 +98,7 @@ fun MiniStopwatch(
                     OutlinedButton(
                         onClick = {
                             snapshot = engine.reset()
-                            scope.launch { runCatching { activeStopwatch.clear() } }
+                            scope.launch { suspendResult { activeStopwatch.clear() } }
                         },
                     ) { Text(stringResource(Res.string.action_reset)) }
                 }

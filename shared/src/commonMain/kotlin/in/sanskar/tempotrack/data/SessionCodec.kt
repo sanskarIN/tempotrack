@@ -22,7 +22,7 @@ object SessionCodec {
                 append(csv(session.name)).append(',')
                 append(session.createdAtEpochMillis).append(',')
                 append(csv(DurationFormatter.formatNanos(session.durationNanos))).append(',')
-                append(",,,")
+                append(",,")
                 appendLine()
             } else {
                 session.laps.forEach { lap ->

@@ -6,6 +6,10 @@ The format follows Keep a Changelog concepts and the project uses semantic versi
 
 ## [Unreleased]
 
+No unreleased changes are recorded after the 2.0.12 release-preparation freeze.
+
+## [2.0.12] - 2026-08-19
+
 ### Added
 
 - Production-oriented Kotlin/Compose Multiplatform project structure.
@@ -90,6 +94,7 @@ The format follows Keep a Changelog concepts and the project uses semantic versi
 - GitHub workflows use maintained Node 24-compatible action majors for checkout, Java/Python setup, Android setup, CodeQL, dependency review, artifact upload/download, and Gradle setup.
 - `gradle/actions/setup-gradle` stays on the v5 line because v6 introduces a separately licensed proprietary caching component; Dependabot ignores only `gradle/actions` 6.x while allowing later versions to be evaluated.
 - Dependabot no longer requests a repository label that does not exist.
+- Canonical application defaults are advanced to version 2.0.12 with Android development `versionCode` 20012.
 
 ### Fixed
 

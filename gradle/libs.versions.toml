@@ -5,6 +5,7 @@ composeMultiplatform = "1.11.0"
 coroutines = "1.11.0"
 serialization = "1.11.0"
 activityCompose = "1.13.0"
+ktlintPlugin = "14.2.0"
 
 androidCompileSdk = "37"
 androidMinSdk = "26"
@@ -24,3 +25,4 @@ androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintPlugin" }

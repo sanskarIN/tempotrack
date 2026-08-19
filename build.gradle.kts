@@ -6,6 +6,11 @@ plugins {
     alias(libs.plugins.androidMultiplatformLibrary) apply false
     alias(libs.plugins.composeMultiplatform) apply false
     alias(libs.plugins.composeCompiler) apply false
+    alias(libs.plugins.ktlint) apply false
+}
+
+subprojects {
+    apply(plugin = "org.jlleitschuh.gradle.ktlint")
 }
 
 tasks.register("quality") {
@@ -16,5 +21,8 @@ tasks.register("quality") {
         ":desktopApp:test",
         ":androidApp:testDebugUnitTest",
         ":androidApp:lintDebug",
+        ":shared:ktlintCheck",
+        ":desktopApp:ktlintCheck",
+        ":androidApp:ktlintCheck",
     )
 }

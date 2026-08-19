@@ -77,11 +77,12 @@ class AndroidShareService(
 
     private fun createUniqueShareFile(directory: File, safeName: String): File {
         val extension = safeName.substringAfterLast('.', missingDelimiterValue = "")
-        val suffix = extension.takeIf(String::isNotBlank)?.let { ".$it" } ?: ".tmp"
+        val suffix = extension.takeIf { it.isNotBlank() }?.let { ".$it" } ?: ".tmp"
         val stem = safeName
             .removeSuffix(suffix)
             .take(60)
             .ifBlank { "tempotrack-export" }
-        return File.createTempFile("$stem-", suffix, directory)
+        val prefix = "$stem-".let { if (it.length >= 3) it else "tt-$it" }
+        return File.createTempFile(prefix, suffix, directory)
     }
 }

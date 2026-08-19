@@ -1,0 +1,52 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.0"
+      - run: gradle :shared:allTests :androidApp:lintDebug :androidApp:assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tempotrack-android-debug
+          path: androidApp/build/outputs/apk/debug/*.apk
+
+  desktop:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.0"
+      - shell: bash
+        run: gradle :shared:allTests :desktopApp:packageDistributionForCurrentOS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tempotrack-desktop-${{ runner.os }}
+          path: desktopApp/build/compose/binaries/main/**

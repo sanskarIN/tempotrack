@@ -8,6 +8,7 @@ import in.sanskar.tempotrack.data.JsonActiveStopwatchRepository
 import in.sanskar.tempotrack.data.JsonPreferencesRepository
 import in.sanskar.tempotrack.data.JsonSessionRepository
 import in.sanskar.tempotrack.domain.MonotonicClock
+import in.sanskar.tempotrack.domain.StopwatchCheckpointRecovery
 import in.sanskar.tempotrack.domain.WallClock
 import in.sanskar.tempotrack.ui.TempoTrackApp
 import in.sanskar.tempotrack.ui.TempoTrackDependencies
@@ -19,10 +20,12 @@ class MainActivity : ComponentActivity() {
         val sessionsStorage = AndroidStringStorage(filesDir.resolve("sessions.json"))
         val preferencesStorage = AndroidStringStorage(filesDir.resolve("preferences.json"))
         val activeStorage = AndroidStringStorage(filesDir.resolve("active-stopwatch.json"))
+        val monotonicClock = MonotonicClock { SystemClock.elapsedRealtimeNanos() }
+        val wallClock = WallClock { System.currentTimeMillis() }
 
         val dependencies = TempoTrackDependencies(
-            monotonicClock = MonotonicClock { SystemClock.elapsedRealtimeNanos() },
-            wallClock = WallClock { System.currentTimeMillis() },
+            monotonicClock = monotonicClock,
+            wallClock = wallClock,
             sessions = JsonSessionRepository(sessionsStorage),
             preferences = JsonPreferencesRepository(preferencesStorage),
             activeStopwatch = JsonActiveStopwatchRepository(activeStorage),
@@ -30,6 +33,13 @@ class MainActivity : ComponentActivity() {
             platformName = "Android",
             versionName = BuildConfig.VERSION_NAME,
             shareService = AndroidShareService(this),
+            recoverCheckpoint = { checkpoint ->
+                StopwatchCheckpointRecovery.recoverSystemUptimeCheckpoint(
+                    checkpoint = checkpoint,
+                    currentMonotonicNanos = monotonicClock.nowNanos(),
+                    currentEpochMillis = wallClock.nowEpochMillis(),
+                )
+            },
         )
 
         setContent {

@@ -56,7 +56,10 @@ class JsonSessionRepository(
 
     override suspend fun delete(id: String) = mutex.withLock {
         if (id.isBlank()) return@withLock
-        persistUnlocked(loadUnlocked().filterNot { it.id == id })
+        val current = loadUnlocked()
+        val updated = current.filterNot { it.id == id }
+        if (updated.size == current.size) return@withLock
+        persistUnlocked(updated)
     }
 
     override suspend fun replaceAll(sessions: List<StopwatchSession>) = mutex.withLock {

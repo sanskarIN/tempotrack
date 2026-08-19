@@ -20,12 +20,24 @@ object SessionValidation {
             val expectedIndex = position + 1
             if (lap.index != expectedIndex) errors += "Lap indices must be consecutive starting at 1."
             if (lap.splitNanos < 0L) errors += "Lap split duration must not be negative."
-            if (lap.totalNanos < previousTotal) errors += "Lap totals must be monotonic."
-            if (lap.totalNanos > session.durationNanos) errors += "Lap total exceeds session duration."
-            if (lap.totalNanos - previousTotal != lap.splitNanos) {
-                errors += "Lap split does not match its cumulative total."
+            if (lap.totalNanos < 0L) errors += "Lap total duration must not be negative."
+
+            val cumulativeOrderIsValid = lap.totalNanos >= 0L && lap.totalNanos >= previousTotal
+            if (lap.totalNanos >= 0L && lap.totalNanos < previousTotal) {
+                errors += "Lap totals must be monotonic."
             }
-            previousTotal = lap.totalNanos
+            if (lap.totalNanos > session.durationNanos) errors += "Lap total exceeds session duration."
+
+            if (cumulativeOrderIsValid && lap.splitNanos >= 0L) {
+                val expectedSplit = lap.totalNanos - previousTotal
+                if (expectedSplit != lap.splitNanos) {
+                    errors += "Lap split does not match its cumulative total."
+                }
+            }
+
+            if (lap.totalNanos >= 0L) {
+                previousTotal = lap.totalNanos
+            }
         }
 
         return errors.distinct()

@@ -71,6 +71,9 @@ fun TempoTrackApp(
         if (dependencies.miniStopwatchSupported) {
             dependencies.setMiniStopwatchVisible(loadedPreferences.miniStopwatchVisible)
         }
+        if (dependencies.keyboardShortcutsSupported) {
+            dependencies.setKeyboardShortcutsEnabled(loadedPreferences.keyboardShortcutsEnabled)
+        }
         val checkpoint = runCatching { dependencies.activeStopwatch.load() }.getOrNull()
         engine = StopwatchEngine(dependencies.monotonicClock, checkpoint ?: StopwatchCheckpoint())
         onEngineReady(requireNotNull(engine))
@@ -182,6 +185,7 @@ private fun ScreenContent(
             miniStopwatchSupported = dependencies.miniStopwatchSupported,
             setMiniStopwatchVisible = dependencies.setMiniStopwatchVisible,
             keyboardShortcutsSupported = dependencies.keyboardShortcutsSupported,
+            setKeyboardShortcutsEnabled = dependencies.setKeyboardShortcutsEnabled,
         )
 
         Destination.ABOUT -> AboutScreen(

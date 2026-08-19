@@ -38,6 +38,7 @@ import in.sanskar.tempotrack.data.SessionRepository
 import in.sanskar.tempotrack.domain.DurationFormatter
 import in.sanskar.tempotrack.domain.Lap
 import in.sanskar.tempotrack.domain.LapStatistics
+import in.sanskar.tempotrack.domain.SessionIdGenerator
 import in.sanskar.tempotrack.domain.SessionValidation
 import in.sanskar.tempotrack.domain.StopwatchEngine
 import in.sanskar.tempotrack.domain.StopwatchSession
@@ -207,7 +208,10 @@ fun StopwatchScreen(
                         val now = wallClock.nowEpochMillis()
                         val safeName = sessionName.trim().ifEmpty { "$sessionDefaultPrefix $now" }
                         val session = StopwatchSession(
-                            id = "$now-${finalSnapshot.elapsedNanos}",
+                            id = SessionIdGenerator.generate(
+                                createdAtEpochMillis = now,
+                                durationNanos = finalSnapshot.elapsedNanos,
+                            ),
                             name = safeName,
                             createdAtEpochMillis = now,
                             durationNanos = finalSnapshot.elapsedNanos,

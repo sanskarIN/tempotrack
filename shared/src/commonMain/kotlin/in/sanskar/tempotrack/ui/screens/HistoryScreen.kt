@@ -58,8 +58,10 @@ fun HistoryScreen(
     var lastDeleted by remember { mutableStateOf<StopwatchSession?>(null) }
     var showImportDialog by remember { mutableStateOf(false) }
     var importJson by remember { mutableStateOf("") }
+    var importError by remember { mutableStateOf<String?>(null) }
     var renamingSession by remember { mutableStateOf<StopwatchSession?>(null) }
     var renameText by remember { mutableStateOf("") }
+    var renameError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val readFailedMessage = stringResource(Res.string.history_read_failed)
     val restoreDeletedFailedMessage = stringResource(Res.string.history_restore_deleted_failed)
@@ -131,6 +133,7 @@ fun HistoryScreen(
             modifier = Modifier.fillMaxWidth(),
             onClick = {
                 importJson = ""
+                importError = null
                 showImportDialog = true
             },
         ) {
@@ -181,6 +184,7 @@ fun HistoryScreen(
                         onRename = {
                             renamingSession = session
                             renameText = session.name
+                            renameError = null
                         },
                         onDelete = {
                             scope.launch {
@@ -200,7 +204,10 @@ fun HistoryScreen(
 
     if (showImportDialog) {
         AlertDialog(
-            onDismissRequest = { showImportDialog = false },
+            onDismissRequest = {
+                showImportDialog = false
+                importError = null
+            },
             title = { Text(stringResource(Res.string.history_restore_dialog_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -209,12 +216,23 @@ fun HistoryScreen(
                         modifier = Modifier.fillMaxWidth(),
                         value = importJson,
                         onValueChange = {
-                            if (it.length <= SessionImporter.MAX_IMPORT_CHARACTERS) importJson = it
+                            if (it.length <= SessionImporter.MAX_IMPORT_CHARACTERS) {
+                                importJson = it
+                                importError = null
+                            }
                         },
                         minLines = 6,
                         maxLines = 12,
+                        isError = importError != null,
                         label = { Text(stringResource(Res.string.history_backup_json_label)) },
                     )
+                    importError?.let { error ->
+                        Text(
+                            error,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
                 }
             },
             confirmButton = {
@@ -223,7 +241,7 @@ fun HistoryScreen(
                     onClick = {
                         when (val result = SessionImporter.fromJson(importJson)) {
                             is SessionImportResult.Failure -> {
-                                scope.launch { message = importFailureMessage(result) }
+                                scope.launch { importError = importFailureMessage(result) }
                             }
 
                             is SessionImportResult.Success -> {
@@ -232,6 +250,7 @@ fun HistoryScreen(
                                         .onSuccess {
                                             lastDeleted = null
                                             importJson = ""
+                                            importError = null
                                             showImportDialog = false
                                             message = getString(
                                                 Res.string.history_restored_count,
@@ -239,7 +258,7 @@ fun HistoryScreen(
                                             )
                                             reload()
                                         }
-                                        .onFailure { message = restoreFailedMessage }
+                                        .onFailure { importError = restoreFailedMessage }
                                 }
                             }
                         }
@@ -247,7 +266,12 @@ fun HistoryScreen(
                 ) { Text(stringResource(Res.string.history_replace)) }
             },
             dismissButton = {
-                TextButton(onClick = { showImportDialog = false }) {
+                TextButton(
+                    onClick = {
+                        showImportDialog = false
+                        importError = null
+                    },
+                ) {
                     Text(stringResource(Res.string.action_cancel))
                 }
             },
@@ -256,16 +280,32 @@ fun HistoryScreen(
 
     renamingSession?.let { session ->
         AlertDialog(
-            onDismissRequest = { renamingSession = null },
+            onDismissRequest = {
+                renamingSession = null
+                renameError = null
+            },
             title = { Text(stringResource(Res.string.history_rename_title)) },
             text = {
-                OutlinedTextField(
-                    modifier = Modifier.fillMaxWidth(),
-                    value = renameText,
-                    onValueChange = { renameText = it.take(SessionValidation.MAX_SESSION_NAME_LENGTH) },
-                    singleLine = true,
-                    label = { Text(stringResource(Res.string.history_rename_label)) },
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = renameText,
+                        onValueChange = {
+                            renameText = it.take(SessionValidation.MAX_SESSION_NAME_LENGTH)
+                            renameError = null
+                        },
+                        singleLine = true,
+                        isError = renameError != null,
+                        label = { Text(stringResource(Res.string.history_rename_label)) },
+                    )
+                    renameError?.let { error ->
+                        Text(
+                            error,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
             },
             confirmButton = {
                 Button(
@@ -276,20 +316,26 @@ fun HistoryScreen(
                             try {
                                 if (sessions.rename(session.id, requestedName)) {
                                     renamingSession = null
+                                    renameError = null
                                     message = getString(Res.string.history_renamed, requestedName)
                                     reload()
                                 } else {
-                                    message = renameFailedMessage
+                                    renameError = renameFailedMessage
                                 }
                             } catch (_: IllegalArgumentException) {
-                                message = renameFailedMessage
+                                renameError = renameFailedMessage
                             }
                         }
                     },
                 ) { Text(stringResource(Res.string.action_save)) }
             },
             dismissButton = {
-                TextButton(onClick = { renamingSession = null }) {
+                TextButton(
+                    onClick = {
+                        renamingSession = null
+                        renameError = null
+                    },
+                ) {
                     Text(stringResource(Res.string.action_cancel))
                 }
             },

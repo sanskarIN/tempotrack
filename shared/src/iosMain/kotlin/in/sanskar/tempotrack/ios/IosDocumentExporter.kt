@@ -61,6 +61,7 @@ internal class IosDocumentExporter(
         suspendCancellableCoroutine { continuation ->
             val picker = UIDocumentPickerViewController(
                 forExportingURLs = listOf(file.url),
+                asCopy = true,
             )
             picker.shouldShowFileExtensions = true
 

@@ -24,6 +24,9 @@
 - Fastest, slowest and average lap statistics with recorded/fastest/slowest sorting.
 - Named, searchable sessions stored locally, with rename and undo-delete flows.
 - CSV and JSON export plus validated JSON history restore.
+- Android JSON/CSV system sharing through a restricted `FileProvider` cache path.
+- Desktop native save-file chooser with explicit cancellation handling.
+- Bounded shared export-filename sanitization for platform file operations.
 - Versioned local session, preference, and active-stopwatch storage with legacy migration.
 - Persistent active-stopwatch checkpoints and Desktop mini-stopwatch visibility.
 - Light, dark and system themes.
@@ -33,12 +36,12 @@
 - Android and Desktop applications with shared Kotlin/Compose UI and domain logic.
 - Kotlin/Native iOS framework targets and a Compose `UIViewController` entry point for host integration.
 - Desktop floating mini-stopwatch support.
-- Desktop keyboard shortcuts: Space start/pause/resume, L lap, R reset, with in-app shortcut help.
+- Desktop keyboard shortcuts: Space start/pause/resume, L lap, R reset, with in-app shortcut help and a persistent enable/disable setting.
 - No account, ads, analytics SDK, or required network connection.
 
 ## Screenshots
 
-Real release screenshots will replace these placeholders once the first tagged build is captured on each supported platform.
+Real release screenshots will replace these placeholders once verified tagged builds are captured on the supported primary platforms.
 
 | Android | Desktop |
 |---|---|
@@ -57,11 +60,10 @@ Real release screenshots will replace these placeholders once the first tagged b
 - Kotlin 2.4.10
 - Compose Multiplatform 1.11.0
 - Android Gradle Plugin 9.3.0
+- AndroidX Core 1.19.0
 - Gradle 9.5.0
 - Kotlinx Coroutines 1.11.0
 - Kotlinx Serialization 1.11.0
-
-The version choices follow the current stable Kotlin/Compose/Android toolchain available when this repository was implemented.
 
 ## Quick start
 
@@ -109,12 +111,18 @@ See [docs/setup.md](docs/setup.md) for full setup instructions.
 TempoTrack uses a modular-monolith structure:
 
 - `shared/` — domain model, versioned storage contracts/codecs, serialization, shared Compose UI/resources, tests, and iOS adapters.
-- `androidApp/` — Android entry point, Android monotonic clock, atomic private-file storage, and MediaStore/file export.
-- `desktopApp/` — Desktop entry point, atomic JVM storage/export, keyboard shortcuts, and mini-window integration.
+- `androidApp/` — Android entry point, Android monotonic clock, atomic private-file storage, MediaStore export, and secure operating-system sharing.
+- `desktopApp/` — Desktop entry point, atomic JVM storage, native export destination selection, keyboard shortcuts, and mini-window integration.
 
 The stopwatch engine never derives elapsed duration from the wall clock. A `MonotonicClock` is injected so elapsed-time behavior can be tested deterministically.
 
 See [docs/architecture.md](docs/architecture.md) and [docs/adr/0001-monotonic-time.md](docs/adr/0001-monotonic-time.md).
+
+## Data portability
+
+History can be exported as JSON or CSV. JSON exports can be restored after validation and explicit replacement confirmation. On Android, the same JSON/CSV payloads can be sent to the system share sheet; TempoTrack grants temporary read access only to the selected content URI. Desktop export opens the platform file chooser so the destination remains under user control.
+
+The internal persistence format is independently versioned and migrated; portable JSON exports remain plain session lists so backups are not coupled to the internal storage envelope.
 
 ## Testing
 
@@ -142,7 +150,7 @@ See [docs/release.md](docs/release.md).
 
 ## Privacy and security
 
-TempoTrack is local-first. The application includes no analytics, ads, authentication service, or app-managed cloud synchronization. Export only happens after an explicit user action. Android platform backup/device-transfer behavior is documented separately because it is controlled by the operating system.
+TempoTrack is local-first. The application includes no analytics, ads, authentication service, or app-managed cloud synchronization. Export and sharing happen only after explicit user actions. Android sharing uses an app-cache file exposed through a non-exported `FileProvider` with temporary read permission. Android platform backup/device-transfer behavior is documented separately because it is controlled by the operating system.
 
 Read [PRIVACY.md](PRIVACY.md) and [SECURITY.md](SECURITY.md).
 

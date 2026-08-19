@@ -61,6 +61,7 @@ import in.sanskar.tempotrack.resources.settings_theme_system
 import in.sanskar.tempotrack.resources.settings_title
 import in.sanskar.tempotrack.resources.settings_updates
 import in.sanskar.tempotrack.resources.settings_updates_summary
+import in.sanskar.tempotrack.util.suspendResult
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -83,7 +84,7 @@ fun SettingsScreen(
         onPreferencesChanged(next)
         saveFailed = false
         scope.launch {
-            runCatching { repository.save(next) }
+            suspendResult { repository.save(next) }
                 .onSuccess { saveFailed = false }
                 .onFailure { saveFailed = true }
         }

@@ -42,3 +42,20 @@ jobs:
           gradle-version: "9.5.0"
       - name: Test, lint and build Android
         run: gradle :androidApp:ktlintCheck :androidApp:testDebugUnitTest :androidApp:lintDebug :androidApp:assembleDebug --stacktrace
+
+  ios-shared:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.0"
+      - name: Compile iOS simulator framework
+        run: gradle :shared:linkDebugFrameworkIosSimulatorArm64 --stacktrace
+      - name: Test iOS simulator target
+        run: gradle :shared:iosSimulatorArm64Test --stacktrace

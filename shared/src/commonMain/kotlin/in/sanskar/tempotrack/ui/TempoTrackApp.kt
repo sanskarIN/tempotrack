@@ -31,11 +31,18 @@ import in.sanskar.tempotrack.ui.screens.OnboardingScreen
 import in.sanskar.tempotrack.ui.screens.SettingsScreen
 import in.sanskar.tempotrack.ui.screens.StopwatchScreen
 
-private enum class Destination(val label: String, val glyph: String) {
-    STOPWATCH("Stopwatch", "⏱"),
-    HISTORY("History", "◷"),
-    SETTINGS("Settings", "⚙"),
-    ABOUT("About", "ⓘ"),
+private enum class Destination(val glyph: String) {
+    STOPWATCH("⏱"),
+    HISTORY("◷"),
+    SETTINGS("⚙"),
+    ABOUT("ⓘ"),
+}
+
+private fun Destination.label(strings: TempoTrackStrings): String = when (this) {
+    Destination.STOPWATCH -> strings.stopwatch
+    Destination.HISTORY -> strings.history
+    Destination.SETTINGS -> strings.settings
+    Destination.ABOUT -> strings.about
 }
 
 @Composable
@@ -48,6 +55,7 @@ fun TempoTrackApp(
     var preferences by remember { mutableStateOf(AppPreferences()) }
     var engine by remember { mutableStateOf<StopwatchEngine?>(null) }
     var destination by remember { mutableStateOf(Destination.STOPWATCH) }
+    val strings = dependencies.strings
 
     LaunchedEffect(dependencies) {
         preferences = runCatching { dependencies.preferences.load() }.getOrDefault(AppPreferences())
@@ -72,6 +80,7 @@ fun TempoTrackApp(
                 },
                 onPersist = { next -> runCatching { dependencies.preferences.save(next) } },
                 preferences = preferences,
+                strings = strings,
             )
             return@TempoTrackTheme
         }
@@ -87,7 +96,7 @@ fun TempoTrackApp(
                                 selected = destination == item,
                                 onClick = { destination = item },
                                 icon = { Text(item.glyph) },
-                                label = { Text(item.label) },
+                                label = { Text(item.label(strings)) },
                             )
                         }
                     }
@@ -110,7 +119,7 @@ fun TempoTrackApp(
                                     selected = destination == item,
                                     onClick = { destination = item },
                                     icon = { Text(item.glyph) },
-                                    label = { Text(item.label) },
+                                    label = { Text(item.label(strings)) },
                                 )
                             }
                         }
@@ -139,6 +148,8 @@ private fun ScreenContent(
     preferences: AppPreferences,
     onPreferencesChanged: (AppPreferences) -> Unit,
 ) {
+    val strings = dependencies.strings
+
     when (destination) {
         Destination.STOPWATCH -> StopwatchScreen(
             engine = engine,
@@ -146,11 +157,13 @@ private fun ScreenContent(
             sessions = dependencies.sessions,
             activeStopwatch = dependencies.activeStopwatch,
             largeControls = preferences.largeControls,
+            strings = strings,
         )
 
         Destination.HISTORY -> HistoryScreen(
             sessions = dependencies.sessions,
             exporter = dependencies.exporter,
+            strings = strings,
         )
 
         Destination.SETTINGS -> SettingsScreen(
@@ -159,11 +172,13 @@ private fun ScreenContent(
             onPreferencesChanged = onPreferencesChanged,
             miniStopwatchSupported = dependencies.miniStopwatchSupported,
             setMiniStopwatchVisible = dependencies.setMiniStopwatchVisible,
+            strings = strings,
         )
 
         Destination.ABOUT -> AboutScreen(
             platformName = dependencies.platformName,
             versionName = dependencies.versionName,
+            strings = strings,
         )
     }
 }

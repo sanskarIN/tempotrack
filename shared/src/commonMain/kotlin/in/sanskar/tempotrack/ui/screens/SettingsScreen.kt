@@ -44,7 +44,6 @@ fun SettingsScreen(
 ) {
     val scope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
-    var miniVisible by remember { mutableStateOf(false) }
     var showShortcutHelp by remember { mutableStateOf(false) }
 
     fun update(next: AppPreferences) {
@@ -94,9 +93,10 @@ fun SettingsScreen(
             ToggleRow(
                 title = stringResource(Res.string.settings_mini_stopwatch),
                 subtitle = stringResource(Res.string.settings_mini_stopwatch_summary),
-                checked = miniVisible,
+                checked = preferences.miniStopwatchVisible,
                 onCheckedChange = {
-                    miniVisible = it
+                    val next = preferences.copy(miniStopwatchVisible = it)
+                    update(next)
                     setMiniStopwatchVisible(it)
                 },
             )

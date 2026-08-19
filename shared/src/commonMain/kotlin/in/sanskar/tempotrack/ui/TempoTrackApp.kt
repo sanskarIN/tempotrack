@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import in.sanskar.tempotrack.data.AppPreferences
 import in.sanskar.tempotrack.domain.StopwatchCheckpoint
 import in.sanskar.tempotrack.domain.StopwatchEngine
+import in.sanskar.tempotrack.domain.StopwatchStatus
 import in.sanskar.tempotrack.resources.Res
 import in.sanskar.tempotrack.resources.nav_about
 import in.sanskar.tempotrack.resources.nav_history
@@ -36,6 +37,8 @@ import in.sanskar.tempotrack.ui.screens.OnboardingScreen
 import in.sanskar.tempotrack.ui.screens.SettingsScreen
 import in.sanskar.tempotrack.ui.screens.StopwatchScreen
 import in.sanskar.tempotrack.util.suspendResult
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import org.jetbrains.compose.resources.stringResource
 
 private val WIDE_LAYOUT_BREAKPOINT = 840.dp
@@ -88,6 +91,20 @@ fun TempoTrackApp(
         )
         onEngineReady(requireNotNull(engine))
         loaded = true
+    }
+
+    LaunchedEffect(engine, dependencies.runningCheckpointHeartbeatMillis) {
+        val activeEngine = engine ?: return@LaunchedEffect
+        val intervalMillis = dependencies.runningCheckpointHeartbeatMillis
+            ?.takeIf { it > 0L }
+            ?: return@LaunchedEffect
+
+        while (isActive) {
+            delay(intervalMillis)
+            if (activeEngine.snapshot().status == StopwatchStatus.RUNNING) {
+                suspendResult { dependencies.activeStopwatch.save(activeEngine.checkpoint()) }
+            }
+        }
     }
 
     TempoTrackTheme(preference = preferences.theme) {

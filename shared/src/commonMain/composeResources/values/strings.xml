@@ -47,6 +47,11 @@
     <string name="history_search">Search sessions</string>
     <string name="history_export_json">Export JSON</string>
     <string name="history_export_csv">Export CSV</string>
+    <string name="history_share_json">Share JSON</string>
+    <string name="history_share_csv">Share CSV</string>
+    <string name="history_share_started">Share sheet opened.</string>
+    <string name="history_share_failed">Could not prepare this file for sharing.</string>
+    <string name="history_share_unavailable">Sharing is not available on this platform host.</string>
     <string name="history_restore_json">Restore from JSON backup</string>
     <string name="history_read_failed">Could not read saved sessions.</string>
     <string name="history_undo_delete">Undo delete “%1$s”</string>

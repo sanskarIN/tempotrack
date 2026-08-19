@@ -51,3 +51,27 @@ jobs:
         with:
           name: tempotrack-desktop-${{ runner.os }}
           path: desktopApp/build/compose/binaries/main/**
+
+  ios-framework:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.0"
+      - name: Verify and link iOS framework
+        run: gradle :shared:iosSimulatorArm64Test :shared:linkReleaseFrameworkIosArm64 --stacktrace
+      - name: Archive iOS framework
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            shared/build/bin/iosArm64/releaseFramework/TempoTrackShared.framework \
+            tempotrack-ios-arm64-framework.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tempotrack-ios-arm64-framework
+          path: tempotrack-ios-arm64-framework.zip

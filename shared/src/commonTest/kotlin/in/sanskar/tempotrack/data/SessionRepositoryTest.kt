@@ -24,6 +24,20 @@ class SessionRepositoryTest {
     }
 
     @Test
+    fun identicalUpsertDoesNotRewriteStorage() = runTest {
+        val storage = InMemoryStringStorage()
+        val repository = JsonSessionRepository(storage)
+        val saved = session(id = "one", createdAt = 10L)
+        repository.upsert(saved)
+        val writesAfterSave = storage.writeCount
+
+        repository.upsert(saved)
+
+        assertEquals(writesAfterSave, storage.writeCount)
+        assertEquals(listOf(saved), repository.all())
+    }
+
+    @Test
     fun concurrentUpsertsPreserveAllSessionsAndSerializeWrites() = runTest {
         val storage = ConcurrentWriteDetectingStorage()
         val repository = JsonSessionRepository(storage)

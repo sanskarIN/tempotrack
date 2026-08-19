@@ -100,6 +100,7 @@ Before Gradle dependency resolution, run:
 
 ```bash
 python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
 
@@ -110,6 +111,8 @@ package `in`.sanskar.tempotrack
 ```
 
 The compiled package remains `in.sanskar.tempotrack`.
+
+The repository-reference guard uses `git ls-files`, so it must run from a real Git checkout. It verifies that every tracked path is documented exactly in [`repository-reference.md`](repository-reference.md).
 
 ## Verify Gradle launcher
 
@@ -247,6 +250,7 @@ Once required SDK/tooling is available:
 
 ```bash
 python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
 ./gradlew quality :androidApp:assembleDebug :desktopApp:packageDistributionForCurrentOS
 python tools/check_markdown_links.py
 ```

@@ -18,7 +18,7 @@ class AndroidStringStorage(
         file.parentFile?.mkdirs()
         val target = file.toPath()
         val temp = File(file.parentFile, "${file.name}.tmp").toPath()
-        Files.writeString(temp, content)
+        Files.write(temp, content.toByteArray(Charsets.UTF_8))
         runCatching {
             Files.move(
                 temp,

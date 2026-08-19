@@ -84,16 +84,20 @@ On macOS with Xcode:
 ./gradlew :shared:iosSimulatorArm64Test
 ```
 
+The `iosTest` source set includes temporary-export-file tests that exercise Foundation directory/file creation, filename sanitization, unique operation directories, and cleanup. This gives the simulator test target direct compilation coverage for the native staging boundary.
+
 The release workflow additionally links the arm64 release framework.
 
 Manual iOS host checks should verify that:
 
+- History Export JSON and Export CSV present the native document picker;
+- choosing a document destination produces a readable UTF-8 file with the sanitized suggested filename;
+- cancelling the document picker returns the explicit cancellation result and does not mutate history;
 - History Share JSON and Share CSV present the native activity sheet;
-- the temporary file has the sanitized suggested filename and valid UTF-8 JSON/CSV contents;
 - an iPad/regular-width activity sheet has a valid popover anchor and does not crash during presentation;
 - dismissing/cancelling the activity sheet does not mutate history;
-- the About screen reports the containing app's `CFBundleShortVersionString`;
-- direct Export JSON/CSV continues to report unavailable until a native document-picker exporter is implemented rather than claiming an app-private file is a user-selected export.
+- temporary operation directories are removed after document-picker or activity-sheet completion paths;
+- the About screen reports the containing app's `CFBundleShortVersionString`.
 
 ## Large-history responsiveness
 

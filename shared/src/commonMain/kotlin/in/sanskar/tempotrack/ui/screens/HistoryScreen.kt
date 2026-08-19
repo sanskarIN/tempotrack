@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import in.sanskar.tempotrack.data.Exporter
 import in.sanskar.tempotrack.data.ExportResult
 import in.sanskar.tempotrack.data.SessionCodec
+import in.sanskar.tempotrack.data.SessionImportError
 import in.sanskar.tempotrack.data.SessionImportResult
 import in.sanskar.tempotrack.data.SessionImporter
 import in.sanskar.tempotrack.data.SessionRepository
@@ -220,7 +221,10 @@ fun HistoryScreen(
                     enabled = importJson.isNotBlank(),
                     onClick = {
                         when (val result = SessionImporter.fromJson(importJson)) {
-                            is SessionImportResult.Failure -> message = result.userMessage
+                            is SessionImportResult.Failure -> {
+                                scope.launch { message = importFailureMessage(result) }
+                            }
+
                             is SessionImportResult.Success -> {
                                 scope.launch {
                                     runCatching { sessions.replaceAll(result.sessions) }
@@ -290,6 +294,19 @@ fun HistoryScreen(
             },
         )
     }
+}
+
+private suspend fun importFailureMessage(failure: SessionImportResult.Failure): String = when (failure.error) {
+    SessionImportError.EMPTY_BACKUP -> getString(Res.string.history_import_empty)
+    SessionImportError.BACKUP_TOO_LARGE -> getString(Res.string.history_import_too_large)
+    SessionImportError.INVALID_JSON -> getString(Res.string.history_import_invalid_json)
+    SessionImportError.INVALID_DATA -> getString(Res.string.history_import_invalid_data)
+    SessionImportError.TOO_MANY_SESSIONS -> getString(Res.string.history_import_too_many_sessions)
+    SessionImportError.DUPLICATE_SESSION_IDS -> getString(Res.string.history_import_duplicate_ids)
+    SessionImportError.INVALID_SESSION -> getString(
+        Res.string.history_import_invalid_session,
+        (failure.invalidSessionNumber ?: 0).toString(),
+    )
 }
 
 private suspend fun export(

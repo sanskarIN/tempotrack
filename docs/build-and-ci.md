@@ -78,7 +78,7 @@ appVersion=2.0.12
 appVersionCode=20012
 ```
 
-Tagged release jobs still override `appVersion` from the semantic tag and Android `appVersionCode` from the GitHub Actions run number.
+Tagged release jobs override `appVersion` from the semantic tag and derive Android `appVersionCode` as `MAJOR * 10000 + MINOR * 100 + PATCH`, so `v2.0.12` maps to `20012` and remains aligned with the source default.
 
 ## Wrapper/bootstrap behavior
 
@@ -335,7 +335,7 @@ Review generated updates like any other dependency change; green compilation is 
 ^v[0-9]+\.[0-9]+\.[0-9]+$
 ```
 
-Only `vMAJOR.MINOR.PATCH` proceeds.
+Only `vMAJOR.MINOR.PATCH` proceeds. The validation job also checks the Android semantic-to-versionCode mapping before any platform build starts.
 
 Release concurrency is per tag and does **not** cancel an in-progress release.
 
@@ -348,10 +348,12 @@ Runs on Ubuntu.
 3. Decode keystore into `$RUNNER_TEMP/tempotrack-release.jks` with restrictive permissions.
 4. Require key/password/alias secrets only on the build step.
 5. Derive `appVersion` from tag without leading `v`.
-6. Derive `appVersionCode` from `GITHUB_RUN_NUMBER`.
+6. Derive `appVersionCode` as `MAJOR * 10000 + MINOR * 100 + PATCH`; `v2.0.12` therefore produces `20012`.
 7. Run shared tests, Android release lint, Android unit tests, signed APK assembly, and AAB bundle.
 8. Verify at least one APK and AAB exist.
 9. Upload Android artifact bundle.
+
+The mapping requires MINOR/PATCH values no greater than 99 and a final Android versionCode in `1..2100000000`. This makes release ordering deterministic and prevents a low workflow run number from replacing a higher source/package versionCode.
 
 The release job fails before publishing if required production signing secrets are absent.
 
@@ -416,7 +418,7 @@ Do not put these values into:
 
 Development defaults live in `gradle.properties`. For the 2.0.12 release line they are `appVersion=2.0.12` and `appVersionCode=20012`.
 
-Release jobs override `appVersion` from the semantic tag and Android `versionCode` from the workflow run number. For the intended 2.0.12 release tag, use `v2.0.12` only after the release gate is actually green.
+Release jobs override `appVersion` from the semantic tag and derive Android `versionCode` from the same semantic components. For the intended 2.0.12 release tag, `v2.0.12` therefore remains versionName `2.0.12` / versionCode `20012`.
 
 For a release rehearsal or real release, confirm that generated application metadata and intended tag are consistent before public publishing.
 

@@ -17,6 +17,7 @@ interface Exporter {
 enum class ExportError {
     WRITE_FAILED,
     PLATFORM_EXPORT_UNAVAILABLE,
+    USER_CANCELLED,
 }
 
 sealed interface ExportResult {

@@ -11,6 +11,14 @@ plugins {
 
 subprojects {
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
+
+    configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
+        filter {
+            // Compose Multiplatform attaches generated resource Kotlin sources to source sets.
+            // Generated code is not owned by this repository and must not fail style checks.
+            exclude("**/generated/**")
+        }
+    }
 }
 
 tasks.register("quality") {

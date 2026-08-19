@@ -49,6 +49,20 @@ class StopwatchEngineTest {
     }
 
     @Test
+    fun repeatedTimerSnapshotsReuseUnchangedLapList() {
+        engine.start()
+        clock.advanceSeconds(1)
+        engine.lap()
+
+        val first = engine.snapshot()
+        clock.advanceSeconds(1)
+        val second = engine.snapshot()
+
+        assertTrue(first.laps === second.laps)
+        assertEquals(1, second.laps.size)
+    }
+
+    @Test
     fun staleRunningCheckpointNeverCreatesNegativeDuration() {
         val stale = StopwatchCheckpoint(
             status = StopwatchStatus.RUNNING,

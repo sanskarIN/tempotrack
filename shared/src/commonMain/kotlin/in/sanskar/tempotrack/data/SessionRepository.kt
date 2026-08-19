@@ -30,11 +30,13 @@ class JsonSessionRepository(
 
     override suspend fun upsert(session: StopwatchSession) = mutex.withLock {
         SessionValidation.requireValid(session)
-        val updated = loadUnlocked()
+        val current = loadUnlocked()
+        val updated = current
             .filterNot { it.id == session.id }
             .plus(session)
             .sortedByDescending(StopwatchSession::createdAtEpochMillis)
         require(updated.size <= MAX_STORED_SESSIONS) { "Too many saved sessions." }
+        if (updated == current) return@withLock
         persistUnlocked(updated)
     }
 

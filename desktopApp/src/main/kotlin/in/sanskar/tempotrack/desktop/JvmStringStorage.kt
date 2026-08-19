@@ -1,7 +1,9 @@
 package in.sanskar.tempotrack.desktop
 
 import in.sanskar.tempotrack.data.StringStorage
+import java.io.IOException
 import java.nio.charset.StandardCharsets
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -16,24 +18,30 @@ class JvmStringStorage(
     }
 
     override suspend fun write(content: String) = withContext(Dispatchers.IO) {
-        path.parent?.let(Files::createDirectories)
+        val parent = path.parent ?: throw IOException("Storage path must have a parent directory.")
+        Files.createDirectories(parent)
+        if (!Files.isDirectory(parent)) {
+            throw IOException("Storage parent path is not a directory.")
+        }
+
         val temp = path.resolveSibling("${path.fileName}.tmp")
         Files.writeString(temp, content, StandardCharsets.UTF_8)
-        runCatching {
+        try {
             Files.move(
                 temp,
                 path,
                 StandardCopyOption.REPLACE_EXISTING,
                 StandardCopyOption.ATOMIC_MOVE,
             )
-        }.recoverCatching {
+        } catch (_: AtomicMoveNotSupportedException) {
             Files.move(temp, path, StandardCopyOption.REPLACE_EXISTING)
-        }.getOrThrow()
+        }
         Unit
     }
 
     override suspend fun clear() = withContext(Dispatchers.IO) {
         Files.deleteIfExists(path)
+        Files.deleteIfExists(path.resolveSibling("${path.fileName}.tmp"))
         Unit
     }
 }

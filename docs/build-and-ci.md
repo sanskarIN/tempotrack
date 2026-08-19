@@ -71,12 +71,14 @@ This is the primary local cross-module verification task but it is not a substit
 - AndroidX;
 - non-transitive Android R classes.
 
-The file also contains application version metadata:
+The file also contains the version 2.0.12 application defaults:
 
 ```properties
-appVersion=1.0.0
-appVersionCode=1
+appVersion=2.0.12
+appVersionCode=20012
 ```
+
+Tagged release jobs still override `appVersion` from the semantic tag and Android `appVersionCode` from the GitHub Actions run number.
 
 ## Wrapper/bootstrap behavior
 
@@ -412,7 +414,9 @@ Do not put these values into:
 
 ## Version/tag relationship
 
-Development defaults live in `gradle.properties`. Release jobs override `appVersion` from semantic tag and Android versionCode from workflow run number.
+Development defaults live in `gradle.properties`. For the 2.0.12 release line they are `appVersion=2.0.12` and `appVersionCode=20012`.
+
+Release jobs override `appVersion` from the semantic tag and Android `versionCode` from the workflow run number. For the intended 2.0.12 release tag, use `v2.0.12` only after the release gate is actually green.
 
 For a release rehearsal or real release, confirm that generated application metadata and intended tag are consistent before public publishing.
 

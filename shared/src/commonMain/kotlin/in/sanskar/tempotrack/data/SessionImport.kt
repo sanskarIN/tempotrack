@@ -6,9 +6,23 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 
+enum class SessionImportError {
+    EMPTY_BACKUP,
+    BACKUP_TOO_LARGE,
+    INVALID_JSON,
+    INVALID_DATA,
+    TOO_MANY_SESSIONS,
+    DUPLICATE_SESSION_IDS,
+    INVALID_SESSION,
+}
+
 sealed interface SessionImportResult {
     data class Success(val sessions: List<StopwatchSession>) : SessionImportResult
-    data class Failure(val userMessage: String) : SessionImportResult
+
+    data class Failure(
+        val error: SessionImportError,
+        val invalidSessionNumber: Int? = null,
+    ) : SessionImportResult
 }
 
 object SessionImporter {
@@ -23,32 +37,32 @@ object SessionImporter {
 
     fun fromJson(content: String): SessionImportResult {
         if (content.isBlank()) {
-            return SessionImportResult.Failure("The selected backup is empty.")
+            return SessionImportResult.Failure(SessionImportError.EMPTY_BACKUP)
         }
         if (content.length > MAX_IMPORT_CHARACTERS) {
-            return SessionImportResult.Failure("The selected backup is too large to import safely.")
+            return SessionImportResult.Failure(SessionImportError.BACKUP_TOO_LARGE)
         }
 
         val sessions = try {
             json.decodeFromString(serializer, content)
         } catch (_: SerializationException) {
-            return SessionImportResult.Failure("The selected file is not a valid TempoTrack JSON backup.")
+            return SessionImportResult.Failure(SessionImportError.INVALID_JSON)
         } catch (_: IllegalArgumentException) {
-            return SessionImportResult.Failure("The selected file contains invalid data.")
+            return SessionImportResult.Failure(SessionImportError.INVALID_DATA)
         }
 
         if (sessions.size > MAX_IMPORT_SESSIONS) {
-            return SessionImportResult.Failure("The backup contains too many sessions.")
+            return SessionImportResult.Failure(SessionImportError.TOO_MANY_SESSIONS)
         }
         if (sessions.map(StopwatchSession::id).distinct().size != sessions.size) {
-            return SessionImportResult.Failure("The backup contains duplicate session ids.")
+            return SessionImportResult.Failure(SessionImportError.DUPLICATE_SESSION_IDS)
         }
 
         sessions.forEachIndexed { index, session ->
-            val errors = SessionValidation.validate(session)
-            if (errors.isNotEmpty()) {
+            if (SessionValidation.validate(session).isNotEmpty()) {
                 return SessionImportResult.Failure(
-                    "Session ${index + 1} is invalid: ${errors.first()}",
+                    error = SessionImportError.INVALID_SESSION,
+                    invalidSessionNumber = index + 1,
                 )
             }
         }

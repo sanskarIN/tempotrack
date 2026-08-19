@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
@@ -39,10 +40,12 @@ fun SettingsScreen(
     onPreferencesChanged: (AppPreferences) -> Unit,
     miniStopwatchSupported: Boolean,
     setMiniStopwatchVisible: (Boolean) -> Unit,
+    keyboardShortcutsSupported: Boolean,
 ) {
     val scope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
     var miniVisible by remember { mutableStateOf(false) }
+    var showShortcutHelp by remember { mutableStateOf(false) }
 
     fun update(next: AppPreferences) {
         onPreferencesChanged(next)
@@ -82,9 +85,12 @@ fun SettingsScreen(
             onCheckedChange = { update(preferences.copy(reducedMotion = it)) },
         )
 
-        if (miniStopwatchSupported) {
+        if (miniStopwatchSupported || keyboardShortcutsSupported) {
             Spacer(Modifier.height(16.dp))
             Text(stringResource(Res.string.settings_desktop), style = MaterialTheme.typography.titleMedium)
+        }
+
+        if (miniStopwatchSupported) {
             ToggleRow(
                 title = stringResource(Res.string.settings_mini_stopwatch),
                 subtitle = stringResource(Res.string.settings_mini_stopwatch_summary),
@@ -94,6 +100,17 @@ fun SettingsScreen(
                     setMiniStopwatchVisible(it)
                 },
             )
+        }
+
+        if (keyboardShortcutsSupported) {
+            Text(stringResource(Res.string.settings_shortcuts), style = MaterialTheme.typography.titleSmall)
+            Text(
+                stringResource(Res.string.settings_shortcuts_summary),
+                style = MaterialTheme.typography.bodySmall,
+            )
+            TextButton(onClick = { showShortcutHelp = true }) {
+                Text(stringResource(Res.string.settings_shortcuts_button))
+            }
         }
 
         Spacer(Modifier.height(20.dp))
@@ -125,6 +142,19 @@ fun SettingsScreen(
         Text(
             stringResource(Res.string.settings_about_summary),
             style = MaterialTheme.typography.bodyMedium,
+        )
+    }
+
+    if (showShortcutHelp) {
+        AlertDialog(
+            onDismissRequest = { showShortcutHelp = false },
+            title = { Text(stringResource(Res.string.keyboard_shortcuts_title)) },
+            text = { Text(stringResource(Res.string.keyboard_shortcuts_body)) },
+            confirmButton = {
+                TextButton(onClick = { showShortcutHelp = false }) {
+                    Text(stringResource(Res.string.action_close))
+                }
+            },
         )
     }
 }

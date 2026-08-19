@@ -86,6 +86,10 @@ The format follows Keep a Changelog concepts and the project uses semantic versi
 - Unix/Windows bootstrap scripts require exactly Gradle 9.5.0 when the wrapper JAR is absent; wrapper properties pin the official Gradle 9.5.0 distribution checksum.
 - Contributor, pull-request, setup, testing, GitHub-operations, and release guidance now use the same three repository integrity checks.
 - Privacy documentation explains Android cache sharing, iOS temporary export/share staging, and operating-system destination selection.
+- Android Gradle Plugin is updated to 9.3.1 and Compose Multiplatform to 1.11.1.
+- GitHub workflows use maintained Node 24-compatible action majors for checkout, Java/Python setup, Android setup, CodeQL, dependency review, artifact upload/download, and Gradle setup.
+- `gradle/actions/setup-gradle` stays on the v5 line because v6 introduces a separately licensed proprietary caching component; Dependabot ignores only `gradle/actions` 6.x while allowing later versions to be evaluated.
+- Dependabot no longer requests a repository label that does not exist.
 
 ### Fixed
 
@@ -111,3 +115,5 @@ The format follows Keep a Changelog concepts and the project uses semantic versi
 - Persist closing the floating mini-stopwatch so it does not unexpectedly reopen on the next launch.
 - Respect the persisted desktop keyboard-shortcut preference before processing Space, L, or R controls.
 - Preserve coroutine cancellation in shared UI persistence and platform export/share boundaries.
+- Exclude generated Compose/resource Kotlin from ktlint so repository style checks evaluate only source owned by the project instead of failing on generated output.
+- Upgrade Android setup in CI, CodeQL, and release jobs so current command-line tools can resolve Android SDK Platform 37 instead of failing during SDK installation.

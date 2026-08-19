@@ -110,6 +110,7 @@ fun HistoryScreen(
     var importError by remember { mutableStateOf<String?>(null) }
     var importing by remember { mutableStateOf(false) }
     var dataOperationInProgress by remember { mutableStateOf(false) }
+    var historyMutationInProgress by remember { mutableStateOf(false) }
     var renamingSession by remember { mutableStateOf<StopwatchSession?>(null) }
     var renameText by remember { mutableStateOf("") }
     var renameError by remember { mutableStateOf<String?>(null) }
@@ -127,7 +128,7 @@ fun HistoryScreen(
     }
 
     fun launchDataOperation(block: suspend () -> String) {
-        if (dataOperationInProgress || importing) return
+        if (dataOperationInProgress || importing || historyMutationInProgress) return
         dataOperationInProgress = true
         message = null
         scope.launch {
@@ -139,6 +140,18 @@ fun HistoryScreen(
         }
     }
 
+    fun launchHistoryMutation(block: suspend () -> Unit) {
+        if (historyMutationInProgress || dataOperationInProgress || importing) return
+        historyMutationInProgress = true
+        scope.launch {
+            try {
+                block()
+            } finally {
+                historyMutationInProgress = false
+            }
+        }
+    }
+
     LaunchedEffect(sessions) { reload() }
 
     val filtered = remember(allSessions, query) {
@@ -146,6 +159,7 @@ fun HistoryScreen(
         if (normalized.isBlank()) allSessions
         else allSessions.filter { it.name.lowercase().contains(normalized) }
     }
+    val historyActionsEnabled = !dataOperationInProgress && !importing && !historyMutationInProgress
 
     Column(Modifier.fillMaxSize().padding(20.dp)) {
         Text(stringResource(Res.string.history_title), style = MaterialTheme.typography.headlineMedium)
@@ -165,7 +179,7 @@ fun HistoryScreen(
         ) {
             OutlinedButton(
                 modifier = Modifier.weight(1f),
-                enabled = allSessions.isNotEmpty() && !dataOperationInProgress && !importing,
+                enabled = allSessions.isNotEmpty() && historyActionsEnabled,
                 onClick = {
                     val snapshot = allSessions
                     launchDataOperation {
@@ -181,7 +195,7 @@ fun HistoryScreen(
             ) { Text(stringResource(Res.string.history_export_json)) }
             OutlinedButton(
                 modifier = Modifier.weight(1f),
-                enabled = allSessions.isNotEmpty() && !dataOperationInProgress && !importing,
+                enabled = allSessions.isNotEmpty() && historyActionsEnabled,
                 onClick = {
                     val snapshot = allSessions
                     launchDataOperation {
@@ -205,7 +219,7 @@ fun HistoryScreen(
             ) {
                 OutlinedButton(
                     modifier = Modifier.weight(1f),
-                    enabled = allSessions.isNotEmpty() && !dataOperationInProgress && !importing,
+                    enabled = allSessions.isNotEmpty() && historyActionsEnabled,
                     onClick = {
                         val snapshot = allSessions
                         launchDataOperation {
@@ -221,7 +235,7 @@ fun HistoryScreen(
                 ) { Text(stringResource(Res.string.history_share_json)) }
                 OutlinedButton(
                     modifier = Modifier.weight(1f),
-                    enabled = allSessions.isNotEmpty() && !dataOperationInProgress && !importing,
+                    enabled = allSessions.isNotEmpty() && historyActionsEnabled,
                     onClick = {
                         val snapshot = allSessions
                         launchDataOperation {
@@ -241,7 +255,7 @@ fun HistoryScreen(
         Spacer(Modifier.height(8.dp))
         OutlinedButton(
             modifier = Modifier.fillMaxWidth(),
-            enabled = !dataOperationInProgress && !importing,
+            enabled = historyActionsEnabled,
             onClick = {
                 importJson = ""
                 importError = null
@@ -259,8 +273,9 @@ fun HistoryScreen(
         lastDeleted?.let { deleted ->
             Spacer(Modifier.height(6.dp))
             OutlinedButton(
+                enabled = historyActionsEnabled,
                 onClick = {
-                    scope.launch {
+                    launchHistoryMutation {
                         suspendResult { sessions.upsert(deleted) }
                             .onSuccess {
                                 lastDeleted = null
@@ -292,13 +307,14 @@ fun HistoryScreen(
                 items(filtered, key = StopwatchSession::id) { session ->
                     SessionCard(
                         session = session,
+                        enabled = historyActionsEnabled,
                         onRename = {
                             renamingSession = session
                             renameText = session.name
                             renameError = null
                         },
                         onDelete = {
-                            scope.launch {
+                            launchHistoryMutation {
                                 suspendResult { sessions.delete(session.id) }
                                     .onSuccess {
                                         lastDeleted = session
@@ -407,8 +423,10 @@ fun HistoryScreen(
     renamingSession?.let { session ->
         AlertDialog(
             onDismissRequest = {
-                renamingSession = null
-                renameError = null
+                if (!historyMutationInProgress) {
+                    renamingSession = null
+                    renameError = null
+                }
             },
             title = { Text(stringResource(Res.string.history_rename_title)) },
             text = {
@@ -417,10 +435,13 @@ fun HistoryScreen(
                         modifier = Modifier.fillMaxWidth(),
                         value = renameText,
                         onValueChange = {
-                            renameText = it.take(SessionValidation.MAX_SESSION_NAME_LENGTH)
-                            renameError = null
+                            if (!historyMutationInProgress) {
+                                renameText = it.take(SessionValidation.MAX_SESSION_NAME_LENGTH)
+                                renameError = null
+                            }
                         },
                         singleLine = true,
+                        enabled = !historyMutationInProgress,
                         isError = renameError != null,
                         label = { Text(stringResource(Res.string.history_rename_label)) },
                     )
@@ -435,10 +456,12 @@ fun HistoryScreen(
             },
             confirmButton = {
                 Button(
-                    enabled = renameText.trim().isNotEmpty() && renameText.trim() != session.name,
+                    enabled = !historyMutationInProgress &&
+                        renameText.trim().isNotEmpty() &&
+                        renameText.trim() != session.name,
                     onClick = {
                         val requestedName = renameText.trim()
-                        scope.launch {
+                        launchHistoryMutation {
                             suspendResult { sessions.rename(session.id, requestedName) }
                                 .onSuccess { renamed ->
                                     if (renamed) {
@@ -457,6 +480,7 @@ fun HistoryScreen(
             },
             dismissButton = {
                 TextButton(
+                    enabled = !historyMutationInProgress,
                     onClick = {
                         renamingSession = null
                         renameError = null
@@ -512,6 +536,7 @@ private suspend fun share(
 @Composable
 private fun SessionCard(
     session: StopwatchSession,
+    enabled: Boolean,
     onRename: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -536,10 +561,16 @@ private fun SessionCard(
             )
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onRename) {
+                OutlinedButton(
+                    enabled = enabled,
+                    onClick = onRename,
+                ) {
                     Text(stringResource(Res.string.action_rename))
                 }
-                Button(onClick = onDelete) {
+                Button(
+                    enabled = enabled,
+                    onClick = onDelete,
+                ) {
                     Text(stringResource(Res.string.action_delete))
                 }
             }

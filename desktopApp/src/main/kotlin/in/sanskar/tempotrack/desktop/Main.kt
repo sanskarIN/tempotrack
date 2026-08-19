@@ -45,6 +45,7 @@ fun main() = application {
             versionName = "1.0.0",
             miniStopwatchSupported = true,
             setMiniStopwatchVisible = { miniVisible = it },
+            keyboardShortcutsSupported = true,
         )
     }
 

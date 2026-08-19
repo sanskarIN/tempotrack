@@ -18,4 +18,5 @@ data class TempoTrackDependencies(
     val versionName: String,
     val miniStopwatchSupported: Boolean = false,
     val setMiniStopwatchVisible: (Boolean) -> Unit = {},
+    val strings: TempoTrackStrings = EnglishTempoTrackStrings,
 )

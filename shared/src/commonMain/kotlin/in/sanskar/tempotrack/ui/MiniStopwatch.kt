@@ -1,4 +1,4 @@
-package in.sanskar.tempotrack.ui
+package `in`.sanskar.tempotrack.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,18 +21,18 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import in.sanskar.tempotrack.data.ActiveStopwatchRepository
-import in.sanskar.tempotrack.domain.DurationFormatter
-import in.sanskar.tempotrack.domain.StopwatchEngine
-import in.sanskar.tempotrack.domain.StopwatchStatus
-import in.sanskar.tempotrack.resources.Res
-import in.sanskar.tempotrack.resources.action_lap
-import in.sanskar.tempotrack.resources.action_pause
-import in.sanskar.tempotrack.resources.action_reset
-import in.sanskar.tempotrack.resources.action_resume
-import in.sanskar.tempotrack.resources.action_start
-import in.sanskar.tempotrack.resources.elapsed_time_description
-import in.sanskar.tempotrack.util.suspendResult
+import `in`.sanskar.tempotrack.data.ActiveStopwatchRepository
+import `in`.sanskar.tempotrack.domain.DurationFormatter
+import `in`.sanskar.tempotrack.domain.StopwatchEngine
+import `in`.sanskar.tempotrack.domain.StopwatchStatus
+import `in`.sanskar.tempotrack.resources.Res
+import `in`.sanskar.tempotrack.resources.action_lap
+import `in`.sanskar.tempotrack.resources.action_pause
+import `in`.sanskar.tempotrack.resources.action_reset
+import `in`.sanskar.tempotrack.resources.action_resume
+import `in`.sanskar.tempotrack.resources.action_start
+import `in`.sanskar.tempotrack.resources.elapsed_time_description
+import `in`.sanskar.tempotrack.util.suspendResult
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch

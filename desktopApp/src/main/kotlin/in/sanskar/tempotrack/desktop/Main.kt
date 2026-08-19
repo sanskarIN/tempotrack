@@ -30,6 +30,7 @@ fun main() = application {
     val preferencesStorage = remember { JvmStringStorage(home.resolve("preferences.json")) }
     val activeStorage = remember { JvmStringStorage(home.resolve("active-stopwatch.json")) }
     val monotonicClock = remember { MonotonicClock { System.nanoTime() } }
+    val versionName = remember { System.getProperty("tempotrack.version")?.takeIf { it.isNotBlank() } ?: "1.0.0" }
     var miniVisible by remember { mutableStateOf(false) }
     var shortcutsEnabled by remember { mutableStateOf(true) }
     var sharedEngine by remember { mutableStateOf<StopwatchEngine?>(null) }
@@ -44,7 +45,7 @@ fun main() = application {
             activeStopwatch = JsonActiveStopwatchRepository(activeStorage),
             exporter = DesktopExporter(),
             platformName = "Desktop",
-            versionName = "1.0.0",
+            versionName = versionName,
             miniStopwatchSupported = true,
             setMiniStopwatchVisible = { miniVisible = it },
             keyboardShortcutsSupported = true,

@@ -67,7 +67,8 @@ class AndroidShareService(
             }
             ShareResult.Started
         } catch (error: CancellationException) {
-            stagedFile?.delete()
+            // The chooser may already be visible. Keep the staged cache file so a recipient
+            // that obtained the granted URI can still read it, then propagate cancellation.
             throw error
         } catch (_: Exception) {
             stagedFile?.delete()

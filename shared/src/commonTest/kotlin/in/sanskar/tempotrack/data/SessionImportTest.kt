@@ -8,6 +8,12 @@ import kotlin.test.assertIs
 
 class SessionImportTest {
     @Test
+    fun restoreLimitsMatchPersistenceLimits() {
+        assertEquals(MAX_SESSION_STORE_CHARACTERS, SessionImporter.MAX_IMPORT_CHARACTERS)
+        assertEquals(MAX_STORED_SESSIONS, SessionImporter.MAX_IMPORT_SESSIONS)
+    }
+
+    @Test
     fun importsValidBackup() {
         val sessions = listOf(
             StopwatchSession(

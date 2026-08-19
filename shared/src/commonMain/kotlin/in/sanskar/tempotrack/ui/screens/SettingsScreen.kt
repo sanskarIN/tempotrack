@@ -81,23 +81,27 @@ fun SettingsScreen(
     var showShortcutHelp by remember { mutableStateOf(false) }
     var saveFailed by remember { mutableStateOf(false) }
     var saveJob by remember { mutableStateOf<Job?>(null) }
+    var lastPersistedPreferences by remember(repository) { mutableStateOf(preferences) }
 
     fun update(
         next: AppPreferences,
         onApplied: () -> Unit = {},
-        onRollback: () -> Unit = {},
+        onRollback: (AppPreferences) -> Unit = {},
     ) {
-        val previous = preferences
         onPreferencesChanged(next)
         onApplied()
         saveFailed = false
         saveJob?.cancel()
         saveJob = scope.launch {
             suspendResult { repository.save(next) }
-                .onSuccess { saveFailed = false }
+                .onSuccess {
+                    lastPersistedPreferences = next
+                    saveFailed = false
+                }
                 .onFailure {
-                    onPreferencesChanged(previous)
-                    onRollback()
+                    val rollback = lastPersistedPreferences
+                    onPreferencesChanged(rollback)
+                    onRollback(rollback)
                     saveFailed = true
                 }
         }
@@ -159,7 +163,7 @@ fun SettingsScreen(
                     update(
                         next = next,
                         onApplied = { setMiniStopwatchVisible(visible) },
-                        onRollback = { setMiniStopwatchVisible(preferences.miniStopwatchVisible) },
+                        onRollback = { rollback -> setMiniStopwatchVisible(rollback.miniStopwatchVisible) },
                     )
                 },
             )
@@ -175,7 +179,7 @@ fun SettingsScreen(
                     update(
                         next = next,
                         onApplied = { setKeyboardShortcutsEnabled(enabled) },
-                        onRollback = { setKeyboardShortcutsEnabled(preferences.keyboardShortcutsEnabled) },
+                        onRollback = { rollback -> setKeyboardShortcutsEnabled(rollback.keyboardShortcutsEnabled) },
                     )
                 },
             )

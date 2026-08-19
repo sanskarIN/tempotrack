@@ -20,6 +20,8 @@ fun TempoTrackTheme(
 
     MaterialTheme(
         colorScheme = if (dark) darkColorScheme() else lightColorScheme(),
+        shapes = TempoTrackShapes,
+        typography = TempoTrackTypography,
         content = content,
     )
 }

@@ -42,6 +42,9 @@ import in.sanskar.tempotrack.domain.StopwatchEngine
 import in.sanskar.tempotrack.domain.StopwatchSession
 import in.sanskar.tempotrack.domain.StopwatchStatus
 import in.sanskar.tempotrack.domain.WallClock
+import in.sanskar.tempotrack.ui.EnglishTempoTrackStrings
+import in.sanskar.tempotrack.ui.TempoMotion
+import in.sanskar.tempotrack.ui.TempoTrackStrings
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -59,6 +62,7 @@ fun StopwatchScreen(
     sessions: SessionRepository,
     activeStopwatch: ActiveStopwatchRepository,
     largeControls: Boolean,
+    strings: TempoTrackStrings = EnglishTempoTrackStrings,
 ) {
     var snapshot by remember(engine) { mutableStateOf(engine.snapshot()) }
     var sessionName by remember { mutableStateOf("") }
@@ -68,7 +72,13 @@ fun StopwatchScreen(
 
     LaunchedEffect(engine) {
         while (isActive) {
-            delay(if (snapshot.status == StopwatchStatus.RUNNING) 16L else 200L)
+            delay(
+                if (snapshot.status == StopwatchStatus.RUNNING) {
+                    TempoMotion.RUNNING_REFRESH_MILLIS
+                } else {
+                    TempoMotion.IDLE_REFRESH_MILLIS
+                },
+            )
             val latest = engine.snapshot()
             if (latest != snapshot) snapshot = latest
         }
@@ -81,10 +91,11 @@ fun StopwatchScreen(
         modifier = Modifier.fillMaxSize().padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        val formattedElapsed = DurationFormatter.formatNanos(snapshot.elapsedNanos)
         Text(
-            text = DurationFormatter.formatNanos(snapshot.elapsedNanos),
+            text = formattedElapsed,
             modifier = Modifier.semantics {
-                contentDescription = "Elapsed time ${DurationFormatter.formatNanos(snapshot.elapsedNanos)}"
+                contentDescription = "${strings.elapsedTime} $formattedElapsed"
             },
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.SemiBold,
@@ -103,7 +114,7 @@ fun StopwatchScreen(
                         snapshot = engine.start()
                         scope.launch { runCatching { activeStopwatch.save(engine.checkpoint()) } }
                     },
-                ) { Text("Start") }
+                ) { Text(strings.start) }
 
                 StopwatchStatus.RUNNING -> {
                     Button(
@@ -112,14 +123,14 @@ fun StopwatchScreen(
                             snapshot = engine.pause()
                             scope.launch { runCatching { activeStopwatch.save(engine.checkpoint()) } }
                         },
-                    ) { Text("Pause") }
+                    ) { Text(strings.pause) }
                     FilledTonalButton(
                         modifier = Modifier.weight(1f).height(buttonHeight),
                         onClick = {
                             snapshot = engine.lap()
                             scope.launch { runCatching { activeStopwatch.save(engine.checkpoint()) } }
                         },
-                    ) { Text("Lap") }
+                    ) { Text(strings.lap) }
                 }
 
                 StopwatchStatus.PAUSED -> {
@@ -129,7 +140,7 @@ fun StopwatchScreen(
                             snapshot = engine.resume()
                             scope.launch { runCatching { activeStopwatch.save(engine.checkpoint()) } }
                         },
-                    ) { Text("Resume") }
+                    ) { Text(strings.resume) }
                     OutlinedButton(
                         modifier = Modifier.weight(1f).height(buttonHeight),
                         onClick = {
@@ -137,7 +148,7 @@ fun StopwatchScreen(
                             sessionName = ""
                             scope.launch { runCatching { activeStopwatch.clear() } }
                         },
-                    ) { Text("Reset") }
+                    ) { Text(strings.reset) }
                 }
             }
         }
@@ -149,8 +160,8 @@ fun StopwatchScreen(
                 value = sessionName,
                 onValueChange = { sessionName = it.take(80) },
                 singleLine = true,
-                label = { Text("Session name") },
-                supportingText = { Text("Optional; defaults to a timestamp-based name") },
+                label = { Text(strings.sessionName) },
+                supportingText = { Text(strings.sessionNameHint) },
             )
             Spacer(Modifier.height(8.dp))
             OutlinedButton(
@@ -158,7 +169,7 @@ fun StopwatchScreen(
                 onClick = {
                     val finalSnapshot = engine.snapshot()
                     val now = wallClock.nowEpochMillis()
-                    val safeName = sessionName.trim().ifEmpty { "Session $now" }
+                    val safeName = sessionName.trim().ifEmpty { "${strings.defaultSessionName} $now" }
                     val session = StopwatchSession(
                         id = "$now-${finalSnapshot.elapsedNanos}",
                         name = safeName,
@@ -168,11 +179,11 @@ fun StopwatchScreen(
                     )
                     scope.launch {
                         runCatching { sessions.upsert(session) }
-                            .onSuccess { savedMessage = "Saved “$safeName”" }
-                            .onFailure { savedMessage = "Could not save this session." }
+                            .onSuccess { savedMessage = "${strings.saved} “$safeName”" }
+                            .onFailure { savedMessage = strings.saveFailed }
                     }
                 },
-            ) { Text("Save session") }
+            ) { Text(strings.saveSession) }
         }
 
         savedMessage?.let {
@@ -183,11 +194,11 @@ fun StopwatchScreen(
         Spacer(Modifier.height(16.dp))
         if (snapshot.laps.isEmpty()) {
             Text(
-                "Record a lap while the stopwatch is running to compare splits.",
+                strings.recordLapHint,
                 style = MaterialTheme.typography.bodyMedium,
             )
         } else {
-            LapSummary(stats)
+            LapSummary(stats = stats, strings = strings)
             Spacer(Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -200,9 +211,9 @@ fun StopwatchScreen(
                     ) {
                         Text(
                             when (option) {
-                                LapSort.RECORDED -> "Recorded"
-                                LapSort.FASTEST -> "Fastest"
-                                LapSort.SLOWEST -> "Slowest"
+                                LapSort.RECORDED -> strings.recorded
+                                LapSort.FASTEST -> strings.fastest
+                                LapSort.SLOWEST -> strings.slowest
                             },
                         )
                     }
@@ -219,7 +230,7 @@ fun StopwatchScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(visibleLaps, key = Lap::index) { lap ->
-                    LapCard(lap, stats)
+                    LapCard(lap = lap, stats = stats, strings = strings)
                 }
             }
         }
@@ -227,22 +238,29 @@ fun StopwatchScreen(
 }
 
 @Composable
-private fun LapSummary(stats: LapStatistics) {
+private fun LapSummary(
+    stats: LapStatistics,
+    strings: TempoTrackStrings,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text("Fastest ${stats.fastest?.let { DurationFormatter.formatNanos(it.splitNanos) } ?: "—"}")
-        Text("Average ${DurationFormatter.formatNanos(stats.averageSplitNanos)}")
-        Text("Slowest ${stats.slowest?.let { DurationFormatter.formatNanos(it.splitNanos) } ?: "—"}")
+        Text("${strings.fastest} ${stats.fastest?.let { DurationFormatter.formatNanos(it.splitNanos) } ?: "—"}")
+        Text("${strings.average} ${DurationFormatter.formatNanos(stats.averageSplitNanos)}")
+        Text("${strings.slowest} ${stats.slowest?.let { DurationFormatter.formatNanos(it.splitNanos) } ?: "—"}")
     }
 }
 
 @Composable
-private fun LapCard(lap: Lap, stats: LapStatistics) {
+private fun LapCard(
+    lap: Lap,
+    stats: LapStatistics,
+    strings: TempoTrackStrings,
+) {
     val descriptor = when (lap.index) {
-        stats.fastest?.index -> "Fastest"
-        stats.slowest?.index -> "Slowest"
+        stats.fastest?.index -> strings.fastest
+        stats.slowest?.index -> strings.slowest
         else -> null
     }
 
@@ -253,13 +271,13 @@ private fun LapCard(lap: Lap, stats: LapStatistics) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column {
-                Text("Lap ${lap.index}", fontWeight = FontWeight.SemiBold)
+                Text("${strings.lap} ${lap.index}", fontWeight = FontWeight.SemiBold)
                 descriptor?.let { Text(it, style = MaterialTheme.typography.labelMedium) }
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(DurationFormatter.formatNanos(lap.splitNanos), fontFamily = FontFamily.Monospace)
                 Text(
-                    "Total ${DurationFormatter.formatNanos(lap.totalNanos)}",
+                    "${strings.total} ${DurationFormatter.formatNanos(lap.totalNanos)}",
                     style = MaterialTheme.typography.labelMedium,
                     fontFamily = FontFamily.Monospace,
                 )

@@ -7,6 +7,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 
 class SessionRepositoryTest {
@@ -19,6 +21,22 @@ class SessionRepositoryTest {
         repository.upsert(session(id = "new", createdAt = 20L))
 
         assertEquals(listOf("new", "old"), repository.all().map(StopwatchSession::id))
+    }
+
+    @Test
+    fun concurrentUpsertsPreserveAllSessionsAndSerializeWrites() = runTest {
+        val storage = ConcurrentWriteDetectingStorage()
+        val repository = JsonSessionRepository(storage)
+
+        List(20) { index ->
+            launch {
+                repository.upsert(session(id = "session-$index", createdAt = index.toLong()))
+            }
+        }.joinAll()
+
+        val stored = repository.all()
+        assertEquals(20, stored.size)
+        assertEquals((0 until 20).map { "session-$it" }.toSet(), stored.map(StopwatchSession::id).toSet())
     }
 
     @Test

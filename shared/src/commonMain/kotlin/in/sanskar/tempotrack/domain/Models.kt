@@ -1,7 +1,6 @@
 package in.sanskar.tempotrack.domain
 
 import kotlinx.serialization.Serializable
-import kotlin.math.roundToLong
 
 @Serializable
 enum class StopwatchStatus {
@@ -55,8 +54,26 @@ data class LapStatistics(
             return LapStatistics(
                 fastest = laps.minByOrNull(Lap::splitNanos),
                 slowest = laps.maxByOrNull(Lap::splitNanos),
-                averageSplitNanos = laps.map(Lap::splitNanos).average().roundToLong(),
+                averageSplitNanos = roundedAverageNonNegative(laps.map(Lap::splitNanos)),
             )
+        }
+
+        private fun roundedAverageNonNegative(values: List<Long>): Long {
+            val count = values.size.toLong()
+            var quotientSum = 0L
+            var remainderSum = 0L
+
+            values.forEach { rawValue ->
+                val value = rawValue.coerceAtLeast(0L)
+                quotientSum += value / count
+                remainderSum += value % count
+            }
+
+            val wholeRemainder = remainderSum / count
+            val fractionalRemainder = remainderSum % count
+            val averageFloor = quotientSum + wholeRemainder
+            val roundUp = fractionalRemainder >= (count + 1L) / 2L
+            return if (roundUp && averageFloor < Long.MAX_VALUE) averageFloor + 1L else averageFloor
         }
     }
 }

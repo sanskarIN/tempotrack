@@ -1,13 +1,13 @@
-package in.sanskar.tempotrack.ui
+package `in`.sanskar.tempotrack.ui
 
-import in.sanskar.tempotrack.data.ActiveStopwatchRepository
-import in.sanskar.tempotrack.data.Exporter
-import in.sanskar.tempotrack.data.PreferencesRepository
-import in.sanskar.tempotrack.data.SessionRepository
-import in.sanskar.tempotrack.data.ShareService
-import in.sanskar.tempotrack.domain.MonotonicClock
-import in.sanskar.tempotrack.domain.StopwatchCheckpoint
-import in.sanskar.tempotrack.domain.WallClock
+import `in`.sanskar.tempotrack.data.ActiveStopwatchRepository
+import `in`.sanskar.tempotrack.data.Exporter
+import `in`.sanskar.tempotrack.data.PreferencesRepository
+import `in`.sanskar.tempotrack.data.SessionRepository
+import `in`.sanskar.tempotrack.data.ShareService
+import `in`.sanskar.tempotrack.domain.MonotonicClock
+import `in`.sanskar.tempotrack.domain.StopwatchCheckpoint
+import `in`.sanskar.tempotrack.domain.WallClock
 
 data class TempoTrackDependencies(
     val monotonicClock: MonotonicClock,

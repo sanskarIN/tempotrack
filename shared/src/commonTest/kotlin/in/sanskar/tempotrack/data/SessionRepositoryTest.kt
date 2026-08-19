@@ -5,6 +5,8 @@ import in.sanskar.tempotrack.domain.StopwatchSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
 
 class SessionRepositoryTest {
@@ -17,6 +19,36 @@ class SessionRepositoryTest {
         repository.upsert(session(id = "new", createdAt = 20L))
 
         assertEquals(listOf("new", "old"), repository.all().map(StopwatchSession::id))
+    }
+
+    @Test
+    fun renameUpdatesOnlyRequestedSession() = runTest {
+        val repository = JsonSessionRepository(InMemoryStringStorage())
+        repository.upsert(session(id = "one", createdAt = 10L))
+        repository.upsert(session(id = "two", createdAt = 20L))
+
+        assertTrue(repository.rename("one", "  Focus sprint  "))
+
+        val sessions = repository.all()
+        assertEquals("Focus sprint", sessions.first { it.id == "one" }.name)
+        assertEquals("Session two", sessions.first { it.id == "two" }.name)
+    }
+
+    @Test
+    fun renameReturnsFalseForMissingSession() = runTest {
+        val repository = JsonSessionRepository(InMemoryStringStorage())
+
+        assertFalse(repository.rename("missing", "New name"))
+    }
+
+    @Test
+    fun renameRejectsBlankName() = runTest {
+        val repository = JsonSessionRepository(InMemoryStringStorage())
+        repository.upsert(session(id = "one", createdAt = 10L))
+
+        assertFailsWith<IllegalArgumentException> {
+            repository.rename("one", "   ")
+        }
     }
 
     @Test

@@ -8,6 +8,7 @@ import in.sanskar.tempotrack.data.ShareError
 import in.sanskar.tempotrack.data.ShareResult
 import in.sanskar.tempotrack.data.ShareService
 import java.io.File
+import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -22,7 +23,13 @@ class AndroidShareService(
     ): ShareResult = withContext(Dispatchers.IO) {
         val shareIntent = try {
             val safeName = ExportFileName.sanitize(suggestedFileName)
-            val directory = File(context.cacheDir, "shared-exports").apply { mkdirs() }
+            val directory = File(context.cacheDir, "shared-exports")
+            if (!directory.exists() && !directory.mkdirs()) {
+                throw IOException("Could not create share cache directory.")
+            }
+            if (!directory.isDirectory) {
+                throw IOException("Share cache path is not a directory.")
+            }
             val target = File(directory, safeName)
             target.writeText(content, Charsets.UTF_8)
 

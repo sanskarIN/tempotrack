@@ -4,6 +4,7 @@ import androidx.compose.ui.window.ComposeUIViewController
 import in.sanskar.tempotrack.data.JsonActiveStopwatchRepository
 import in.sanskar.tempotrack.data.JsonPreferencesRepository
 import in.sanskar.tempotrack.data.JsonSessionRepository
+import in.sanskar.tempotrack.domain.StopwatchCheckpointRecovery
 import in.sanskar.tempotrack.ui.TempoTrackApp
 import in.sanskar.tempotrack.ui.TempoTrackDependencies
 import platform.Foundation.NSBundle
@@ -13,11 +14,13 @@ fun MainViewController(): UIViewController {
     val sessionsStorage = IosStringStorage("tempotrack.sessions")
     val preferencesStorage = IosStringStorage("tempotrack.preferences")
     val activeStorage = IosStringStorage("tempotrack.active-stopwatch")
+    val monotonicClock = iosMonotonicClock()
+    val wallClock = iosWallClock()
     var hostController: UIViewController? = null
 
     val dependencies = TempoTrackDependencies(
-        monotonicClock = iosMonotonicClock(),
-        wallClock = iosWallClock(),
+        monotonicClock = monotonicClock,
+        wallClock = wallClock,
         sessions = JsonSessionRepository(sessionsStorage),
         preferences = JsonPreferencesRepository(preferencesStorage),
         activeStopwatch = JsonActiveStopwatchRepository(activeStorage),
@@ -25,6 +28,13 @@ fun MainViewController(): UIViewController {
         shareService = IosShareService { requireNotNull(hostController) },
         platformName = "iOS",
         versionName = iosVersionName(),
+        recoverCheckpoint = { checkpoint ->
+            StopwatchCheckpointRecovery.recoverSystemUptimeCheckpoint(
+                checkpoint = checkpoint,
+                currentMonotonicNanos = monotonicClock.nowNanos(),
+                currentEpochMillis = wallClock.nowEpochMillis(),
+            )
+        },
     )
 
     val controller = ComposeUIViewController {

@@ -28,19 +28,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import in.sanskar.tempotrack.data.Exporter
 import in.sanskar.tempotrack.data.ExportResult
+import in.sanskar.tempotrack.data.Exporter
 import in.sanskar.tempotrack.data.SessionCodec
 import in.sanskar.tempotrack.data.SessionRepository
 import in.sanskar.tempotrack.domain.DurationFormatter
 import in.sanskar.tempotrack.domain.LapStatistics
 import in.sanskar.tempotrack.domain.StopwatchSession
+import in.sanskar.tempotrack.ui.EnglishTempoTrackStrings
+import in.sanskar.tempotrack.ui.TempoTrackStrings
 import kotlinx.coroutines.launch
 
 @Composable
 fun HistoryScreen(
     sessions: SessionRepository,
     exporter: Exporter,
+    strings: TempoTrackStrings = EnglishTempoTrackStrings,
 ) {
     var allSessions by remember { mutableStateOf<List<StopwatchSession>>(emptyList()) }
     var query by remember { mutableStateOf("") }
@@ -51,7 +54,7 @@ fun HistoryScreen(
     suspend fun reload() {
         runCatching { sessions.all() }
             .onSuccess { allSessions = it }
-            .onFailure { message = "Could not read saved sessions." }
+            .onFailure { message = strings.historyReadFailed }
     }
 
     LaunchedEffect(sessions) { reload() }
@@ -63,14 +66,14 @@ fun HistoryScreen(
     }
 
     Column(Modifier.fillMaxSize().padding(20.dp)) {
-        Text("History", style = MaterialTheme.typography.headlineMedium)
+        Text(strings.history, style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(10.dp))
         OutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
             value = query,
             onValueChange = { query = it.take(100) },
             singleLine = true,
-            label = { Text("Search sessions") },
+            label = { Text(strings.searchSessions) },
         )
 
         Spacer(Modifier.height(10.dp))
@@ -84,28 +87,30 @@ fun HistoryScreen(
                 onClick = {
                     scope.launch {
                         message = export(
-                            exporter,
-                            "tempotrack-sessions.json",
-                            "application/json",
-                            SessionCodec.toJson(allSessions),
+                            exporter = exporter,
+                            name = "tempotrack-sessions.json",
+                            mimeType = "application/json",
+                            content = SessionCodec.toJson(allSessions),
+                            strings = strings,
                         )
                     }
                 },
-            ) { Text("Export JSON") }
+            ) { Text(strings.exportJson) }
             OutlinedButton(
                 modifier = Modifier.weight(1f),
                 enabled = allSessions.isNotEmpty(),
                 onClick = {
                     scope.launch {
                         message = export(
-                            exporter,
-                            "tempotrack-sessions.csv",
-                            "text/csv",
-                            SessionCodec.toCsv(allSessions),
+                            exporter = exporter,
+                            name = "tempotrack-sessions.csv",
+                            mimeType = "text/csv",
+                            content = SessionCodec.toCsv(allSessions),
+                            strings = strings,
                         )
                     }
                 },
-            ) { Text("Export CSV") }
+            ) { Text(strings.exportCsv) }
         }
 
         message?.let {
@@ -123,18 +128,18 @@ fun HistoryScreen(
                                 lastDeleted = null
                                 reload()
                             }
-                            .onFailure { message = "Could not restore the deleted session." }
+                            .onFailure { message = strings.restoreFailed }
                     }
                 },
             ) {
-                Text("Undo delete “${deleted.name}”")
+                Text("${strings.undoDelete} “${deleted.name}”")
             }
         }
 
         Spacer(Modifier.height(12.dp))
         if (filtered.isEmpty()) {
             Text(
-                if (query.isBlank()) "No saved sessions yet." else "No sessions match your search.",
+                if (query.isBlank()) strings.noSavedSessions else strings.noMatchingSessions,
                 style = MaterialTheme.typography.bodyLarge,
             )
         } else {
@@ -145,6 +150,7 @@ fun HistoryScreen(
                 items(filtered, key = StopwatchSession::id) { session ->
                     SessionCard(
                         session = session,
+                        strings = strings,
                         onDelete = {
                             scope.launch {
                                 runCatching { sessions.delete(session.id) }
@@ -152,7 +158,7 @@ fun HistoryScreen(
                                         lastDeleted = session
                                         reload()
                                     }
-                                    .onFailure { message = "Could not delete this session." }
+                                    .onFailure { message = strings.deleteFailed }
                             }
                         },
                     )
@@ -167,14 +173,16 @@ private suspend fun export(
     name: String,
     mimeType: String,
     content: String,
+    strings: TempoTrackStrings,
 ): String = when (val result = exporter.export(name, mimeType, content)) {
-    is ExportResult.Success -> "Exported to ${result.destination}"
-    is ExportResult.Failure -> result.userMessage
+    is ExportResult.Success -> "${strings.exportedTo} ${result.destination}"
+    is ExportResult.Failure -> strings.exportFailed
 }
 
 @Composable
 private fun SessionCard(
     session: StopwatchSession,
+    strings: TempoTrackStrings,
     onDelete: () -> Unit,
 ) {
     val stats = remember(session.laps) { LapStatistics.from(session.laps) }
@@ -188,13 +196,13 @@ private fun SessionCard(
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
-                "${session.laps.size} laps • fastest ${
+                "${session.laps.size} ${strings.laps} • ${strings.fastest.lowercase()} ${
                     stats.fastest?.let { DurationFormatter.formatNanos(it.splitNanos) } ?: "—"
                 }",
                 style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(8.dp))
-            Button(onClick = onDelete) { Text("Delete") }
+            Button(onClick = onDelete) { Text(strings.delete) }
         }
     }
 }

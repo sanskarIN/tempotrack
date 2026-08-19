@@ -29,6 +29,7 @@ class MainActivity : ComponentActivity() {
             exporter = AndroidExporter(this),
             platformName = "Android",
             versionName = BuildConfig.VERSION_NAME,
+            shareService = AndroidShareService(this),
         )
 
         setContent {

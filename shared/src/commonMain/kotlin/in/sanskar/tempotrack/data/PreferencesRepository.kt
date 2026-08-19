@@ -4,6 +4,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 
+const val MAX_PREFERENCES_STORE_CHARACTERS: Int = 100_000
+
 @Serializable
 enum class ThemePreference {
     SYSTEM,
@@ -34,14 +36,24 @@ class JsonPreferencesRepository(
 
     override suspend fun load(): AppPreferences = mutex.withLock {
         val raw = storage.read()?.takeIf { it.isNotBlank() } ?: return@withLock AppPreferences()
+        if (raw.length > MAX_PREFERENCES_STORE_CHARACTERS) return@withLock AppPreferences()
+
         val decoded = codec.decode(raw) ?: return@withLock AppPreferences()
         if (decoded.needsMigration) {
-            storage.write(codec.encode(decoded.preferences))
+            persistUnlocked(decoded.preferences)
         }
         decoded.preferences
     }
 
     override suspend fun save(preferences: AppPreferences) = mutex.withLock {
-        storage.write(codec.encode(preferences))
+        persistUnlocked(preferences)
+    }
+
+    private suspend fun persistUnlocked(preferences: AppPreferences) {
+        val encoded = codec.encode(preferences)
+        require(encoded.length <= MAX_PREFERENCES_STORE_CHARACTERS) {
+            "Preferences payload is too large."
+        }
+        storage.write(encoded)
     }
 }

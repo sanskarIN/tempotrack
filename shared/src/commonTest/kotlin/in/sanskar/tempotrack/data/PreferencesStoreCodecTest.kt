@@ -1,4 +1,4 @@
-package in.sanskar.tempotrack.data
+package `in`.sanskar.tempotrack.data
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -2,9 +2,9 @@ package in.sanskar.tempotrack.data
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.Json
 
 class PreferencesRepositoryTest {
     @Test
@@ -16,6 +16,7 @@ class PreferencesRepositoryTest {
             largeControls = true,
             reducedMotion = true,
             onboardingCompleted = true,
+            miniStopwatchVisible = true,
         )
 
         repository.save(expected)
@@ -32,13 +33,16 @@ class PreferencesRepositoryTest {
     }
 
     @Test
-    fun legacyPreferencesMigrateOnRead() = runTest {
-        val expected = AppPreferences(theme = ThemePreference.LIGHT, onboardingCompleted = true)
-        val legacy = Json.encodeToString(AppPreferences.serializer(), expected)
+    fun legacyPreferencesMigrateOnReadAndDefaultNewFields() = runTest {
+        val legacy = """{"theme":"LIGHT","largeControls":false,"reducedMotion":false,"onboardingCompleted":true}"""
         val storage = PreferencesTestStorage(legacy)
         val repository = JsonPreferencesRepository(storage)
 
-        assertEquals(expected, repository.load())
+        val loaded = repository.load()
+
+        assertEquals(ThemePreference.LIGHT, loaded.theme)
+        assertTrue(loaded.onboardingCompleted)
+        assertFalse(loaded.miniStopwatchVisible)
         assertTrue(storage.value.orEmpty().contains("\"schemaVersion\": 1"))
     }
 }

@@ -3,6 +3,7 @@ package in.sanskar.tempotrack.domain
 class StopwatchEngine(
     private val clock: MonotonicClock,
     checkpoint: StopwatchCheckpoint = StopwatchCheckpoint(),
+    private val wallClock: WallClock? = null,
 ) {
     private var status: StopwatchStatus = checkpoint.status
     private var accumulatedNanos: Long = checkpoint.accumulatedNanos.coerceAtLeast(0L)
@@ -82,7 +83,7 @@ class StopwatchEngine(
         )
     }
 
-    fun checkpoint(savedAtEpochMillis: Long? = null): StopwatchCheckpoint {
+    fun checkpoint(savedAtEpochMillis: Long? = wallClock?.nowEpochMillis()): StopwatchCheckpoint {
         if (status != StopwatchStatus.RUNNING) {
             return StopwatchCheckpoint(
                 status = status,

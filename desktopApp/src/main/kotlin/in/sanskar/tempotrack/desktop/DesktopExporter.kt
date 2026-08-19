@@ -1,6 +1,7 @@
 package in.sanskar.tempotrack.desktop
 
 import in.sanskar.tempotrack.data.ExportError
+import in.sanskar.tempotrack.data.ExportFileName
 import in.sanskar.tempotrack.data.Exporter
 import in.sanskar.tempotrack.data.ExportResult
 import java.nio.charset.StandardCharsets
@@ -37,7 +38,7 @@ class DesktopExporter : Exporter {
         suggestedFileName: String,
         mimeType: String,
     ): Path? {
-        val safeName = suggestedFileName.replace(Regex("[^A-Za-z0-9._-]"), "_")
+        val safeName = ExportFileName.sanitize(suggestedFileName)
         val selected = AtomicReference<Path?>(null)
 
         val showChooser = {

@@ -10,7 +10,6 @@ import kotlin.test.assertTrue
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.yield
 
 class SessionRepositoryTest {
     @Test
@@ -127,29 +126,6 @@ private class InMemoryStringStorage(
     }
 
     override suspend fun clear() {
-        value = null
-    }
-}
-
-private class ConcurrentWriteDetectingStorage : StringStorage {
-    private var value: String? = null
-    private var writeInProgress: Boolean = false
-
-    override suspend fun read(): String? = value
-
-    override suspend fun write(content: String) {
-        check(!writeInProgress) { "Concurrent storage writes detected." }
-        writeInProgress = true
-        try {
-            yield()
-            value = content
-        } finally {
-            writeInProgress = false
-        }
-    }
-
-    override suspend fun clear() {
-        check(!writeInProgress) { "Concurrent storage clear detected." }
         value = null
     }
 }

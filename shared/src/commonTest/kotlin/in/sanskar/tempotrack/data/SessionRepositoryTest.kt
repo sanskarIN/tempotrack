@@ -109,6 +109,21 @@ class SessionRepositoryTest {
     }
 
     @Test
+    fun identicalReplaceAllDoesNotRewriteStorage() = runTest {
+        val storage = InMemoryStringStorage()
+        val repository = JsonSessionRepository(storage)
+        val old = session(id = "old", createdAt = 10L)
+        val latest = session(id = "latest", createdAt = 20L)
+        repository.replaceAll(listOf(old, latest))
+        val writesAfterReplace = storage.writeCount
+
+        repository.replaceAll(listOf(old, latest))
+
+        assertEquals(writesAfterReplace, storage.writeCount)
+        assertEquals(listOf(latest, old), repository.all())
+    }
+
+    @Test
     fun replaceAllRejectsDuplicateIds() = runTest {
         val repository = JsonSessionRepository(InMemoryStringStorage())
         val duplicate = session(id = "same", createdAt = 10L)

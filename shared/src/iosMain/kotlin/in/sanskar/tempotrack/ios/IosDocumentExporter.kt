@@ -114,7 +114,7 @@ internal class IosDocumentExporter(
                     animated = true,
                     completion = null,
                 )
-            } catch (error: Exception) {
+            } catch (_: Exception) {
                 activeDelegate = null
                 if (continuation.isActive) {
                     continuation.resume(ExportResult.Failure(ExportError.PLATFORM_EXPORT_UNAVAILABLE))
@@ -124,5 +124,6 @@ internal class IosDocumentExporter(
 
     private fun destinationLabel(url: NSURL): String =
         url.path?.takeIf(String::isNotBlank)
-            ?: url.absoluteString
+            ?: url.absoluteString?.takeIf(String::isNotBlank)
+            ?: "iOS document"
 }

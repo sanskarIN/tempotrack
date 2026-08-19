@@ -85,14 +85,17 @@ The following live at repository root because GitHub and external users expect t
 
 ## Repository tooling references
 
-Two deterministic repository-local Python checks are intentionally independent of Gradle:
+Three deterministic repository-local Python checks complement the Gradle verification matrix:
 
 ```bash
 python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
 
-The first protects the Kotlin source spelling of the runtime namespace `in.sanskar...`: because `in` is a Kotlin keyword, source declarations/imports must use `` `in`.sanskar... ``. The second validates repository-local Markdown destinations.
+- `check_kotlin_package_keywords.py` protects the Kotlin source spelling of the runtime namespace `in.sanskar...`: because `in` is a Kotlin keyword, source declarations/imports must use `` `in`.sanskar... ``.
+- `check_repository_reference.py` compares `git ls-files` with [`repository-reference.md`](repository-reference.md) so every tracked file is documented with its exact path.
+- `check_markdown_links.py` validates repository-local Markdown destinations.
 
 The primary Gradle quality task is:
 
@@ -104,6 +107,6 @@ See [`testing.md`](testing.md) for the full platform matrix and verification-int
 
 ## Documentation maintenance rule
 
-When a change modifies a public feature, persistence schema, recovery rule, platform adapter, build/release process, security/privacy behavior, or repository structure, update the relevant document in the same change series. If a tracked file is added, renamed, or removed, also update [`repository-reference.md`](repository-reference.md).
+When a change modifies a public feature, persistence schema, recovery rule, platform adapter, build/release process, security/privacy behavior, or repository structure, update the relevant document in the same change series. If a tracked file is added, renamed, or removed, also update [`repository-reference.md`](repository-reference.md) and run the repository-reference coverage checker.
 
 Do not claim a platform build, signing operation, CI job, simulator/device check, or release artifact as verified unless that result was actually observed. Environment-gated work remains explicitly documented as unverified until it runs on the required toolchain.

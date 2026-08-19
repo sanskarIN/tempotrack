@@ -52,6 +52,8 @@ import in.sanskar.tempotrack.resources.settings_reduced_motion_summary
 import in.sanskar.tempotrack.resources.settings_save_failed
 import in.sanskar.tempotrack.resources.settings_shortcuts
 import in.sanskar.tempotrack.resources.settings_shortcuts_button
+import in.sanskar.tempotrack.resources.settings_shortcuts_enabled
+import in.sanskar.tempotrack.resources.settings_shortcuts_enabled_summary
 import in.sanskar.tempotrack.resources.settings_shortcuts_summary
 import in.sanskar.tempotrack.resources.settings_theme_dark
 import in.sanskar.tempotrack.resources.settings_theme_light
@@ -70,6 +72,7 @@ fun SettingsScreen(
     miniStopwatchSupported: Boolean,
     setMiniStopwatchVisible: (Boolean) -> Unit,
     keyboardShortcutsSupported: Boolean,
+    setKeyboardShortcutsEnabled: (Boolean) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
@@ -146,6 +149,16 @@ fun SettingsScreen(
         }
 
         if (keyboardShortcutsSupported) {
+            ToggleRow(
+                title = stringResource(Res.string.settings_shortcuts_enabled),
+                subtitle = stringResource(Res.string.settings_shortcuts_enabled_summary),
+                checked = preferences.keyboardShortcutsEnabled,
+                onCheckedChange = {
+                    val next = preferences.copy(keyboardShortcutsEnabled = it)
+                    update(next)
+                    setKeyboardShortcutsEnabled(it)
+                },
+            )
             Text(stringResource(Res.string.settings_shortcuts), style = MaterialTheme.typography.titleSmall)
             Text(
                 stringResource(Res.string.settings_shortcuts_summary),

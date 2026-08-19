@@ -5,6 +5,11 @@ import in.sanskar.tempotrack.domain.StopwatchSession
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+const val MAX_STORED_SESSIONS: Int = 10_000
+const val MAX_SESSION_STORE_CHARACTERS: Int = 20_000_000
+
+class SessionStoreCorruptionException : IllegalStateException("Saved session history is invalid or unsupported.")
+
 interface SessionRepository {
     suspend fun all(): List<StopwatchSession>
     suspend fun upsert(session: StopwatchSession)
@@ -29,6 +34,7 @@ class JsonSessionRepository(
             .filterNot { it.id == session.id }
             .plus(session)
             .sortedByDescending(StopwatchSession::createdAtEpochMillis)
+        require(updated.size <= MAX_STORED_SESSIONS) { "Too many saved sessions." }
         persistUnlocked(updated)
     }
 
@@ -53,6 +59,7 @@ class JsonSessionRepository(
     }
 
     override suspend fun replaceAll(sessions: List<StopwatchSession>) = mutex.withLock {
+        require(sessions.size <= MAX_STORED_SESSIONS) { "Too many saved sessions." }
         require(sessions.map(StopwatchSession::id).distinct().size == sessions.size) {
             "Session ids must be unique."
         }
@@ -62,12 +69,18 @@ class JsonSessionRepository(
 
     private suspend fun loadUnlocked(): List<StopwatchSession> {
         val raw = storage.read()?.takeIf { it.isNotBlank() } ?: return emptyList()
-        val decoded = storeCodec.decode(raw) ?: return emptyList()
-        val normalized = decoded.sessions
-            .filter { SessionValidation.validate(it).isEmpty() }
-            .distinctBy(StopwatchSession::id)
-            .sortedByDescending(StopwatchSession::createdAtEpochMillis)
+        if (raw.length > MAX_SESSION_STORE_CHARACTERS) throw SessionStoreCorruptionException()
 
+        val decoded = storeCodec.decode(raw) ?: throw SessionStoreCorruptionException()
+        if (decoded.sessions.size > MAX_STORED_SESSIONS) throw SessionStoreCorruptionException()
+        if (decoded.sessions.map(StopwatchSession::id).distinct().size != decoded.sessions.size) {
+            throw SessionStoreCorruptionException()
+        }
+        if (decoded.sessions.any { SessionValidation.validate(it).isNotEmpty() }) {
+            throw SessionStoreCorruptionException()
+        }
+
+        val normalized = decoded.sessions.sortedByDescending(StopwatchSession::createdAtEpochMillis)
         if (decoded.needsMigration) {
             persistUnlocked(normalized)
         }

@@ -19,11 +19,12 @@ Android Lint runs separately because it also checks manifests/resources and Andr
 - reset behavior;
 - duration formatting;
 - CSV escaping, spreadsheet-formula neutralization and JSON export content;
+- bounded export-filename sanitization and traversal-like filename normalization;
 - session validation, rename behavior, sorting and duplicate-id rejection;
 - validated JSON restore and stable import error codes;
 - session-store schema migration;
 - active-stopwatch checkpoint validation and schema migration;
-- preference schema migration, including defaults for newly added settings.
+- preference schema migration, including defaults for newly added settings such as desktop shortcut enablement.
 
 Run:
 
@@ -47,6 +48,15 @@ Release-oriented Android verification:
 
 An unsigned release APK is useful for build verification but must not be treated as a Play-ready signed release artifact.
 
+Manual Android data-portability checks should verify that:
+
+- JSON and CSV exports are created only after the corresponding action;
+- Share JSON and Share CSV open the operating-system chooser;
+- the shared URI is a `content://` URI rather than a raw filesystem path;
+- the receiving app can read the granted file;
+- no unrelated cache path is exposed by the `FileProvider` configuration;
+- cancelling or returning from the share sheet does not mutate saved history.
+
 ## Desktop checks
 
 ```bash
@@ -55,7 +65,9 @@ An unsigned release APK is useful for build verification but must not be treated
 ./gradlew :desktopApp:packageDistributionForCurrentOS
 ```
 
-Desktop packaging is OS-specific.
+Desktop packaging is OS-specific. Manual export checks should confirm the native save chooser opens, honours the suggested JSON/CSV filename, writes to the selected destination, and treats chooser cancellation as a cancellation rather than a write failure.
+
+Desktop keyboard checks should verify Space/L/R with shortcuts enabled, no stopwatch action from those bindings when disabled, and persistence of the enable/disable setting after restart.
 
 ## iOS checks
 
@@ -66,7 +78,7 @@ On macOS with Xcode:
 ./gradlew :shared:iosSimulatorArm64Test
 ```
 
-The release workflow additionally links the arm64 release framework.
+The release workflow additionally links the arm64 release framework. Native document/share-sheet behavior must be verified in the host app once that bridge is implemented; the shared fallback intentionally reports platform export unavailable rather than pretending to save a file.
 
 ## Documentation checks
 

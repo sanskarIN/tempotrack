@@ -1,16 +1,21 @@
 package in.sanskar.tempotrack.ui.screens
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
@@ -25,7 +30,9 @@ import in.sanskar.tempotrack.resources.about_support
 import in.sanskar.tempotrack.resources.about_tagline
 import in.sanskar.tempotrack.resources.about_version_platform
 import in.sanskar.tempotrack.resources.app_name
+import in.sanskar.tempotrack.resources.external_link_failed
 import in.sanskar.tempotrack.resources.made_by
+import in.sanskar.tempotrack.ui.openUriSafely
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -34,49 +41,68 @@ fun AboutScreen(
     versionName: String,
 ) {
     val uriHandler = LocalUriHandler.current
+    var linkFailed by remember { mutableStateOf(false) }
 
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
+    fun open(uri: String) {
+        linkFailed = !uriHandler.openUriSafely(uri)
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize().padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
         Text(stringResource(Res.string.app_name), style = MaterialTheme.typography.headlineMedium)
         Text(stringResource(Res.string.about_tagline))
-        Spacer(Modifier.height(16.dp))
         Text(stringResource(Res.string.about_version_platform, versionName, platformName))
-        Text(stringResource(Res.string.about_license))
-        Spacer(Modifier.height(16.dp))
         Text(stringResource(Res.string.made_by), style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(12.dp))
-        LinkButton(stringResource(Res.string.about_github), "https://github.com/sanskarIN", uriHandler::openUri)
-        LinkButton(stringResource(Res.string.about_bmc), "https://buymeacoffee.com/sanskarIN", uriHandler::openUri)
-        Spacer(Modifier.height(12.dp))
-        LinkButton(
-            stringResource(Res.string.about_business_outlook),
-            "mailto:sanskarin@outlook.in",
-            uriHandler::openUri,
-        )
-        LinkButton(
-            stringResource(Res.string.about_business_gmail),
-            "mailto:sanskarin.business@gmail.com",
-            uriHandler::openUri,
-        )
-        LinkButton(
-            stringResource(Res.string.about_support),
-            "mailto:supportramsandesh@gmail.com",
-            uriHandler::openUri,
-        )
-        Spacer(Modifier.height(20.dp))
-        Text(
-            stringResource(Res.string.about_privacy),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-    }
-}
+        Text(stringResource(Res.string.about_license))
+        Spacer(Modifier.height(4.dp))
 
-@Composable
-private fun LinkButton(
-    label: String,
-    uri: String,
-    open: (String) -> Unit,
-) {
-    TextButton(onClick = { open(uri) }) {
-        Text(label)
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { open("https://github.com/sanskarIN/tempotrack") },
+        ) {
+            Text(stringResource(Res.string.about_github))
+        }
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { open("https://buymeacoffee.com/sanskarIN") },
+        ) {
+            Text(stringResource(Res.string.about_bmc))
+        }
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { open("mailto:sanskarin@outlook.in") },
+        ) {
+            Text(stringResource(Res.string.about_business_outlook))
+        }
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { open("mailto:sanskarin.business@gmail.com") },
+        ) {
+            Text(stringResource(Res.string.about_business_gmail))
+        }
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { open("mailto:supportramsandesh@gmail.com") },
+        ) {
+            Text(stringResource(Res.string.about_support))
+        }
+
+        if (linkFailed) {
+            Text(
+                stringResource(Res.string.external_link_failed),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+
+        Spacer(Modifier.height(6.dp))
+        Row(Modifier.fillMaxWidth()) {
+            Text(
+                stringResource(Res.string.about_privacy),
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
     }
 }

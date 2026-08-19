@@ -75,8 +75,17 @@ fun TempoTrackApp(
         if (dependencies.keyboardShortcutsSupported) {
             dependencies.setKeyboardShortcutsEnabled(loadedPreferences.keyboardShortcutsEnabled)
         }
-        val checkpoint = suspendResult { dependencies.activeStopwatch.load() }.getOrNull()
-        engine = StopwatchEngine(dependencies.monotonicClock, checkpoint ?: StopwatchCheckpoint())
+
+        val loadedCheckpoint = suspendResult { dependencies.activeStopwatch.load() }.getOrNull()
+        val recoveredCheckpoint = loadedCheckpoint?.let(dependencies.recoverCheckpoint)
+        if (loadedCheckpoint != null && recoveredCheckpoint != loadedCheckpoint) {
+            suspendResult { dependencies.activeStopwatch.save(requireNotNull(recoveredCheckpoint)) }
+        }
+
+        engine = StopwatchEngine(
+            clock = dependencies.monotonicClock,
+            checkpoint = recoveredCheckpoint ?: StopwatchCheckpoint(),
+        )
         onEngineReady(requireNotNull(engine))
         loaded = true
     }

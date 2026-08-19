@@ -17,6 +17,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import in.sanskar.tempotrack.data.ActiveStopwatchRepository
@@ -29,6 +31,7 @@ import in.sanskar.tempotrack.resources.action_pause
 import in.sanskar.tempotrack.resources.action_reset
 import in.sanskar.tempotrack.resources.action_resume
 import in.sanskar.tempotrack.resources.action_start
+import in.sanskar.tempotrack.resources.elapsed_time_description
 import in.sanskar.tempotrack.util.suspendResult
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -55,9 +58,15 @@ fun MiniStopwatch(
         scope.launch { suspendResult { activeStopwatch.save(engine.checkpoint()) } }
     }
 
+    val formattedElapsed = DurationFormatter.formatNanos(snapshot.elapsedNanos)
+    val elapsedDescription = stringResource(Res.string.elapsed_time_description, formattedElapsed)
+
     Column(Modifier.padding(12.dp)) {
         Text(
-            DurationFormatter.formatNanos(snapshot.elapsedNanos),
+            formattedElapsed,
+            modifier = Modifier.semantics {
+                contentDescription = elapsedDescription
+            },
             style = MaterialTheme.typography.headlineSmall,
             fontFamily = FontFamily.Monospace,
         )

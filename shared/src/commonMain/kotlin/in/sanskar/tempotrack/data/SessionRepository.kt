@@ -2,9 +2,6 @@ package in.sanskar.tempotrack.data
 
 import in.sanskar.tempotrack.domain.SessionValidation
 import in.sanskar.tempotrack.domain.StopwatchSession
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.Json
 
 interface SessionRepository {
     suspend fun all(): List<StopwatchSession>
@@ -15,27 +12,20 @@ interface SessionRepository {
 
 class JsonSessionRepository(
     private val storage: StringStorage,
-    private val json: Json = Json {
-        prettyPrint = true
-        ignoreUnknownKeys = true
-        explicitNulls = false
-        exceptionsWithDebugInfo = false
-    },
+    private val storeCodec: SessionStoreCodec = SessionStoreCodec(),
 ) : SessionRepository {
-    private val serializer = ListSerializer(StopwatchSession.serializer())
-
     override suspend fun all(): List<StopwatchSession> {
         val raw = storage.read()?.takeIf { it.isNotBlank() } ?: return emptyList()
-        return try {
-            json.decodeFromString(serializer, raw)
-                .filter { SessionValidation.validate(it).isEmpty() }
-                .distinctBy(StopwatchSession::id)
-                .sortedByDescending(StopwatchSession::createdAtEpochMillis)
-        } catch (_: SerializationException) {
-            emptyList()
-        } catch (_: IllegalArgumentException) {
-            emptyList()
+        val decoded = storeCodec.decode(raw) ?: return emptyList()
+        val normalized = decoded.sessions
+            .filter { SessionValidation.validate(it).isEmpty() }
+            .distinctBy(StopwatchSession::id)
+            .sortedByDescending(StopwatchSession::createdAtEpochMillis)
+
+        if (decoded.needsMigration) {
+            persist(normalized)
         }
+        return normalized
     }
 
     override suspend fun upsert(session: StopwatchSession) {
@@ -61,6 +51,6 @@ class JsonSessionRepository(
     }
 
     private suspend fun persist(sessions: List<StopwatchSession>) {
-        storage.write(json.encodeToString(serializer, sessions))
+        storage.write(storeCodec.encode(sessions))
     }
 }

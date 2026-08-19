@@ -35,4 +35,19 @@ class SessionCodecTest {
         assertContains(json, "Study sprint")
         assertContains(json, "id-2")
     }
+
+    @Test
+    fun csvNeutralizesSpreadsheetFormulas() {
+        val session = StopwatchSession(
+            id = "id-3",
+            name = "=SUM(1,1)",
+            createdAtEpochMillis = 3L,
+            durationNanos = 3_000_000_000L,
+            laps = emptyList(),
+        )
+
+        val csv = SessionCodec.toCsv(listOf(session))
+
+        assertContains(csv, "\"'=SUM(1,1)\"")
+    }
 }

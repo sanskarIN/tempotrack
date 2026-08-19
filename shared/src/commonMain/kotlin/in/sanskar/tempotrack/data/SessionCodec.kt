@@ -39,6 +39,9 @@ object SessionCodec {
         }
     }
 
-    private fun csv(value: String): String =
-        "\"" + value.replace("\"", "\"\"") + "\""
+    private fun csv(value: String): String {
+        val trimmed = value.trimStart()
+        val safe = if (trimmed.firstOrNull() in setOf('=', '+', '-', '@')) "'$value" else value
+        return "\"" + safe.replace("\"", "\"\"") + "\""
+    }
 }

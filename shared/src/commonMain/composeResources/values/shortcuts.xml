@@ -1,0 +1,4 @@
+<resources>
+    <string name="settings_shortcuts_enabled">Enable global stopwatch shortcuts</string>
+    <string name="settings_shortcuts_enabled_summary">Allow Space, L and R to control the stopwatch while the desktop window is focused.</string>
+</resources>

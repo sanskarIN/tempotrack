@@ -1,0 +1,4 @@
+<resources>
+    <string name="onboarding_save_failed">Could not save your first-run preference. Please try again.</string>
+    <string name="settings_save_failed">Could not save this setting. The change may not persist after restart.</string>
+</resources>

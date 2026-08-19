@@ -24,3 +24,21 @@ sealed interface ExportResult {
     data class Success(val destination: String) : ExportResult
     data class Failure(val error: ExportError) : ExportResult
 }
+
+interface ShareService {
+    suspend fun share(
+        suggestedFileName: String,
+        mimeType: String,
+        content: String,
+    ): ShareResult
+}
+
+enum class ShareError {
+    PREPARE_FAILED,
+    PLATFORM_SHARE_UNAVAILABLE,
+}
+
+sealed interface ShareResult {
+    data object Started : ShareResult
+    data class Failure(val error: ShareError) : ShareResult
+}

@@ -16,6 +16,7 @@ import in.sanskar.tempotrack.data.JsonPreferencesRepository
 import in.sanskar.tempotrack.data.JsonSessionRepository
 import in.sanskar.tempotrack.domain.MonotonicClock
 import in.sanskar.tempotrack.domain.StopwatchEngine
+import in.sanskar.tempotrack.domain.StopwatchStatus
 import in.sanskar.tempotrack.domain.WallClock
 import in.sanskar.tempotrack.ui.MiniStopwatch
 import in.sanskar.tempotrack.ui.TempoTrackApp
@@ -50,7 +51,7 @@ fun main() = application {
 
     Window(
         onCloseRequest = ::exitApplication,
-        title = "TempoTrack",
+        title = dependencies.strings.appName,
         onKeyEvent = { event ->
             if (event.type != KeyEventType.KeyDown) {
                 false
@@ -60,9 +61,9 @@ fun main() = application {
                     engine == null -> false
                     event.key == Key.Spacebar -> {
                         when (engine.snapshot().status) {
-                            in.sanskar.tempotrack.domain.StopwatchStatus.IDLE -> engine.start()
-                            in.sanskar.tempotrack.domain.StopwatchStatus.RUNNING -> engine.pause()
-                            in.sanskar.tempotrack.domain.StopwatchStatus.PAUSED -> engine.resume()
+                            StopwatchStatus.IDLE -> engine.start()
+                            StopwatchStatus.RUNNING -> engine.pause()
+                            StopwatchStatus.PAUSED -> engine.resume()
                         }
                         scope.launch { runCatching { dependencies.activeStopwatch.save(engine.checkpoint()) } }
                         true
@@ -92,7 +93,7 @@ fun main() = application {
     if (miniVisible && sharedEngine != null) {
         Window(
             onCloseRequest = { miniVisible = false },
-            title = "TempoTrack Mini",
+            title = dependencies.strings.floatingStopwatch,
             alwaysOnTop = true,
             resizable = false,
         ) {
@@ -100,6 +101,7 @@ fun main() = application {
             MiniStopwatch(
                 engine = requireNotNull(sharedEngine),
                 activeStopwatch = dependencies.activeStopwatch,
+                strings = dependencies.strings,
             )
         }
     }

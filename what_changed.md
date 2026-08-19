@@ -730,3 +730,68 @@ On macOS/Xcode:
 TempoTrack now has both broad and deep documentation rather than only a README-level overview. The repository contains an indexed user/contributor/maintainer documentation set, an exhaustive tracked-file reference, detailed source/data/state/platform/security/build guides, corrected troubleshooting, synchronized contribution/release guidance, and CI enforcement that prevents future tracked files from being silently omitted from the repository reference.
 
 The authoritative current file inventory is `docs/repository-reference.md`; the historical file lists earlier in this handoff are intentionally preserved as prior checkpoints and may refer to structures that were subsequently consolidated or renamed.
+
+---
+
+## Final maintenance checkpoint — 2026-08-19 evening IST
+
+### Build and CI correctness fixes
+
+- Root ktlint now excludes `**/generated/**`, so generated Compose/resource Kotlin cannot fail repository-owned source style checks.
+- Main CI, CodeQL and tagged release Android jobs now use `android-actions/setup-android@v4`, whose current command-line tools can resolve Android SDK Platform 37 used by the project.
+- Primary GitHub Actions were moved to maintained Node 24-compatible majors: checkout v7, setup-java v5, setup-python v6, CodeQL v4, dependency-review v5, upload-artifact v7 and download-artifact v8.
+- `gradle/actions/setup-gradle` is intentionally kept on the v5 line. The v6 line introduces a separately licensed proprietary caching component, so the open-source repository does not adopt it by default.
+- Dependabot ignores only `gradle/actions` 6.x and no longer requests a `dependencies` label that is absent from the repository.
+
+### Dependency maintenance
+
+- Android Gradle Plugin updated from 9.3.0 to 9.3.1.
+- Compose Multiplatform updated from 1.11.0 to 1.11.1.
+- Gradle itself remains pinned to 9.5.0 so the wrapper properties, bootstrap scripts, CI installation and documentation remain internally consistent.
+- Dependabot PR #4 for Gradle 9.7.0 remains open intentionally because that upgrade changes wrapper artifacts and must be verified as one coherent toolchain update rather than partially hand-edited.
+
+### Documentation synchronization
+
+- `docs/build-and-ci.md` now records the current AGP/Compose versions, generated-source lint ownership, Android SDK setup fix, Node 24 action policy, Gradle Actions v5 licensing decision, Dependabot behavior and wrapper-upgrade atomicity requirement.
+- `CHANGELOG.md` records the same build, CI, dependency and generated-source fixes.
+- This `what_changed.md` history has been preserved in full; this checkpoint is appended rather than replacing earlier handoff records.
+
+### Repository maintenance cleanup
+
+- Obsolete/superseded Dependabot PRs for AGP, Compose, dependency-review, checkout, Android setup, setup-java, upload-artifact and CodeQL were closed after their equivalent updates landed directly on `main`.
+- The Gradle Actions v6 PR was closed because the repository intentionally stays on the v5 line.
+- The old `audit/release-candidate` PR was closed because it targeted the pre-fix CI/toolchain state and was hundreds of commits behind current `main`.
+- No open source-code TODO/FIXME gap was found in the final indexed search, and no open repository issue was present during this audit.
+
+### Granular commits created in this final pass
+
+- `6ef47382e1c529683982295f0b295af27305fab7` — `fix: exclude generated Kotlin from ktlint`.
+- `2f4e95c97e06a2a97be6a0d123968a6e6e468d53` — `ci: use Android setup action v4`.
+- `a35f251c65ec6be152da9b09abb7d42b66112da5` — `ci: move primary actions to Node 24 majors`.
+- `028046785786eb245119dc21a9c5b63f04de9e10` — `ci: modernize CodeQL workflow actions`.
+- `7cee3f97508f0e2a71d8d9d32d7991ff1c716cdd` — `ci: modernize release workflow actions`.
+- `74bc855ad2c700fed25b793733d7926cc208cf1f` — `ci: modernize dependency review actions`.
+- `798fc6376d229fa94630e9b9b05db2e003dbc1fb` — `ci: modernize secret scan checkout`.
+- `d232aa1da84936578e843602d3665b0746068c16` — `chore: remove invalid Dependabot labels`.
+- `c7c4f1d48fb3484e1c0a812fa56b106e89625bfd` — `ci: update Python setup action`.
+- `4682837b5a5dd1c8dde0d4271de5e2be3d340500` — `ci: update artifact download action`.
+- `bee63b03594a44f68ff2a3cbff78cc7bbaae3ab8` — `build: update Android Gradle Plugin to 9.3.1`.
+- `33fd61e6d2028d78163b0d2ea8b956f2e767d644` — `build: update Compose Multiplatform to 1.11.1`.
+- `2adcd5d644072249ebbc172c7244ab797dc22c17` — `chore: keep Gradle action on open-source v5 line`.
+- `7b6ee2023e48921933cc75724116aa43e921a3d1` — `docs: document final build and CI maintenance`.
+- `ff2e0b5aad6a977ece0382deb049eed064db029b` — `docs: record final CI and dependency hardening`.
+
+### Verification status for this checkpoint
+
+This checkpoint is intentionally committed on `audit/final-verification-2026-08-19` and used to trigger a fresh pull-request verification against the hardened workflow definitions. The workflow outcome must be observed before representing the automated build/test matrix as green.
+
+Even after an automated matrix is green, the following remain externally gated and must not be claimed as completed by source edits alone:
+
+1. trusted generation/verification of a standard wrapper JAR if the project wants fully self-contained Gradle wrapper bootstrap;
+2. protected production Android signing secret provisioning;
+3. actual signed tag-release artifact inspection;
+4. manual Android accessibility/lifecycle/device testing;
+5. native iOS document-picker/share-sheet/device lifecycle testing in Xcode/simulator/device;
+6. real release screenshots captured from verified application builds.
+
+The source/documentation audit is otherwise complete for the currently defined TempoTrack v1.0 scope; future optional roadmap work should be treated as new scope rather than as a hidden release blocker.

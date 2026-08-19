@@ -13,6 +13,23 @@ Android and Desktop package builds read these properties. On a `vMAJOR.MINOR.PAT
 
 The release workflow rejects tags that do not exactly match `vMAJOR.MINOR.PATCH` and serializes release runs per tag.
 
+## Version 2.0.12 release line
+
+The repository defaults for this release line are:
+
+```properties
+appVersion=2.0.12
+appVersionCode=20012
+```
+
+The intended semantic release tag is:
+
+```text
+v2.0.12
+```
+
+Do not create or promote that tag until the release-candidate checks described below are actually observed green and required Android signing secrets are configured. The tag workflow overrides Android `versionCode` with `GITHUB_RUN_NUMBER`, so `20012` is the source-tree development/package default rather than a promise about the final tagged Android artifact's version code.
+
 Before a release, also update:
 
 - `CHANGELOG.md`;
@@ -25,6 +42,8 @@ Before a release, also update:
 `gradle/wrapper/gradle-wrapper.properties` pins Gradle 9.5.0 and the binary distribution SHA-256. The standard `gradle-wrapper.jar` is not committed in the current repository state, so local bootstrap scripts require an installed Gradle 9.5.0 until a trusted wrapper binary is generated.
 
 Do not create a release from a machine silently using another Gradle version. Either use the exact fallback version or generate the standard wrapper JAR from a trusted Gradle 9.5.0 installation before the release-candidate audit.
+
+A Gradle-wrapper upgrade is not part of the 2.0.12 release freeze unless its wrapper properties, launcher/bootstrap assumptions, CI Gradle installation, documentation, and full build matrix are updated and verified together.
 
 ## Pre-release gate
 
@@ -72,9 +91,10 @@ Before tagging:
 4. Confirm persistence/recovery/platform behavior matches `state-and-recovery.md`, `data-model-and-storage.md`, and `platforms.md`.
 5. Confirm new security/privacy behavior is reflected in `SECURITY.md`, `PRIVACY.md`, and `security-model.md`.
 6. Confirm contributor/build/release commands match actual Gradle/CI configuration.
-7. Confirm `CHANGELOG.md` contains the release-relevant fixes/features.
-8. Confirm `what_changed.md` records observed verification and unresolved environment-gated work.
-9. Do not publish placeholder screenshots as real release captures.
+7. Confirm `CHANGELOG.md` contains a dated section for the intended release version.
+8. Confirm `gradle.properties`, README release marker, changelog release section, and intended tag all identify the same semantic version.
+9. Confirm `what_changed.md` records observed verification and unresolved environment-gated work.
+10. Do not publish placeholder screenshots as real release captures.
 
 ## Android signing
 
@@ -137,13 +157,24 @@ The build jobs use read-only repository permissions. Only the final publish job 
 
 ## Tag
 
-Create an annotated `vMAJOR.MINOR.PATCH` tag only after the pre-release gate is green, production Android signing secrets are configured for a distributable Android release, and release notes are ready.
+For this release line, create annotated tag `v2.0.12` only after the pre-release gate is green, production Android signing secrets are configured for a distributable Android release, and release notes are ready.
+
+Do not create a release tag merely to test whether configuration might work; use a release-candidate branch/PR first so failures can be fixed without publishing release semantics.
 
 ## Release notes
 
-Start from `release-notes-template.md`, copy the relevant `CHANGELOG.md` section, and include known limitations. Do not claim a platform has been tested unless it was actually built/run.
+Use the dated `## [2.0.12] - 2026-08-19` section in `CHANGELOG.md` as the source of truth for 2.0.12 release notes. Copy only the release-relevant items and include known limitations. Do not claim a platform has been tested unless it was actually built/run.
 
 For Android, do not describe artifacts as production-ready unless the signed tag workflow has succeeded. For iOS, clearly distinguish the reusable framework from a signed/packaged App Store application.
+
+At minimum, 2.0.12 release notes should identify:
+
+- local-first stopwatch/history/data-portability scope;
+- reliability and recovery hardening;
+- Android/Desktop/iOS framework/platform support boundaries;
+- the current Kotlin/Compose/AGP/Gradle toolchain;
+- security/release automation improvements;
+- any verification or signing limitations that remain at publication time.
 
 ## Verification record
 

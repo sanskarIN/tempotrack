@@ -25,9 +25,6 @@ class StopwatchEngineTest {
     @Test
     fun elapsedTimeAdvancesAcrossDeviceSleepLikeClockJump() {
         engine.start()
-
-        // Platform clocks are required to include sleep on Android
-        // (SystemClock.elapsedRealtimeNanos), represented here as a jump.
         clock.advanceSeconds(3_600)
 
         assertEquals(3_600_000L, engine.snapshot().elapsedMillis)
@@ -62,6 +59,21 @@ class StopwatchEngineTest {
         assertEquals(5 * NANOS_PER_SECOND, checkpoint.accumulatedNanos)
         assertEquals(5 * NANOS_PER_SECOND, checkpoint.startedAtNanos)
         assertEquals(2 * NANOS_PER_SECOND, checkpoint.laps.single().totalNanos)
+    }
+
+    @Test
+    fun checkpointUsesInjectedWallClockForRecoveryMetadata() {
+        val timestampedEngine = StopwatchEngine(
+            clock = clock,
+            wallClock = WallClock { 1_700_000_123_456L },
+        )
+        timestampedEngine.start()
+        clock.advanceSeconds(1)
+
+        val checkpoint = timestampedEngine.checkpoint()
+
+        assertEquals(1_700_000_123_456L, checkpoint.savedAtEpochMillis)
+        assertEquals(1 * NANOS_PER_SECOND, checkpoint.accumulatedNanos)
     }
 
     @Test

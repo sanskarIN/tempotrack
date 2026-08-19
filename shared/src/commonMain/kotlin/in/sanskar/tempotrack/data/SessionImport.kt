@@ -26,8 +26,8 @@ sealed interface SessionImportResult {
 }
 
 object SessionImporter {
-    const val MAX_IMPORT_CHARACTERS = 5_000_000
-    const val MAX_IMPORT_SESSIONS = 10_000
+    const val MAX_IMPORT_CHARACTERS = MAX_SESSION_STORE_CHARACTERS
+    const val MAX_IMPORT_SESSIONS = MAX_STORED_SESSIONS
 
     private val json = Json {
         ignoreUnknownKeys = true

@@ -62,7 +62,10 @@ class AndroidExporter(
             }
             values.clear()
             values.put(MediaStore.Downloads.IS_PENDING, 0)
-            context.contentResolver.update(uri, values, null, null)
+            val updatedRows = context.contentResolver.update(uri, values, null, null)
+            if (updatedRows != 1) {
+                throw IOException("Could not finalize MediaStore export.")
+            }
             return ExportResult.Success(uri.toString())
         } catch (error: Exception) {
             context.contentResolver.delete(uri, null, null)

@@ -86,7 +86,9 @@ fun TempoTrackApp(
                 onContinue = {
                     preferences = preferences.copy(onboardingCompleted = true)
                 },
-                onPersist = { next -> runCatching { dependencies.preferences.save(next) } },
+                onPersist = { next ->
+                    runCatching { dependencies.preferences.save(next) }.isSuccess
+                },
                 preferences = preferences,
             )
             return@TempoTrackTheme

@@ -64,6 +64,7 @@
     <string name="history_rename_title">Rename session</string>
     <string name="history_rename_label">New session name</string>
     <string name="history_rename_failed">Could not rename this session.</string>
+    <string name="history_renamed">Renamed session to “%1$s”.</string>
 
     <string name="settings_title">Settings</string>
     <string name="settings_appearance">Appearance</string>

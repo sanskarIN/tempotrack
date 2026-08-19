@@ -38,6 +38,7 @@ import in.sanskar.tempotrack.data.SessionRepository
 import in.sanskar.tempotrack.domain.DurationFormatter
 import in.sanskar.tempotrack.domain.Lap
 import in.sanskar.tempotrack.domain.LapStatistics
+import in.sanskar.tempotrack.domain.SessionValidation
 import in.sanskar.tempotrack.domain.StopwatchEngine
 import in.sanskar.tempotrack.domain.StopwatchSession
 import in.sanskar.tempotrack.domain.StopwatchStatus
@@ -89,6 +90,7 @@ fun StopwatchScreen(
     var snapshot by remember(engine) { mutableStateOf(engine.snapshot()) }
     var sessionName by remember { mutableStateOf("") }
     var savedMessage by remember { mutableStateOf<String?>(null) }
+    var savingSession by remember { mutableStateOf(false) }
     var lapSort by remember { mutableStateOf(LapSort.RECORDED) }
     val scope = rememberCoroutineScope()
 
@@ -107,6 +109,10 @@ fun StopwatchScreen(
     val sessionDefaultPrefix = stringResource(Res.string.session_default_prefix)
     val savedPrefix = stringResource(Res.string.session_saved_prefix)
     val saveFailedMessage = stringResource(Res.string.session_save_failed)
+
+    fun clearSavedFeedback() {
+        savedMessage = null
+    }
 
     Column(
         modifier = Modifier.fillMaxSize().padding(20.dp),
@@ -131,6 +137,7 @@ fun StopwatchScreen(
                 StopwatchStatus.IDLE -> Button(
                     modifier = Modifier.weight(1f).height(buttonHeight),
                     onClick = {
+                        clearSavedFeedback()
                         snapshot = engine.start()
                         scope.launch { suspendResult { activeStopwatch.save(engine.checkpoint()) } }
                     },
@@ -140,6 +147,7 @@ fun StopwatchScreen(
                     Button(
                         modifier = Modifier.weight(1f).height(buttonHeight),
                         onClick = {
+                            clearSavedFeedback()
                             snapshot = engine.pause()
                             scope.launch { suspendResult { activeStopwatch.save(engine.checkpoint()) } }
                         },
@@ -147,6 +155,7 @@ fun StopwatchScreen(
                     FilledTonalButton(
                         modifier = Modifier.weight(1f).height(buttonHeight),
                         onClick = {
+                            clearSavedFeedback()
                             snapshot = engine.lap()
                             scope.launch { suspendResult { activeStopwatch.save(engine.checkpoint()) } }
                         },
@@ -157,6 +166,7 @@ fun StopwatchScreen(
                     Button(
                         modifier = Modifier.weight(1f).height(buttonHeight),
                         onClick = {
+                            clearSavedFeedback()
                             snapshot = engine.resume()
                             scope.launch { suspendResult { activeStopwatch.save(engine.checkpoint()) } }
                         },
@@ -164,6 +174,7 @@ fun StopwatchScreen(
                     OutlinedButton(
                         modifier = Modifier.weight(1f).height(buttonHeight),
                         onClick = {
+                            clearSavedFeedback()
                             snapshot = engine.reset()
                             sessionName = ""
                             scope.launch { suspendResult { activeStopwatch.clear() } }
@@ -178,7 +189,10 @@ fun StopwatchScreen(
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = sessionName,
-                onValueChange = { sessionName = it.take(80) },
+                onValueChange = {
+                    sessionName = it.take(SessionValidation.MAX_SESSION_NAME_LENGTH)
+                    clearSavedFeedback()
+                },
                 singleLine = true,
                 label = { Text(stringResource(Res.string.session_name_label)) },
                 supportingText = { Text(stringResource(Res.string.session_name_support)) },
@@ -186,7 +200,9 @@ fun StopwatchScreen(
             Spacer(Modifier.height(8.dp))
             OutlinedButton(
                 modifier = Modifier.fillMaxWidth().height(buttonHeight),
+                enabled = !savingSession,
                 onClick = {
+                    if (savingSession) return@OutlinedButton
                     val finalSnapshot = engine.snapshot()
                     val now = wallClock.nowEpochMillis()
                     val safeName = sessionName.trim().ifEmpty { "$sessionDefaultPrefix $now" }
@@ -197,10 +213,17 @@ fun StopwatchScreen(
                         durationNanos = finalSnapshot.elapsedNanos,
                         laps = finalSnapshot.laps,
                     )
+                    savingSession = true
                     scope.launch {
                         suspendResult { sessions.upsert(session) }
-                            .onSuccess { savedMessage = "$savedPrefix “$safeName”" }
-                            .onFailure { savedMessage = saveFailedMessage }
+                            .onSuccess {
+                                savedMessage = "$savedPrefix “$safeName”"
+                                savingSession = false
+                            }
+                            .onFailure {
+                                savedMessage = saveFailedMessage
+                                savingSession = false
+                            }
                     }
                 },
             ) { Text(stringResource(Res.string.save_session)) }

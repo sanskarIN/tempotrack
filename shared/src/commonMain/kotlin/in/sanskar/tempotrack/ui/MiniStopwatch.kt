@@ -23,7 +23,12 @@ import in.sanskar.tempotrack.data.ActiveStopwatchRepository
 import in.sanskar.tempotrack.domain.DurationFormatter
 import in.sanskar.tempotrack.domain.StopwatchEngine
 import in.sanskar.tempotrack.domain.StopwatchStatus
-import in.sanskar.tempotrack.resources.*
+import in.sanskar.tempotrack.resources.Res
+import in.sanskar.tempotrack.resources.action_lap
+import in.sanskar.tempotrack.resources.action_pause
+import in.sanskar.tempotrack.resources.action_reset
+import in.sanskar.tempotrack.resources.action_resume
+import in.sanskar.tempotrack.resources.action_start
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch

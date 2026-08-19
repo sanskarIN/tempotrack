@@ -9,6 +9,7 @@ import in.sanskar.tempotrack.data.JsonPreferencesRepository
 import in.sanskar.tempotrack.data.JsonSessionRepository
 import in.sanskar.tempotrack.ui.TempoTrackApp
 import in.sanskar.tempotrack.ui.TempoTrackDependencies
+import platform.Foundation.NSBundle
 import platform.UIKit.UIViewController
 
 fun MainViewController(): UIViewController {
@@ -24,13 +25,18 @@ fun MainViewController(): UIViewController {
         activeStopwatch = JsonActiveStopwatchRepository(activeStorage),
         exporter = IosHostExporter,
         platformName = "iOS",
-        versionName = "1.0.0",
+        versionName = iosVersionName(),
     )
 
     return ComposeUIViewController {
         TempoTrackApp(dependencies = dependencies)
     }
 }
+
+private fun iosVersionName(): String =
+    (NSBundle.mainBundle.objectForInfoDictionaryKey("CFBundleShortVersionString") as? String)
+        ?.takeIf(String::isNotBlank)
+        ?: "1.0.0"
 
 private object IosHostExporter : Exporter {
     override suspend fun export(

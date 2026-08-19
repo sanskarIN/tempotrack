@@ -38,6 +38,7 @@ import in.sanskar.tempotrack.data.SessionImporter
 import in.sanskar.tempotrack.data.SessionRepository
 import in.sanskar.tempotrack.domain.DurationFormatter
 import in.sanskar.tempotrack.domain.LapStatistics
+import in.sanskar.tempotrack.domain.SessionValidation
 import in.sanskar.tempotrack.domain.StopwatchSession
 import in.sanskar.tempotrack.resources.Res
 import kotlinx.coroutines.launch
@@ -55,11 +56,14 @@ fun HistoryScreen(
     var lastDeleted by remember { mutableStateOf<StopwatchSession?>(null) }
     var showImportDialog by remember { mutableStateOf(false) }
     var importJson by remember { mutableStateOf("") }
+    var renamingSession by remember { mutableStateOf<StopwatchSession?>(null) }
+    var renameText by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     val readFailedMessage = stringResource(Res.string.history_read_failed)
     val restoreDeletedFailedMessage = stringResource(Res.string.history_restore_deleted_failed)
     val deleteFailedMessage = stringResource(Res.string.history_delete_failed)
     val restoreFailedMessage = stringResource(Res.string.history_restore_failed)
+    val renameFailedMessage = stringResource(Res.string.history_rename_failed)
 
     suspend fun reload() {
         runCatching { sessions.all() }
@@ -172,6 +176,10 @@ fun HistoryScreen(
                 items(filtered, key = StopwatchSession::id) { session ->
                     SessionCard(
                         session = session,
+                        onRename = {
+                            renamingSession = session
+                            renameText = session.name
+                        },
                         onDelete = {
                             scope.launch {
                                 runCatching { sessions.delete(session.id) }
@@ -240,6 +248,48 @@ fun HistoryScreen(
             },
         )
     }
+
+    renamingSession?.let { session ->
+        AlertDialog(
+            onDismissRequest = { renamingSession = null },
+            title = { Text(stringResource(Res.string.history_rename_title)) },
+            text = {
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = renameText,
+                    onValueChange = { renameText = it.take(SessionValidation.MAX_SESSION_NAME_LENGTH) },
+                    singleLine = true,
+                    label = { Text(stringResource(Res.string.history_rename_label)) },
+                )
+            },
+            confirmButton = {
+                Button(
+                    enabled = renameText.trim().isNotEmpty() && renameText.trim() != session.name,
+                    onClick = {
+                        val requestedName = renameText.trim()
+                        scope.launch {
+                            try {
+                                if (sessions.rename(session.id, requestedName)) {
+                                    renamingSession = null
+                                    message = getString(Res.string.history_renamed, requestedName)
+                                    reload()
+                                } else {
+                                    message = renameFailedMessage
+                                }
+                            } catch (_: IllegalArgumentException) {
+                                message = renameFailedMessage
+                            }
+                        }
+                    },
+                ) { Text(stringResource(Res.string.action_save)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { renamingSession = null }) {
+                    Text(stringResource(Res.string.action_cancel))
+                }
+            },
+        )
+    }
 }
 
 private suspend fun export(
@@ -255,6 +305,7 @@ private suspend fun export(
 @Composable
 private fun SessionCard(
     session: StopwatchSession,
+    onRename: () -> Unit,
     onDelete: () -> Unit,
 ) {
     val stats = remember(session.laps) { LapStatistics.from(session.laps) }
@@ -277,7 +328,14 @@ private fun SessionCard(
                 style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(8.dp))
-            Button(onClick = onDelete) { Text(stringResource(Res.string.action_delete)) }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = onRename) {
+                    Text(stringResource(Res.string.action_rename))
+                }
+                Button(onClick = onDelete) {
+                    Text(stringResource(Res.string.action_delete))
+                }
+            }
         }
     }
 }

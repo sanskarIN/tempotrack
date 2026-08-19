@@ -82,12 +82,13 @@ class StopwatchEngine(
         )
     }
 
-    fun checkpoint(): StopwatchCheckpoint {
+    fun checkpoint(savedAtEpochMillis: Long? = null): StopwatchCheckpoint {
         if (status != StopwatchStatus.RUNNING) {
             return StopwatchCheckpoint(
                 status = status,
                 accumulatedNanos = accumulatedNanos,
                 startedAtNanos = startedAtNanos,
+                savedAtEpochMillis = savedAtEpochMillis,
                 laps = laps.toList(),
             )
         }
@@ -101,6 +102,7 @@ class StopwatchEngine(
             status = StopwatchStatus.RUNNING,
             accumulatedNanos = elapsedAtSave,
             startedAtNanos = now,
+            savedAtEpochMillis = savedAtEpochMillis,
             laps = laps.toList(),
         )
     }

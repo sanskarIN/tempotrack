@@ -6,6 +6,7 @@ import in.sanskar.tempotrack.domain.StopwatchSession
 interface SessionRepository {
     suspend fun all(): List<StopwatchSession>
     suspend fun upsert(session: StopwatchSession)
+    suspend fun rename(id: String, newName: String): Boolean
     suspend fun delete(id: String)
     suspend fun replaceAll(sessions: List<StopwatchSession>)
 }
@@ -35,6 +36,21 @@ class JsonSessionRepository(
             .plus(session)
             .sortedByDescending(StopwatchSession::createdAtEpochMillis)
         persist(updated)
+    }
+
+    override suspend fun rename(id: String, newName: String): Boolean {
+        if (id.isBlank()) return false
+        val normalizedName = newName.trim()
+        val current = all()
+        val existing = current.firstOrNull { it.id == id } ?: return false
+        val renamed = existing.copy(name = normalizedName)
+        SessionValidation.requireValid(renamed)
+        persist(
+            current
+                .map { if (it.id == id) renamed else it }
+                .sortedByDescending(StopwatchSession::createdAtEpochMillis),
+        )
+        return true
     }
 
     override suspend fun delete(id: String) {

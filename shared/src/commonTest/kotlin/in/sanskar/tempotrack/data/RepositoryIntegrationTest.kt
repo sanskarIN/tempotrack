@@ -1,8 +1,11 @@
 package in.sanskar.tempotrack.data
 
+import in.sanskar.tempotrack.domain.StopwatchCheckpoint
 import in.sanskar.tempotrack.domain.StopwatchSession
+import in.sanskar.tempotrack.domain.StopwatchStatus
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
 
@@ -41,6 +44,26 @@ class RepositoryIntegrationTest {
 
         storage.write("not-json")
         assertEquals(AppPreferences(), repository.load())
+    }
+
+    @Test
+    fun activeCheckpointRoundTripsClearsAndRejectsCorruption() = runTest {
+        val storage = MemoryStorage()
+        val repository = JsonActiveStopwatchRepository(storage)
+        val checkpoint = StopwatchCheckpoint(
+            status = StopwatchStatus.PAUSED,
+            accumulatedNanos = 123_456_789L,
+            startedAtNanos = null,
+        )
+
+        repository.save(checkpoint)
+        assertEquals(checkpoint, repository.load())
+
+        repository.clear()
+        assertNull(repository.load())
+
+        storage.write("broken-checkpoint")
+        assertNull(repository.load())
     }
 
     private fun session(id: String, createdAt: Long) = StopwatchSession(

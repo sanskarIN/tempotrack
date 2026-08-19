@@ -15,6 +15,7 @@ import in.sanskar.tempotrack.data.JsonActiveStopwatchRepository
 import in.sanskar.tempotrack.data.JsonPreferencesRepository
 import in.sanskar.tempotrack.data.JsonSessionRepository
 import in.sanskar.tempotrack.domain.MonotonicClock
+import in.sanskar.tempotrack.domain.StopwatchCheckpointRecovery
 import in.sanskar.tempotrack.domain.StopwatchEngine
 import in.sanskar.tempotrack.domain.WallClock
 import in.sanskar.tempotrack.ui.MiniStopwatch
@@ -46,6 +47,7 @@ fun main() = application {
             exporter = DesktopExporter(),
             platformName = "Desktop",
             versionName = versionName,
+            recoverCheckpoint = StopwatchCheckpointRecovery::pauseRunningAtLastSavedElapsed,
             miniStopwatchSupported = true,
             setMiniStopwatchVisible = { miniVisible = it },
             keyboardShortcutsSupported = true,

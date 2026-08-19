@@ -23,9 +23,11 @@ import in.sanskar.tempotrack.data.ActiveStopwatchRepository
 import in.sanskar.tempotrack.domain.DurationFormatter
 import in.sanskar.tempotrack.domain.StopwatchEngine
 import in.sanskar.tempotrack.domain.StopwatchStatus
+import in.sanskar.tempotrack.resources.Res
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun MiniStopwatch(
@@ -63,7 +65,7 @@ fun MiniStopwatch(
                         snapshot = engine.start()
                         persist()
                     },
-                ) { Text("Start") }
+                ) { Text(stringResource(Res.string.action_start)) }
 
                 StopwatchStatus.RUNNING -> {
                     Button(
@@ -71,13 +73,13 @@ fun MiniStopwatch(
                             snapshot = engine.pause()
                             persist()
                         },
-                    ) { Text("Pause") }
+                    ) { Text(stringResource(Res.string.action_pause)) }
                     OutlinedButton(
                         onClick = {
                             snapshot = engine.lap()
                             persist()
                         },
-                    ) { Text("Lap") }
+                    ) { Text(stringResource(Res.string.action_lap)) }
                 }
 
                 StopwatchStatus.PAUSED -> {
@@ -86,13 +88,13 @@ fun MiniStopwatch(
                             snapshot = engine.resume()
                             persist()
                         },
-                    ) { Text("Resume") }
+                    ) { Text(stringResource(Res.string.action_resume)) }
                     OutlinedButton(
                         onClick = {
                             snapshot = engine.reset()
                             scope.launch { runCatching { activeStopwatch.clear() } }
                         },
-                    ) { Text("Reset") }
+                    ) { Text(stringResource(Res.string.action_reset)) }
                 }
             }
         }

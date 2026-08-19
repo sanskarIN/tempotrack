@@ -18,6 +18,7 @@ data class AppPreferences(
     val reducedMotion: Boolean = false,
     val onboardingCompleted: Boolean = false,
     val miniStopwatchVisible: Boolean = false,
+    val keyboardShortcutsEnabled: Boolean = true,
 )
 
 interface PreferencesRepository {

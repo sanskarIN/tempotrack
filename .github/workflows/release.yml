@@ -13,7 +13,20 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  validate-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tags must use vMAJOR.MINOR.PATCH, for example v1.2.3." >&2
+            exit 1
+          fi
+
   android:
+    needs: validate-tag
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -73,6 +86,7 @@ jobs:
             androidApp/build/outputs/bundle/release/*.aab
 
   desktop:
+    needs: validate-tag
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -102,6 +116,7 @@ jobs:
           path: desktopApp/build/compose/binaries/main/**
 
   ios-framework:
+    needs: validate-tag
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4

@@ -38,6 +38,9 @@ import in.sanskar.tempotrack.data.SessionImportError
 import in.sanskar.tempotrack.data.SessionImportResult
 import in.sanskar.tempotrack.data.SessionImporter
 import in.sanskar.tempotrack.data.SessionRepository
+import in.sanskar.tempotrack.data.ShareError
+import in.sanskar.tempotrack.data.ShareResult
+import in.sanskar.tempotrack.data.ShareService
 import in.sanskar.tempotrack.domain.DurationFormatter
 import in.sanskar.tempotrack.domain.LapStatistics
 import in.sanskar.tempotrack.domain.SessionValidation
@@ -78,6 +81,11 @@ import in.sanskar.tempotrack.resources.history_restore_json
 import in.sanskar.tempotrack.resources.history_restored_count
 import in.sanskar.tempotrack.resources.history_search
 import in.sanskar.tempotrack.resources.history_session_summary
+import in.sanskar.tempotrack.resources.history_share_csv
+import in.sanskar.tempotrack.resources.history_share_failed
+import in.sanskar.tempotrack.resources.history_share_json
+import in.sanskar.tempotrack.resources.history_share_started
+import in.sanskar.tempotrack.resources.history_share_unavailable
 import in.sanskar.tempotrack.resources.history_title
 import in.sanskar.tempotrack.resources.history_undo_delete
 import kotlinx.coroutines.launch
@@ -88,6 +96,7 @@ import org.jetbrains.compose.resources.stringResource
 fun HistoryScreen(
     sessions: SessionRepository,
     exporter: Exporter,
+    shareService: ShareService? = null,
 ) {
     var allSessions by remember { mutableStateOf<List<StopwatchSession>>(emptyList()) }
     var query by remember { mutableStateOf("") }
@@ -165,6 +174,44 @@ fun HistoryScreen(
                 },
             ) { Text(stringResource(Res.string.history_export_csv)) }
         }
+
+        if (shareService != null) {
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                OutlinedButton(
+                    modifier = Modifier.weight(1f),
+                    enabled = allSessions.isNotEmpty(),
+                    onClick = {
+                        scope.launch {
+                            message = share(
+                                shareService,
+                                "tempotrack-sessions.json",
+                                "application/json",
+                                SessionCodec.toJson(allSessions),
+                            )
+                        }
+                    },
+                ) { Text(stringResource(Res.string.history_share_json)) }
+                OutlinedButton(
+                    modifier = Modifier.weight(1f),
+                    enabled = allSessions.isNotEmpty(),
+                    onClick = {
+                        scope.launch {
+                            message = share(
+                                shareService,
+                                "tempotrack-sessions.csv",
+                                "text/csv",
+                                SessionCodec.toCsv(allSessions),
+                            )
+                        }
+                    },
+                ) { Text(stringResource(Res.string.history_share_csv)) }
+            }
+        }
+
         Spacer(Modifier.height(8.dp))
         OutlinedButton(
             modifier = Modifier.fillMaxWidth(),
@@ -404,6 +451,19 @@ private suspend fun export(
         ExportError.WRITE_FAILED -> getString(Res.string.history_export_write_failed)
         ExportError.PLATFORM_EXPORT_UNAVAILABLE -> getString(Res.string.history_export_unavailable)
         ExportError.USER_CANCELLED -> getString(Res.string.history_export_cancelled)
+    }
+}
+
+private suspend fun share(
+    shareService: ShareService,
+    name: String,
+    mimeType: String,
+    content: String,
+): String = when (val result = shareService.share(name, mimeType, content)) {
+    ShareResult.Started -> getString(Res.string.history_share_started)
+    is ShareResult.Failure -> when (result.error) {
+        ShareError.PREPARE_FAILED -> getString(Res.string.history_share_failed)
+        ShareError.PLATFORM_SHARE_UNAVAILABLE -> getString(Res.string.history_share_unavailable)
     }
 }
 

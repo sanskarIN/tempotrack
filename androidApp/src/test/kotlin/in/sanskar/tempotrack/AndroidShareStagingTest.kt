@@ -1,9 +1,9 @@
 package in.sanskar.tempotrack
 
 import java.nio.file.Files
-import kotlin.test.Test
-import kotlin.test.assertNotEquals
-import kotlin.test.assertTrue
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 class AndroidShareStagingTest {
     @Test

@@ -58,7 +58,11 @@ fun TempoTrackApp(
     var destination by remember { mutableStateOf(Destination.STOPWATCH) }
 
     LaunchedEffect(dependencies) {
-        preferences = runCatching { dependencies.preferences.load() }.getOrDefault(AppPreferences())
+        val loadedPreferences = runCatching { dependencies.preferences.load() }.getOrDefault(AppPreferences())
+        preferences = loadedPreferences
+        if (dependencies.miniStopwatchSupported) {
+            dependencies.setMiniStopwatchVisible(loadedPreferences.miniStopwatchVisible)
+        }
         val checkpoint = runCatching { dependencies.activeStopwatch.load() }.getOrNull()
         engine = StopwatchEngine(dependencies.monotonicClock, checkpoint ?: StopwatchCheckpoint())
         onEngineReady(requireNotNull(engine))

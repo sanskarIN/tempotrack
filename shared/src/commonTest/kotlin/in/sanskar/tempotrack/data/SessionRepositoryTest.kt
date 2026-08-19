@@ -82,6 +82,19 @@ class SessionRepositoryTest {
     }
 
     @Test
+    fun deletingMissingSessionDoesNotRewriteStorage() = runTest {
+        val storage = InMemoryStringStorage()
+        val repository = JsonSessionRepository(storage)
+        repository.upsert(session(id = "one", createdAt = 10L))
+        val writesAfterSave = storage.writeCount
+
+        repository.delete("missing")
+
+        assertEquals(writesAfterSave, storage.writeCount)
+        assertEquals(listOf("one"), repository.all().map(StopwatchSession::id))
+    }
+
+    @Test
     fun replaceAllRejectsDuplicateIds() = runTest {
         val repository = JsonSessionRepository(InMemoryStringStorage())
         val duplicate = session(id = "same", createdAt = 10L)

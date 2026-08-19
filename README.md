@@ -20,8 +20,10 @@
 
 - Start, pause, resume, reset, lap and split timing.
 - Millisecond display precision.
-- Monotonic timing: Android uses `SystemClock.elapsedRealtimeNanos()` so device sleep is included.
-- Fastest, slowest and average lap statistics with recorded/fastest/slowest sorting.
+- Monotonic live timing with platform-aware crash/restart recovery.
+- Android/iOS uptime-vs-wall recovery validation so reboot/reset checkpoints fail safely to paused.
+- Desktop process-restart recovery backed by a five-second running-checkpoint heartbeat.
+- Fastest, slowest and average lap statistics with recorded/fastest/slowest sorting and overflow-safe integer averaging.
 - Named, searchable sessions stored locally, with rename and undo-delete flows.
 - CSV and JSON export plus validated JSON history restore.
 - Android JSON/CSV system sharing through a restricted `FileProvider` cache path.
@@ -30,6 +32,7 @@
 - Desktop native save-file chooser with explicit cancellation handling.
 - Bounded shared export-filename sanitization for platform file operations.
 - Versioned local session, preference, and active-stopwatch storage with legacy migration.
+- Active-stopwatch schema v2 with elapsed-at-save and wall-save recovery metadata.
 - Persistent active-stopwatch checkpoints and Desktop mini-stopwatch visibility.
 - Light, dark and system themes.
 - Large-control accessibility mode and reduced-motion preference.
@@ -72,10 +75,12 @@ Real release screenshots will replace these placeholders once verified tagged bu
 Requirements:
 
 - JDK 17 or newer
-- Gradle 9.5.0 (the bootstrap scripts use a standard wrapper JAR if one is present, otherwise they delegate to an installed `gradle`)
+- Gradle 9.5.0
 - Android Studio with Android SDK 37 for Android builds
 - A desktop OS supported by Compose Desktop
 - macOS with Xcode for iOS framework compilation/tests and iOS host execution
+
+The launcher scripts use `gradle/wrapper/gradle-wrapper.jar` when that standard binary is present. In this repository state the wrapper JAR is not committed, so the launchers deliberately require an installed **Gradle 9.5.0** and reject a mismatched fallback version instead of silently building with a different toolchain. The wrapper properties pin the Gradle 9.5.0 binary distribution SHA-256 for a future trusted wrapper generation.
 
 ```bash
 git clone https://github.com/sanskarIN/tempotrack.git
@@ -112,11 +117,11 @@ See [docs/setup.md](docs/setup.md) for full setup instructions.
 
 TempoTrack uses a modular-monolith structure:
 
-- `shared/` — domain model, versioned storage contracts/codecs, serialization, shared Compose UI/resources, tests, and iOS adapters/export/share bridges.
-- `androidApp/` — Android entry point, Android monotonic clock, atomic private-file storage, MediaStore export, and secure operating-system sharing.
-- `desktopApp/` — Desktop entry point, atomic JVM storage, native export destination selection, keyboard shortcuts, and mini-window integration.
+- `shared/` — domain model, versioned storage contracts/codecs, checkpoint recovery policy, serialization, shared Compose UI/resources, tests, and iOS adapters/export/share bridges.
+- `androidApp/` — Android entry point, uptime monotonic clock, reboot-aware checkpoint recovery, atomic private-file storage, MediaStore export, and secure operating-system sharing.
+- `desktopApp/` — Desktop entry point, JVM monotonic clock, process-restart-safe checkpoint recovery/heartbeat, atomic JVM storage, native export destination selection, keyboard shortcuts, and mini-window integration.
 
-The stopwatch engine never derives elapsed duration from the wall clock. A `MonotonicClock` is injected so elapsed-time behavior can be tested deterministically.
+The stopwatch engine never derives live elapsed duration from the wall clock. Wall time is stored only as recovery metadata so Android/iOS can validate whether a persisted uptime reference still belongs to the same boot. See [ADR 0005](docs/adr/0005-platform-checkpoint-recovery.md).
 
 See [docs/architecture.md](docs/architecture.md) and [docs/adr/0001-monotonic-time.md](docs/adr/0001-monotonic-time.md).
 
@@ -126,7 +131,7 @@ History can be exported as JSON or CSV. JSON exports can be restored after valid
 
 The iOS export/share bridges stage each operation in a unique temporary directory using the sanitized requested filename and remove that temporary directory when the native flow completes or fails.
 
-The internal persistence format is independently versioned and migrated; portable JSON exports remain plain session lists so backups are not coupled to the internal storage envelope.
+The internal persistence format is independently versioned and migrated; portable JSON exports remain plain session lists so backups are not coupled to the internal storage envelope. Restore limits are deliberately aligned with local persistence limits so a valid self-export is not rejected merely by a smaller importer cap.
 
 ## Testing
 

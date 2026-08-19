@@ -2,6 +2,8 @@ package in.sanskar.tempotrack
 
 import in.sanskar.tempotrack.data.StringStorage
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -14,16 +16,25 @@ class AndroidStringStorage(
 
     override suspend fun write(content: String) = withContext(Dispatchers.IO) {
         file.parentFile?.mkdirs()
-        val temp = File(file.parentFile, "${file.name}.tmp")
-        temp.writeText(content)
-        if (!temp.renameTo(file)) {
-            file.writeText(content)
-            temp.delete()
-        }
+        val target = file.toPath()
+        val temp = File(file.parentFile, "${file.name}.tmp").toPath()
+        Files.writeString(temp, content)
+        runCatching {
+            Files.move(
+                temp,
+                target,
+                StandardCopyOption.REPLACE_EXISTING,
+                StandardCopyOption.ATOMIC_MOVE,
+            )
+        }.recoverCatching {
+            Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING)
+        }.getOrThrow()
+        Unit
     }
 
     override suspend fun clear() = withContext(Dispatchers.IO) {
-        if (file.exists()) file.delete()
+        Files.deleteIfExists(file.toPath())
+        Files.deleteIfExists(File(file.parentFile, "${file.name}.tmp").toPath())
         Unit
     }
 }

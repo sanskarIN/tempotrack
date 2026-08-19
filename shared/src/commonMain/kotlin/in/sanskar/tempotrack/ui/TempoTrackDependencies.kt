@@ -4,6 +4,7 @@ import in.sanskar.tempotrack.data.ActiveStopwatchRepository
 import in.sanskar.tempotrack.data.Exporter
 import in.sanskar.tempotrack.data.PreferencesRepository
 import in.sanskar.tempotrack.data.SessionRepository
+import in.sanskar.tempotrack.data.ShareService
 import in.sanskar.tempotrack.domain.MonotonicClock
 import in.sanskar.tempotrack.domain.WallClock
 
@@ -16,6 +17,7 @@ data class TempoTrackDependencies(
     val exporter: Exporter,
     val platformName: String,
     val versionName: String,
+    val shareService: ShareService? = null,
     val miniStopwatchSupported: Boolean = false,
     val setMiniStopwatchVisible: (Boolean) -> Unit = {},
     val keyboardShortcutsSupported: Boolean = false,

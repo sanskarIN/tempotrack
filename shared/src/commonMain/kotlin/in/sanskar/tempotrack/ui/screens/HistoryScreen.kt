@@ -11,12 +11,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import in.sanskar.tempotrack.data.Exporter
 import in.sanskar.tempotrack.data.ExportResult
 import in.sanskar.tempotrack.data.SessionCodec
+import in.sanskar.tempotrack.data.SessionImportResult
+import in.sanskar.tempotrack.data.SessionImporter
 import in.sanskar.tempotrack.data.SessionRepository
 import in.sanskar.tempotrack.domain.DurationFormatter
 import in.sanskar.tempotrack.domain.LapStatistics
@@ -46,6 +50,8 @@ fun HistoryScreen(
     var query by remember { mutableStateOf("") }
     var message by remember { mutableStateOf<String?>(null) }
     var lastDeleted by remember { mutableStateOf<StopwatchSession?>(null) }
+    var showImportDialog by remember { mutableStateOf(false) }
+    var importJson by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
 
     suspend fun reload() {
@@ -107,6 +113,16 @@ fun HistoryScreen(
                 },
             ) { Text("Export CSV") }
         }
+        Spacer(Modifier.height(8.dp))
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                importJson = ""
+                showImportDialog = true
+            },
+        ) {
+            Text("Restore from JSON backup")
+        }
 
         message?.let {
             Spacer(Modifier.height(6.dp))
@@ -159,6 +175,54 @@ fun HistoryScreen(
                 }
             }
         }
+    }
+
+    if (showImportDialog) {
+        AlertDialog(
+            onDismissRequest = { showImportDialog = false },
+            title = { Text("Restore JSON backup") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Paste a TempoTrack JSON export. Restoring replaces the current saved history.")
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = importJson,
+                        onValueChange = {
+                            if (it.length <= SessionImporter.MAX_IMPORT_CHARACTERS) importJson = it
+                        },
+                        minLines = 6,
+                        maxLines = 12,
+                        label = { Text("Backup JSON") },
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    enabled = importJson.isNotBlank(),
+                    onClick = {
+                        when (val result = SessionImporter.fromJson(importJson)) {
+                            is SessionImportResult.Failure -> message = result.userMessage
+                            is SessionImportResult.Success -> {
+                                scope.launch {
+                                    runCatching { sessions.replaceAll(result.sessions) }
+                                        .onSuccess {
+                                            lastDeleted = null
+                                            importJson = ""
+                                            showImportDialog = false
+                                            message = "Restored ${result.sessions.size} saved session(s)."
+                                            reload()
+                                        }
+                                        .onFailure { message = "Could not restore this backup." }
+                                }
+                            }
+                        }
+                    },
+                ) { Text("Replace history") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showImportDialog = false }) { Text("Cancel") }
+            },
+        )
     }
 }
 

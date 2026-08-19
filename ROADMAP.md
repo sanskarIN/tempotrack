@@ -41,6 +41,17 @@
 - [x] Add direct iOS document-picker export destination support through `UIDocumentPickerViewController`.
 - [ ] Add optional encrypted local backup using platform facilities only if a concrete threat model requires it.
 
+## Documentation and maintainability
+
+- [x] Add a central documentation index with role-based reading paths.
+- [x] Add an exhaustive tracked-file reference covering source, tests, resources, workflows, tools, assets, policies, Gradle metadata, and documentation.
+- [x] Add deep source/API, state/recovery, persistence/data lifecycle, platform, user, maintainer, build/CI, and security guides.
+- [x] Add a deterministic Kotlin namespace guard for the `in.sanskar...` keyword-package syntax.
+- [x] Add a Git-backed repository-reference coverage guard so newly tracked files cannot silently remain undocumented.
+- [x] Run the documentation/source guards in CI and expose them in contributor/PR/release guidance.
+- [x] Correct stale troubleshooting guidance for corrupt history and platform checkpoint recovery.
+- [ ] Observe a clean-checkout run of the complete documentation guards in an execution environment with GitHub/network access.
+
 ## Release engineering
 
 - [x] Derive Android/Desktop package versions from release tags.
@@ -50,4 +61,4 @@
 - [x] Scope Android signing secrets to only the workflow steps that require them.
 - [ ] Provision the actual production Android signing secrets in protected repository/environment settings before creating a distributable Android tag release.
 
-Roadmap items are not promises or release dates. Items that require private signing credentials, a macOS/Xcode host, physical/emulated devices, verified iOS picker/share behavior, or release screenshots remain intentionally open until they can be verified in the correct environment.
+Roadmap items are not promises or release dates. Items that require private signing credentials, a macOS/Xcode host, physical/emulated devices, observed CI/clean-checkout execution, verified iOS picker/share behavior, or release screenshots remain intentionally open until they can be verified in the correct environment.

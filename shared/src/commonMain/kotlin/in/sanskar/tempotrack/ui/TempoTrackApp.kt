@@ -23,17 +23,27 @@ import androidx.compose.ui.Modifier
 import in.sanskar.tempotrack.data.AppPreferences
 import in.sanskar.tempotrack.domain.StopwatchCheckpoint
 import in.sanskar.tempotrack.domain.StopwatchEngine
+import in.sanskar.tempotrack.resources.Res
 import in.sanskar.tempotrack.ui.screens.AboutScreen
 import in.sanskar.tempotrack.ui.screens.HistoryScreen
 import in.sanskar.tempotrack.ui.screens.OnboardingScreen
 import in.sanskar.tempotrack.ui.screens.SettingsScreen
 import in.sanskar.tempotrack.ui.screens.StopwatchScreen
+import org.jetbrains.compose.resources.stringResource
 
-private enum class Destination(val label: String, val glyph: String) {
-    STOPWATCH("Stopwatch", "⏱"),
-    HISTORY("History", "◷"),
-    SETTINGS("Settings", "⚙"),
-    ABOUT("About", "ⓘ"),
+private enum class Destination(val glyph: String) {
+    STOPWATCH("⏱"),
+    HISTORY("◷"),
+    SETTINGS("⚙"),
+    ABOUT("ⓘ"),
+}
+
+@Composable
+private fun Destination.label(): String = when (this) {
+    Destination.STOPWATCH -> stringResource(Res.string.nav_stopwatch)
+    Destination.HISTORY -> stringResource(Res.string.nav_history)
+    Destination.SETTINGS -> stringResource(Res.string.nav_settings)
+    Destination.ABOUT -> stringResource(Res.string.nav_about)
 }
 
 @Composable
@@ -82,7 +92,7 @@ fun TempoTrackApp(
                             selected = destination == item,
                             onClick = { destination = item },
                             icon = { Text(item.glyph) },
-                            label = { Text(item.label) },
+                            label = { Text(item.label()) },
                         )
                     }
                 }
@@ -105,7 +115,7 @@ fun TempoTrackApp(
                                 selected = destination == item,
                                 onClick = { destination = item },
                                 icon = { Text(item.glyph) },
-                                label = { Text(item.label) },
+                                label = { Text(item.label()) },
                             )
                         }
                     }

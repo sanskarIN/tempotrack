@@ -1,16 +1,19 @@
 package in.sanskar.tempotrack.util
 
 import kotlin.test.Test
-import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlin.test.fail
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 
 class SuspendResultTest {
     @Test
     fun rethrowsCoroutineCancellation() = runTest {
-        assertFailsWith<CancellationException> {
+        try {
             suspendResult<Unit> { throw CancellationException("cancel") }
+            fail("CancellationException should be rethrown")
+        } catch (_: CancellationException) {
+            // Expected: cancellation must never be converted into Result.failure.
         }
     }
 

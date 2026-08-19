@@ -50,6 +50,7 @@ import in.sanskar.tempotrack.resources.action_save
 import in.sanskar.tempotrack.resources.history_backup_json_label
 import in.sanskar.tempotrack.resources.history_delete_failed
 import in.sanskar.tempotrack.resources.history_empty
+import in.sanskar.tempotrack.resources.history_export_cancelled
 import in.sanskar.tempotrack.resources.history_export_csv
 import in.sanskar.tempotrack.resources.history_export_json
 import in.sanskar.tempotrack.resources.history_export_unavailable
@@ -402,6 +403,7 @@ private suspend fun export(
     is ExportResult.Failure -> when (result.error) {
         ExportError.WRITE_FAILED -> getString(Res.string.history_export_write_failed)
         ExportError.PLATFORM_EXPORT_UNAVAILABLE -> getString(Res.string.history_export_unavailable)
+        ExportError.USER_CANCELLED -> getString(Res.string.history_export_cancelled)
     }
 }
 

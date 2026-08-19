@@ -4,5 +4,8 @@
         <item name="android:windowActionModeOverlay">true</item>
         <item name="android:fontFamily">sans</item>
         <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="android:colorAccent">#415F91</item>
+        <item name="android:navigationBarColor">#F7F8FA</item>
     </style>
 </resources>

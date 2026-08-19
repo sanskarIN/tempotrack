@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
+val tempoTrackVersion = providers.gradleProperty("appVersion").get()
+
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
@@ -26,7 +28,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "TempoTrack"
-            packageVersion = "1.0.0"
+            packageVersion = tempoTrackVersion
             description = "A focused, privacy-first stopwatch for Android and Desktop."
             vendor = "Sanskar"
         }

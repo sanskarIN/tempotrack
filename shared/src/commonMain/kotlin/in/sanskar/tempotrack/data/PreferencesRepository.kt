@@ -15,6 +15,7 @@ data class AppPreferences(
     val largeControls: Boolean = false,
     val reducedMotion: Boolean = false,
     val onboardingCompleted: Boolean = false,
+    val miniStopwatchVisible: Boolean = false,
 )
 
 interface PreferencesRepository {

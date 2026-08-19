@@ -43,6 +43,7 @@ class JsonSessionRepository(
         val normalizedName = newName.trim()
         val current = loadUnlocked()
         val existing = current.firstOrNull { it.id == id } ?: return@withLock false
+        if (existing.name == normalizedName) return@withLock true
         val renamed = existing.copy(name = normalizedName)
         SessionValidation.requireValid(renamed)
         persistUnlocked(

@@ -53,6 +53,8 @@ Run:
 ./gradlew :androidApp:assembleDebug
 ```
 
+Android local JVM tests under `androidApp/src/test` cover collision-safe pre-Android-10 export filename reservation, preservation of existing export contents, bounded reservation failure, unique per-operation share staging, extension preservation, and short share filenames.
+
 Release-oriented Android verification:
 
 ```bash
@@ -67,12 +69,17 @@ Manual Android lifecycle/data-portability checks should verify that:
 - a simulated/device reboot or clearly reset uptime reference restores the last checkpoint as PAUSED rather than producing an incorrect running duration;
 - a migrated legacy running checkpoint without wall-save metadata is normalized to PAUSED once;
 - JSON and CSV exports are created only after the corresponding action;
+- repeated exports on pre-Android-10 devices reserve a new filename rather than overwriting an existing backup;
+- Android 10+ MediaStore exports become visible only after successful finalization;
 - Share JSON and Share CSV open the operating-system chooser;
+- repeated share launches keep independent staged files so a later share cannot change the content behind an earlier granted URI;
 - the shared URI is a `content://` URI rather than a raw filesystem path;
+- the send intent carries the shared URI in both `EXTRA_STREAM` and `ClipData` together with read permission;
 - the receiving app can read the granted file;
 - no unrelated cache path is exposed by the `FileProvider` configuration;
 - cancelling or returning from the share sheet does not mutate saved history;
-- cancelling an in-flight coroutine does not become a false write-failure result.
+- cancelling an in-flight coroutine does not become a false write-failure result;
+- if cancellation races chooser launch, the staged file remains available rather than being deleted while a recipient may still read it.
 
 ## Desktop checks
 

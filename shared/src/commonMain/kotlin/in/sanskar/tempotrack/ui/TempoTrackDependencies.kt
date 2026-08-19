@@ -21,4 +21,5 @@ data class TempoTrackDependencies(
     val miniStopwatchSupported: Boolean = false,
     val setMiniStopwatchVisible: (Boolean) -> Unit = {},
     val keyboardShortcutsSupported: Boolean = false,
+    val setKeyboardShortcutsEnabled: (Boolean) -> Unit = {},
 )

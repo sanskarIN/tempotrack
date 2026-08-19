@@ -1,4 +1,4 @@
-package in.sanskar.tempotrack.domain
+package `in`.sanskar.tempotrack.domain
 
 object DurationFormatter {
     fun formatNanos(nanos: Long, showMillis: Boolean = true): String {

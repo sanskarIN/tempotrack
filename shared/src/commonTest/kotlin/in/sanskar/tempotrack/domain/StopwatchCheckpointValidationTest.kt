@@ -1,10 +1,16 @@
 package in.sanskar.tempotrack.domain
 
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class StopwatchCheckpointValidationTest {
+    @Test
+    fun checkpointLapLimitMatchesSavedSessionLimit() {
+        assertEquals(SessionValidation.MAX_LAPS_PER_SESSION, StopwatchCheckpointValidation.MAX_LAPS)
+    }
+
     @Test
     fun acceptsValidRunningCheckpointWithLaps() {
         val checkpoint = StopwatchCheckpoint(

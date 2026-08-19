@@ -88,6 +88,7 @@ import in.sanskar.tempotrack.resources.history_share_started
 import in.sanskar.tempotrack.resources.history_share_unavailable
 import in.sanskar.tempotrack.resources.history_title
 import in.sanskar.tempotrack.resources.history_undo_delete
+import in.sanskar.tempotrack.util.suspendResult
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -116,7 +117,7 @@ fun HistoryScreen(
     val renameFailedMessage = stringResource(Res.string.history_rename_failed)
 
     suspend fun reload() {
-        runCatching { sessions.all() }
+        suspendResult { sessions.all() }
             .onSuccess { allSessions = it }
             .onFailure { message = readFailedMessage }
     }
@@ -234,7 +235,7 @@ fun HistoryScreen(
             OutlinedButton(
                 onClick = {
                     scope.launch {
-                        runCatching { sessions.upsert(deleted) }
+                        suspendResult { sessions.upsert(deleted) }
                             .onSuccess {
                                 lastDeleted = null
                                 reload()
@@ -272,7 +273,7 @@ fun HistoryScreen(
                         },
                         onDelete = {
                             scope.launch {
-                                runCatching { sessions.delete(session.id) }
+                                suspendResult { sessions.delete(session.id) }
                                     .onSuccess {
                                         lastDeleted = session
                                         reload()
@@ -330,7 +331,7 @@ fun HistoryScreen(
 
                             is SessionImportResult.Success -> {
                                 scope.launch {
-                                    runCatching { sessions.replaceAll(result.sessions) }
+                                    suspendResult { sessions.replaceAll(result.sessions) }
                                         .onSuccess {
                                             lastDeleted = null
                                             importJson = ""
@@ -397,18 +398,18 @@ fun HistoryScreen(
                     onClick = {
                         val requestedName = renameText.trim()
                         scope.launch {
-                            try {
-                                if (sessions.rename(session.id, requestedName)) {
-                                    renamingSession = null
-                                    renameError = null
-                                    message = getString(Res.string.history_renamed, requestedName)
-                                    reload()
-                                } else {
-                                    renameError = renameFailedMessage
+                            suspendResult { sessions.rename(session.id, requestedName) }
+                                .onSuccess { renamed ->
+                                    if (renamed) {
+                                        renamingSession = null
+                                        renameError = null
+                                        message = getString(Res.string.history_renamed, requestedName)
+                                        reload()
+                                    } else {
+                                        renameError = renameFailedMessage
+                                    }
                                 }
-                            } catch (_: IllegalArgumentException) {
-                                renameError = renameFailedMessage
-                            }
+                                .onFailure { renameError = renameFailedMessage }
                         }
                     },
                 ) { Text(stringResource(Res.string.action_save)) }

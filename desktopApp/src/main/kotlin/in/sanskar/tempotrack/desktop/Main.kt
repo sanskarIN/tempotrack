@@ -20,6 +20,7 @@ import in.sanskar.tempotrack.domain.WallClock
 import in.sanskar.tempotrack.ui.MiniStopwatch
 import in.sanskar.tempotrack.ui.TempoTrackApp
 import in.sanskar.tempotrack.ui.TempoTrackDependencies
+import in.sanskar.tempotrack.util.suspendResult
 import java.nio.file.Paths
 import kotlinx.coroutines.launch
 
@@ -67,17 +68,17 @@ fun main() = application {
                             in.sanskar.tempotrack.domain.StopwatchStatus.RUNNING -> engine.pause()
                             in.sanskar.tempotrack.domain.StopwatchStatus.PAUSED -> engine.resume()
                         }
-                        scope.launch { runCatching { dependencies.activeStopwatch.save(engine.checkpoint()) } }
+                        scope.launch { suspendResult { dependencies.activeStopwatch.save(engine.checkpoint()) } }
                         true
                     }
                     event.key == Key.L -> {
                         engine.lap()
-                        scope.launch { runCatching { dependencies.activeStopwatch.save(engine.checkpoint()) } }
+                        scope.launch { suspendResult { dependencies.activeStopwatch.save(engine.checkpoint()) } }
                         true
                     }
                     event.key == Key.R -> {
                         engine.reset()
-                        scope.launch { runCatching { dependencies.activeStopwatch.clear() } }
+                        scope.launch { suspendResult { dependencies.activeStopwatch.clear() } }
                         true
                     }
                     else -> false

@@ -3,6 +3,7 @@ package in.sanskar.tempotrack
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
+import in.sanskar.tempotrack.data.ExportFileName
 import in.sanskar.tempotrack.data.ShareError
 import in.sanskar.tempotrack.data.ShareResult
 import in.sanskar.tempotrack.data.ShareService
@@ -19,7 +20,7 @@ class AndroidShareService(
         content: String,
     ): ShareResult = withContext(Dispatchers.IO) {
         runCatching {
-            val safeName = suggestedFileName.replace(Regex("[^A-Za-z0-9._-]"), "_")
+            val safeName = ExportFileName.sanitize(suggestedFileName)
             val directory = File(context.cacheDir, "shared-exports").apply { mkdirs() }
             val target = File(directory, safeName)
             target.writeText(content, Charsets.UTF_8)

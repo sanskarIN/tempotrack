@@ -50,6 +50,33 @@ class StopwatchEngineTest {
     }
 
     @Test
+    fun runningCheckpointRebasesElapsedAtSaveTime() {
+        engine.start()
+        clock.advanceSeconds(2)
+        engine.lap()
+        clock.advanceSeconds(3)
+
+        val checkpoint = engine.checkpoint()
+
+        assertEquals(StopwatchStatus.RUNNING, checkpoint.status)
+        assertEquals(5 * NANOS_PER_SECOND, checkpoint.accumulatedNanos)
+        assertEquals(5 * NANOS_PER_SECOND, checkpoint.startedAtNanos)
+        assertEquals(2 * NANOS_PER_SECOND, checkpoint.laps.single().totalNanos)
+    }
+
+    @Test
+    fun rebasedRunningCheckpointContinuesFromSavedElapsed() {
+        engine.start()
+        clock.advanceSeconds(5)
+        val checkpoint = engine.checkpoint()
+        clock.advanceSeconds(2)
+
+        val restored = StopwatchEngine(clock, checkpoint)
+
+        assertEquals(7_000L, restored.snapshot().elapsedMillis)
+    }
+
+    @Test
     fun lapsUseSplitAndCumulativeTime() {
         engine.start()
         clock.advanceSeconds(2)
@@ -107,6 +134,30 @@ class StopwatchEngineTest {
         restored.resume()
         rebootedClock.advanceSeconds(2)
         assertEquals(7_000L, restored.snapshot().elapsedMillis)
+    }
+
+    @Test
+    fun staleLegacyRunningCheckpointPreservesKnownLapTime() {
+        val stale = StopwatchCheckpoint(
+            status = StopwatchStatus.RUNNING,
+            accumulatedNanos = 0L,
+            startedAtNanos = 999 * NANOS_PER_SECOND,
+            laps = listOf(
+                Lap(
+                    index = 1,
+                    splitNanos = 5 * NANOS_PER_SECOND,
+                    totalNanos = 5 * NANOS_PER_SECOND,
+                ),
+            ),
+        )
+        val restored = StopwatchEngine(
+            clock = FakeClock(now = 2 * NANOS_PER_SECOND),
+            checkpoint = stale,
+        )
+
+        assertEquals(StopwatchStatus.PAUSED, restored.snapshot().status)
+        assertEquals(5_000L, restored.snapshot().elapsedMillis)
+        assertEquals(5_000L, restored.snapshot().laps.single().totalNanos / NANOS_PER_MILLISECOND)
     }
 
     @Test

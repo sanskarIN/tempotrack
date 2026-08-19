@@ -31,13 +31,20 @@ import kotlinx.coroutines.launch
 fun MiniStopwatch(
     engine: StopwatchEngine,
     activeStopwatch: ActiveStopwatchRepository,
+    strings: TempoTrackStrings = EnglishTempoTrackStrings,
 ) {
     var snapshot by remember(engine) { mutableStateOf(engine.snapshot()) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(engine) {
         while (isActive) {
-            delay(if (snapshot.status == StopwatchStatus.RUNNING) 33L else 200L)
+            delay(
+                if (snapshot.status == StopwatchStatus.RUNNING) {
+                    TempoMotion.RUNNING_REFRESH_MILLIS
+                } else {
+                    TempoMotion.IDLE_REFRESH_MILLIS
+                },
+            )
             val latest = engine.snapshot()
             if (latest != snapshot) snapshot = latest
         }
@@ -63,7 +70,7 @@ fun MiniStopwatch(
                         snapshot = engine.start()
                         persist()
                     },
-                ) { Text("Start") }
+                ) { Text(strings.start) }
 
                 StopwatchStatus.RUNNING -> {
                     Button(
@@ -71,13 +78,13 @@ fun MiniStopwatch(
                             snapshot = engine.pause()
                             persist()
                         },
-                    ) { Text("Pause") }
+                    ) { Text(strings.pause) }
                     OutlinedButton(
                         onClick = {
                             snapshot = engine.lap()
                             persist()
                         },
-                    ) { Text("Lap") }
+                    ) { Text(strings.lap) }
                 }
 
                 StopwatchStatus.PAUSED -> {
@@ -86,13 +93,13 @@ fun MiniStopwatch(
                             snapshot = engine.resume()
                             persist()
                         },
-                    ) { Text("Resume") }
+                    ) { Text(strings.resume) }
                     OutlinedButton(
                         onClick = {
                             snapshot = engine.reset()
                             scope.launch { runCatching { activeStopwatch.clear() } }
                         },
-                    ) { Text("Reset") }
+                    ) { Text(strings.reset) }
                 }
             }
         }

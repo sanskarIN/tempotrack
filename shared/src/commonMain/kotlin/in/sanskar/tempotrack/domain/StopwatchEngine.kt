@@ -58,6 +58,7 @@ class StopwatchEngine(
 
     fun lap(): StopwatchSnapshot {
         if (status != StopwatchStatus.RUNNING) return snapshot()
+        if (laps.size >= SessionValidation.MAX_LAPS_PER_SESSION) return snapshot()
 
         val total = elapsedAt(clock.nowNanos())
         val previousTotal = laps.lastOrNull()?.totalNanos ?: 0L

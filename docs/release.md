@@ -9,9 +9,32 @@ Default development values live in `gradle.properties`:
 - `appVersion`
 - `appVersionCode`
 
-Android and Desktop package builds read these properties. On a `vMAJOR.MINOR.PATCH` tag, the release workflow removes the leading `v` and passes the tag version to Gradle. The Android release job uses the workflow run number as the tag-build `versionCode` override so repeated releases can move forward without committing generated build metadata.
+Android and Desktop package builds read these properties. On a canonical `vMAJOR.MINOR.PATCH` tag, the release workflow removes the leading `v` and passes the tag version to Gradle. Numeric version components do not use leading zeros, so tags such as `v02.0.12`, `v2.00.12`, and `v2.0.012` are rejected. Android release versionCode is derived deterministically as:
 
-The release workflow rejects tags that do not exactly match `vMAJOR.MINOR.PATCH` and serializes release runs per tag.
+```text
+MAJOR * 10000 + MINOR * 100 + PATCH
+```
+
+For that mapping, MINOR and PATCH must each be between 0 and 99, and the resulting Android versionCode must remain in the supported `1..2100000000` range. This keeps source defaults and tagged Android artifacts on the same monotonic versioning scheme instead of tying install ordering to an unrelated workflow run number.
+
+The release workflow rejects tags that do not exactly match canonical `vMAJOR.MINOR.PATCH`, validates the Android mapping, and serializes release runs per tag.
+
+## Version 2.0.12 release line
+
+The repository defaults for this release line are:
+
+```properties
+appVersion=2.0.12
+appVersionCode=20012
+```
+
+The intended semantic release tag is:
+
+```text
+v2.0.12
+```
+
+The tag maps to Android versionCode `20012`, matching the source-tree default. Do not create or promote that tag until the release-candidate checks described below are actually observed green and required Android signing secrets are configured.
 
 Before a release, also update:
 
@@ -25,6 +48,8 @@ Before a release, also update:
 `gradle/wrapper/gradle-wrapper.properties` pins Gradle 9.5.0 and the binary distribution SHA-256. The standard `gradle-wrapper.jar` is not committed in the current repository state, so local bootstrap scripts require an installed Gradle 9.5.0 until a trusted wrapper binary is generated.
 
 Do not create a release from a machine silently using another Gradle version. Either use the exact fallback version or generate the standard wrapper JAR from a trusted Gradle 9.5.0 installation before the release-candidate audit.
+
+A Gradle-wrapper upgrade is not part of the 2.0.12 release freeze unless its wrapper properties, launcher/bootstrap assumptions, CI Gradle installation, documentation, and full build matrix are updated and verified together.
 
 ## Pre-release gate
 
@@ -72,9 +97,10 @@ Before tagging:
 4. Confirm persistence/recovery/platform behavior matches `state-and-recovery.md`, `data-model-and-storage.md`, and `platforms.md`.
 5. Confirm new security/privacy behavior is reflected in `SECURITY.md`, `PRIVACY.md`, and `security-model.md`.
 6. Confirm contributor/build/release commands match actual Gradle/CI configuration.
-7. Confirm `CHANGELOG.md` contains the release-relevant fixes/features.
-8. Confirm `what_changed.md` records observed verification and unresolved environment-gated work.
-9. Do not publish placeholder screenshots as real release captures.
+7. Confirm `CHANGELOG.md` contains a dated section for the intended release version.
+8. Confirm `gradle.properties`, README release marker, changelog release section, intended tag, and Android versionCode mapping all identify the same release.
+9. Confirm `what_changed.md` records observed verification and unresolved environment-gated work.
+10. Do not publish placeholder screenshots as real release captures.
 
 ## Android signing
 
@@ -137,13 +163,24 @@ The build jobs use read-only repository permissions. Only the final publish job 
 
 ## Tag
 
-Create an annotated `vMAJOR.MINOR.PATCH` tag only after the pre-release gate is green, production Android signing secrets are configured for a distributable Android release, and release notes are ready.
+For this release line, create annotated tag `v2.0.12` only after the pre-release gate is green, production Android signing secrets are configured for a distributable Android release, and release notes are ready.
+
+Do not create a release tag merely to test whether configuration might work; use a release-candidate branch/PR first so failures can be fixed without publishing release semantics.
 
 ## Release notes
 
-Start from `release-notes-template.md`, copy the relevant `CHANGELOG.md` section, and include known limitations. Do not claim a platform has been tested unless it was actually built/run.
+Use the dated `## [2.0.12] - 2026-08-19` section in `CHANGELOG.md` as the source of truth for 2.0.12 release notes. Copy only the release-relevant items and include known limitations. Do not claim a platform has been tested unless it was actually built/run.
 
 For Android, do not describe artifacts as production-ready unless the signed tag workflow has succeeded. For iOS, clearly distinguish the reusable framework from a signed/packaged App Store application.
+
+At minimum, 2.0.12 release notes should identify:
+
+- local-first stopwatch/history/data-portability scope;
+- reliability and recovery hardening;
+- Android/Desktop/iOS framework/platform support boundaries;
+- the current Kotlin/Compose/AGP/Gradle toolchain;
+- security/release automation improvements;
+- any verification or signing limitations that remain at publication time.
 
 ## Verification record
 

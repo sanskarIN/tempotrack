@@ -16,14 +16,39 @@ jobs:
   validate-tag:
     runs-on: ubuntu-latest
     steps:
-      - name: Validate release tag
+      - name: Validate release tag and Android version code
         shell: bash
         run: |
           set -euo pipefail
-          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Release tags must use vMAJOR.MINOR.PATCH, for example v1.2.3." >&2
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "Release tags must use canonical vMAJOR.MINOR.PATCH without leading zeros, for example v2.0.12." >&2
             exit 1
           fi
+
+          VERSION="${GITHUB_REF_NAME#v}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+
+          if (( ${#MAJOR} > 6 || ${#MINOR} > 2 || ${#PATCH} > 2 )); then
+            echo "Release version components are too large for the Android versionCode mapping." >&2
+            exit 1
+          fi
+
+          MAJOR_DEC=$((10#$MAJOR))
+          MINOR_DEC=$((10#$MINOR))
+          PATCH_DEC=$((10#$PATCH))
+
+          if (( MINOR_DEC > 99 || PATCH_DEC > 99 )); then
+            echo "Android release mapping requires MINOR and PATCH to be between 0 and 99." >&2
+            exit 1
+          fi
+
+          VERSION_CODE=$((MAJOR_DEC * 10000 + MINOR_DEC * 100 + PATCH_DEC))
+          if (( VERSION_CODE < 1 || VERSION_CODE > 2100000000 )); then
+            echo "Derived Android versionCode $VERSION_CODE is outside the supported 1..2100000000 range." >&2
+            exit 1
+          fi
+
+          echo "Validated $GITHUB_REF_NAME -> Android versionCode $VERSION_CODE"
 
   android:
     needs: validate-tag
@@ -62,10 +87,14 @@ jobs:
           : "${TEMPOTRACK_KEYSTORE_PASSWORD:?Configure TEMPOTRACK_KEYSTORE_PASSWORD as a GitHub Actions secret}"
           : "${TEMPOTRACK_KEY_ALIAS:?Configure TEMPOTRACK_KEY_ALIAS as a GitHub Actions secret}"
           : "${TEMPOTRACK_KEY_PASSWORD:?Configure TEMPOTRACK_KEY_PASSWORD as a GitHub Actions secret}"
+
           VERSION="${GITHUB_REF_NAME#v}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          VERSION_CODE=$((10#$MAJOR * 10000 + 10#$MINOR * 100 + 10#$PATCH))
+
           gradle \
             -PappVersion="$VERSION" \
-            -PappVersionCode="$GITHUB_RUN_NUMBER" \
+            -PappVersionCode="$VERSION_CODE" \
             :shared:allTests \
             :androidApp:lintRelease \
             :androidApp:testDebugUnitTest \

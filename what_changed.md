@@ -795,3 +795,87 @@ Even after an automated matrix is green, the following remain externally gated a
 6. real release screenshots captured from verified application builds.
 
 The source/documentation audit is otherwise complete for the currently defined TempoTrack v1.0 scope; future optional roadmap work should be treated as new scope rather than as a hidden release blocker.
+
+---
+
+## Version 2.0.12 release-preparation checkpoint — 2026-08-19
+
+### Release branch and canonical metadata
+
+- Created `release/2.0.12` from final-maintenance `main` commit `503fb29fc37f46afce40933fb66ac6017d548c74`.
+- `gradle.properties` now defines `appVersion=2.0.12` and source/development Android `appVersionCode=20012`.
+- README now identifies the 2.0.12 release line and is synchronized with Compose Multiplatform 1.11.1 and Android Gradle Plugin 9.3.1.
+- `CHANGELOG.md` has a dated `2.0.12` section and an empty post-freeze Unreleased section.
+- `ROADMAP.md` has an explicit 2.0.12 release-hardening milestone with externally gated verification/signing/device tasks left open.
+
+### Android release versioning bug fixed
+
+The previous tag workflow used `GITHUB_RUN_NUMBER` as Android `versionCode`. That could produce a tagged 2.0.12 artifact with a versionCode far below source/default `20012`, breaking normal Android upgrade ordering.
+
+The release workflow now derives Android versionCode deterministically from the semantic release tag:
+
+```text
+MAJOR * 10000 + MINOR * 100 + PATCH
+```
+
+For `v2.0.12`, this produces `20012`.
+
+The tag validation step now also:
+
+- requires canonical numeric `vMAJOR.MINOR.PATCH` with no leading-zero variants;
+- rejects component sizes that could overflow shell arithmetic before conversion;
+- requires MINOR and PATCH to fit the two-digit mapping;
+- rejects a derived Android versionCode outside `1..2100000000`.
+
+Direct shell verification observed during this continuation:
+
+- `v2.0.12` accepted and mapped to `20012`;
+- `v02.0.12`, `v2.00.12`, and `v2.0.012` rejected;
+- oversized major/minor components rejected;
+- non-numeric tags rejected.
+
+### Release documentation corrections
+
+- `docs/build-and-ci.md` now documents source defaults, semantic versionCode mapping, Android range rules and the `v2.0.12 -> 20012` invariant.
+- `docs/release.md` now documents canonical no-leading-zero tags, 2.0.12 metadata, release gates, signing boundaries and the exact tag contract.
+- The stale release-guide instruction to start from nonexistent `release-notes-template.md` was removed. The dated 2.0.12 changelog section is now the release-note source of truth instead of adding an unnecessary duplicate template.
+- Gradle remains pinned to 9.5.0 for 2.0.12 so wrapper properties, bootstrap scripts, CI and release documentation stay aligned.
+- Dependabot Gradle 9.7 proposal remains separate from the 2.0.12 freeze and should only be handled as an atomic wrapper/toolchain upgrade with observed build verification.
+
+### 2.0.12 granular commits
+
+- `e47226f64788ac8c1f5085663b758be15247d7b0` — `release: set TempoTrack version 2.0.12`.
+- `7f54bbc3427fc18ed1954055598cd58e2ca20478` — `docs: align README with version 2.0.12`.
+- `e67f0ae247bd30b5c000eedb45a9d6563919ada8` — `docs: document 2.0.12 build metadata`.
+- `2ab7e417213ca5db4242386231c0240b3308bc9d` — `docs: freeze changelog for 2.0.12`.
+- `7f2d497e3df20f28dca26149f2d5f42dd7f1a1e8` — `docs: prepare 2.0.12 release procedure`.
+- `df4b8be9cba0a97adcaadfe1a60fd741e61ffc32` — `docs: add 2.0.12 release roadmap`.
+- `d7a6132eec55248c0d610aa6b32877de2ee091c3` — `fix: derive Android versionCode from release tag`.
+- `256c1c4a1392fa6cbff1c093bf3994a89430090e` — `docs: document semantic Android version codes`.
+- `7681c9bc28b2c712a192b489165c648cd4d2ebcd` — `docs: align CI docs with semantic version codes`.
+- `5cb7660a6e2671f1f89e154e93de35268bc00a9d` — `docs: record Android release versioning fix`.
+- `6d776ef82e98438301584bd67f86d0dd0483de32` — `fix: bound semantic release version parsing`.
+- `1037882347ad53347da454220aa36e6b3bdd30f9` — `fix: require canonical semantic release tags`.
+- `5b79cd3053cc3fdf57137c76300696477e606a58` — `docs: require canonical 2.0.12 release tags`.
+
+The commit appending this section follows the list above and is the durable 2.0.12 handoff checkpoint.
+
+### Pull-request verification state
+
+PR #13 (`release: prepare TempoTrack 2.0.12`) targets `main` and contains only release/versioning/docs changes plus this handoff append. It was used to trigger CI, CodeQL, Dependency Review and Secret Scan against the current release candidate.
+
+At the time this checkpoint is written, the refreshed hosted workflows are registered but remain **queued**. No failure log exists to fix, and queued status is not recorded as passing.
+
+### Remaining 2.0.12 release gates
+
+The source tree can be merged as the 2.0.12 release line without claiming a production release. The `v2.0.12` tag and distributable-release claim remain gated on:
+
+1. observed CI/build/test results on the supported GitHub runners;
+2. protected production Android signing secrets;
+3. successful signed APK/AAB tag build and artifact/checksum inspection;
+4. Desktop package verification on intended hosts;
+5. iOS simulator/framework and native document-picker/share verification on macOS/Xcode;
+6. manual accessibility/lifecycle/device checks;
+7. real release screenshots captured from verified builds.
+
+No `v2.0.12` tag should be created merely to test these prerequisites. The source release preparation and the production release are deliberately separated so unverified artifacts are never represented as release-ready.

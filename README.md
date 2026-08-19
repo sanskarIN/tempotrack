@@ -15,6 +15,8 @@
 </p>
 
 > **Made by the Sanskar**
+>
+> Current release line: **2.0.12**
 
 ## Highlights
 
@@ -63,8 +65,8 @@ Real release screenshots will replace these placeholders once verified tagged bu
 ## Tech stack
 
 - Kotlin 2.4.10
-- Compose Multiplatform 1.11.0
-- Android Gradle Plugin 9.3.0
+- Compose Multiplatform 1.11.1
+- Android Gradle Plugin 9.3.1
 - AndroidX Core 1.19.0
 - Gradle 9.5.0
 - Kotlinx Coroutines 1.11.0

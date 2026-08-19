@@ -49,6 +49,33 @@ class StopwatchEngineTest {
     }
 
     @Test
+    fun liveLapRecordingStopsAtPersistenceLimit() {
+        val maxLaps = SessionValidation.MAX_LAPS_PER_SESSION
+        val checkpoint = StopwatchCheckpoint(
+            status = StopwatchStatus.RUNNING,
+            accumulatedNanos = 0L,
+            startedAtNanos = 0L,
+            laps = List(maxLaps) { position ->
+                val index = position + 1
+                Lap(
+                    index = index,
+                    splitNanos = 1L,
+                    totalNanos = index.toLong(),
+                )
+            },
+        )
+        val cappedEngine = StopwatchEngine(
+            clock = FakeClock(now = maxLaps.toLong() + 1L),
+            checkpoint = checkpoint,
+        )
+
+        val afterLap = cappedEngine.lap()
+
+        assertEquals(maxLaps, afterLap.laps.size)
+        assertEquals(maxLaps, afterLap.laps.last().index)
+    }
+
+    @Test
     fun staleRunningCheckpointNeverCreatesNegativeDuration() {
         val stale = StopwatchCheckpoint(
             status = StopwatchStatus.RUNNING,

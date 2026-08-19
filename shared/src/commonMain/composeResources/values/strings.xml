@@ -26,7 +26,9 @@
     <string name="session_name_support">Optional; defaults to a timestamp-based name</string>
     <string name="save_session">Save session</string>
     <string name="session_default_name">Session %1$s</string>
+    <string name="session_default_prefix">Session</string>
     <string name="session_saved">Saved “%1$s”</string>
+    <string name="session_saved_prefix">Saved</string>
     <string name="session_save_failed">Could not save this session.</string>
     <string name="lap_empty">Record a lap while the stopwatch is running to compare splits.</string>
     <string name="lap_sort_recorded">Recorded</string>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <include domain="file" path="sessions.json" />
+    <include domain="file" path="preferences.json" />
+    <exclude domain="file" path="active-stopwatch.json" />
+    <exclude domain="file" path="exports/" />
+</full-backup-content>

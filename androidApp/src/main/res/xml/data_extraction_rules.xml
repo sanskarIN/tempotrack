@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="file" path="sessions.json" />
+        <include domain="file" path="preferences.json" />
+        <exclude domain="file" path="active-stopwatch.json" />
+        <exclude domain="file" path="exports/" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="file" path="sessions.json" />
+        <include domain="file" path="preferences.json" />
+    </device-transfer>
+</data-extraction-rules>

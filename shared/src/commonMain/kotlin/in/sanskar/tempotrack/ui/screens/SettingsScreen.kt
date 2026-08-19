@@ -62,6 +62,7 @@ import in.sanskar.tempotrack.resources.settings_title
 import in.sanskar.tempotrack.resources.settings_updates
 import in.sanskar.tempotrack.resources.settings_updates_summary
 import in.sanskar.tempotrack.util.suspendResult
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -79,14 +80,26 @@ fun SettingsScreen(
     val uriHandler = LocalUriHandler.current
     var showShortcutHelp by remember { mutableStateOf(false) }
     var saveFailed by remember { mutableStateOf(false) }
+    var saveJob by remember { mutableStateOf<Job?>(null) }
 
-    fun update(next: AppPreferences) {
+    fun update(
+        next: AppPreferences,
+        onApplied: () -> Unit = {},
+        onRollback: () -> Unit = {},
+    ) {
+        val previous = preferences
         onPreferencesChanged(next)
+        onApplied()
         saveFailed = false
-        scope.launch {
+        saveJob?.cancel()
+        saveJob = scope.launch {
             suspendResult { repository.save(next) }
                 .onSuccess { saveFailed = false }
-                .onFailure { saveFailed = true }
+                .onFailure {
+                    onPreferencesChanged(previous)
+                    onRollback()
+                    saveFailed = true
+                }
         }
     }
 
@@ -141,10 +154,13 @@ fun SettingsScreen(
                 title = stringResource(Res.string.settings_mini_stopwatch),
                 subtitle = stringResource(Res.string.settings_mini_stopwatch_summary),
                 checked = preferences.miniStopwatchVisible,
-                onCheckedChange = {
-                    val next = preferences.copy(miniStopwatchVisible = it)
-                    update(next)
-                    setMiniStopwatchVisible(it)
+                onCheckedChange = { visible ->
+                    val next = preferences.copy(miniStopwatchVisible = visible)
+                    update(
+                        next = next,
+                        onApplied = { setMiniStopwatchVisible(visible) },
+                        onRollback = { setMiniStopwatchVisible(preferences.miniStopwatchVisible) },
+                    )
                 },
             )
         }
@@ -154,10 +170,13 @@ fun SettingsScreen(
                 title = stringResource(Res.string.settings_shortcuts_enabled),
                 subtitle = stringResource(Res.string.settings_shortcuts_enabled_summary),
                 checked = preferences.keyboardShortcutsEnabled,
-                onCheckedChange = {
-                    val next = preferences.copy(keyboardShortcutsEnabled = it)
-                    update(next)
-                    setKeyboardShortcutsEnabled(it)
+                onCheckedChange = { enabled ->
+                    val next = preferences.copy(keyboardShortcutsEnabled = enabled)
+                    update(
+                        next = next,
+                        onApplied = { setKeyboardShortcutsEnabled(enabled) },
+                        onRollback = { setKeyboardShortcutsEnabled(preferences.keyboardShortcutsEnabled) },
+                    )
                 },
             )
             Text(stringResource(Res.string.settings_shortcuts), style = MaterialTheme.typography.titleSmall)

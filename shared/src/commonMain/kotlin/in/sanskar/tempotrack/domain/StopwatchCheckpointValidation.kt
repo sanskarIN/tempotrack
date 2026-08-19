@@ -21,11 +21,8 @@ object StopwatchCheckpointValidation {
             }
 
             StopwatchStatus.RUNNING -> {
-                val started = checkpoint.startedAtNanos
-                if (started == null) {
+                if (checkpoint.startedAtNanos == null) {
                     errors += "running checkpoint requires a start timestamp"
-                } else if (started < 0L) {
-                    errors += "start timestamp must be non-negative"
                 }
             }
 
@@ -49,8 +46,8 @@ object StopwatchCheckpointValidation {
             }
         }
 
-        if (checkpoint.status != StopwatchStatus.RUNNING && expectedTotal > checkpoint.accumulatedNanos) {
-            errors += "lap total cannot exceed accumulated duration"
+        if (expectedTotal > checkpoint.accumulatedNanos) {
+            errors += "lap total cannot exceed persisted accumulated duration"
         }
 
         return errors.distinct()

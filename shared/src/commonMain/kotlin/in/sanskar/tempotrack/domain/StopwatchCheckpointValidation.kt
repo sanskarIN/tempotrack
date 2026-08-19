@@ -46,8 +46,10 @@ object StopwatchCheckpointValidation {
             }
         }
 
-        if (expectedTotal > checkpoint.accumulatedNanos) {
-            errors += "lap total cannot exceed persisted accumulated duration"
+        // Legacy running checkpoints stored the pre-run accumulated baseline rather than
+        // elapsed-at-save, so their last lap can legitimately be newer than accumulatedNanos.
+        if (checkpoint.status != StopwatchStatus.RUNNING && expectedTotal > checkpoint.accumulatedNanos) {
+            errors += "lap total cannot exceed accumulated duration"
         }
 
         return errors.distinct()

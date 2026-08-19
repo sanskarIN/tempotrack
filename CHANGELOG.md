@@ -32,15 +32,22 @@ The format follows Keep a Changelog concepts and the project uses semantic versi
 - CI, including macOS verification for the iOS shared framework, security scanning, dependency updates, issue templates and release workflow.
 - Repository-local Markdown link validation in CI.
 - Tagged release packaging for Android, Desktop, and iOS framework artifacts, with SHA-256 checksums and GitHub Release publishing.
+- Environment-backed Android production signing configuration.
+- Signed Android tag builds for both APK and Android App Bundle outputs when protected release secrets are configured.
 - Complete project documentation baseline and iOS host integration guide.
 
 ### Changed
 
 - Session import and export failures now use stable internal error codes; shared UI maps them to localized user-safe messages.
 - Export cancellation is distinguished from write failures so Desktop users can cancel the native save dialog without receiving a false error.
+- Desktop native export now reports a platform-unavailable error if a chooser cannot be created on the current host.
 - Android and Desktop export filenames now use one bounded shared sanitization policy.
+- Android sharing preserves coroutine cancellation and distinguishes file-preparation failure from an unavailable system share activity.
 - Android and Desktop package versions are sourced from Gradle properties and release tags.
 - Android private file replacement now uses atomic move when supported with safe replacement fallback.
+- Android tag releases now fail before publishing when production signing secrets are absent instead of intentionally uploading unsigned release artifacts.
+- Android signing secrets are scoped to only the workflow steps that need them.
+- The release publisher now includes AAB files alongside APK/Desktop/iOS artifacts and generated SHA-256 checksums.
 - Privacy documentation now explains Android temporary share-cache files and operating-system destination selection.
 
 ### Fixed

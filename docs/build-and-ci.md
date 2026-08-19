@@ -22,8 +22,8 @@ Current declared versions:
 | Tool/library | Version |
 |---|---:|
 | Kotlin | 2.4.10 |
-| Android Gradle Plugin | 9.3.0 |
-| Compose Multiplatform | 1.11.0 |
+| Android Gradle Plugin | 9.3.1 |
+| Compose Multiplatform | 1.11.1 |
 | Kotlinx Coroutines | 1.11.0 |
 | Kotlinx Serialization | 1.11.0 |
 | AndroidX Activity Compose | 1.13.0 |
@@ -39,7 +39,7 @@ When updating one item, review compatibility with Kotlin compiler, Compose compi
 
 ## Root Gradle configuration
 
-`build.gradle.kts` declares all project plugins with `apply false`, applies ktlint to every subproject, and defines:
+`build.gradle.kts` declares all project plugins with `apply false`, applies ktlint to every subproject, excludes generated Kotlin such as Compose resource output from ktlint ownership, and defines:
 
 ```bash
 ./gradlew quality
@@ -52,6 +52,8 @@ When updating one item, review compatibility with Kotlin compiler, Compose compi
 - `:androidApp:testDebugUnitTest`;
 - `:androidApp:lintDebug`;
 - ktlint for shared/Desktop/Android.
+
+The generated-source exclusion is deliberate: generated Kotlin is validated by the tool that produces/compiles it, while repository-owned Kotlin remains subject to ktlint. This prevents generated Compose resources from making source-style checks fail.
 
 This is the primary local cross-module verification task but it is not a substitute for platform packaging, release lint, iOS linking, repository-local Python guards, or manual lifecycle/accessibility checks.
 
@@ -88,6 +90,8 @@ The standard binary `gradle-wrapper.jar` is not currently tracked. Therefore `gr
 4. fail instead of silently building with another Gradle version.
 
 Do not fabricate or hand-encode a wrapper JAR. Generate it from a trusted Gradle 9.5.0 installation and verify the official distribution chain.
+
+A future Gradle-wrapper upgrade must update the wrapper/bootstrap contract as one verified change. Do not change only the distribution URL or only CI's Gradle version while leaving the rest of the repository pinned to another version.
 
 ## Shared module
 
@@ -214,6 +218,24 @@ The checker requires Git metadata because it distinguishes tracked files from ge
 
 Checks repository-local Markdown destinations. External URLs are skipped because they are not deterministic from a checkout.
 
+## GitHub Actions runtime policy
+
+Repository workflows intentionally use maintained action majors compatible with GitHub's Node 24 runner transition:
+
+- `actions/checkout@v7`;
+- `actions/setup-java@v5`;
+- `actions/setup-python@v6`;
+- `android-actions/setup-android@v4`;
+- `github/codeql-action@v4`;
+- `actions/dependency-review-action@v5`;
+- `actions/upload-artifact@v7`;
+- `actions/download-artifact@v8`;
+- `gradle/actions/setup-gradle@v5`.
+
+`gradle/actions/setup-gradle` is intentionally kept on the v5 line. Gradle Actions v6 moved caching into a separately licensed proprietary component, so TempoTrack does not adopt v6 by default. Dependabot ignores `gradle/actions` `6.x` specifically; a later major may be evaluated independently rather than being permanently blocked.
+
+Action-major upgrades are release-engineering changes. Review runtime requirements, permissions, behavioral changes, and licensing before merging them.
+
 ## Main CI workflow
 
 `.github/workflows/ci.yml` runs on pushes and pull requests targeting `main` with read-only repository permissions. Concurrency cancels superseded branch/PR verification.
@@ -241,7 +263,7 @@ Ubuntu + JDK 17 + Android SDK + Gradle 9.5.0:
 :androidApp:assembleDebug
 ```
 
-The workflow explicitly installs Android platform 37 and build-tools 36.0.0.
+The workflow explicitly installs Android platform 37 and build-tools 36.0.0 after `android-actions/setup-android@v4` provisions current command-line tools. This avoids the older command-line-tools resolution failure that previously prevented API 37 installation.
 
 ### `ios-shared`
 
@@ -275,13 +297,13 @@ The job therefore checks Python syntax, Kotlin namespace source syntax, exhausti
 - main pull requests;
 - weekly schedule.
 
-It initializes CodeQL for `java-kotlin`, installs JDK/Android SDK/Gradle, builds Android debug + Desktop Kotlin, then runs analysis.
+It initializes CodeQL v4 for `java-kotlin`, installs JDK/Android SDK/Gradle, builds Android debug + Desktop Kotlin, then runs analysis.
 
 Permissions are limited to what CodeQL needs (`security-events: write` plus read permissions).
 
 ## Dependency review
 
-`.github/workflows/dependency-review.yml` runs on pull requests to `main` with read-only content permission and `actions/dependency-review-action`.
+`.github/workflows/dependency-review.yml` runs on pull requests to `main` with read-only content permission and `actions/dependency-review-action@v5`.
 
 This is separate from Dependabot: Dependabot proposes updates; dependency review evaluates dependency changes in PR context.
 
@@ -293,7 +315,15 @@ The current grep excludes documentation Markdown to avoid false positives from e
 
 ## Dependabot
 
-`.github/dependabot.yml` configures automated dependency update PRs. Review generated updates like any other dependency change; green compilation is necessary but not sufficient for major toolchain upgrades.
+`.github/dependabot.yml` configures automated dependency update PRs for Gradle and GitHub Actions.
+
+The configuration intentionally:
+
+- omits a hard-coded PR label so updates do not fail when a repository label is absent;
+- ignores only `gradle/actions` `6.x` because of the separately licensed caching component described above;
+- leaves other updates available for normal review.
+
+Review generated updates like any other dependency change; green compilation is necessary but not sufficient for major toolchain upgrades.
 
 ## Release workflow
 
@@ -354,7 +384,7 @@ It has `contents: write` while build jobs remain read-only.
 
 It:
 
-1. downloads all artifacts;
+1. downloads all artifacts with `actions/download-artifact@v8`;
 2. collects APK/AAB/DEB/DMG/MSI/ZIP outputs;
 3. generates `SHA256SUMS.txt`;
 4. creates GitHub Release if needed using generated notes;

@@ -31,6 +31,7 @@ data class StopwatchCheckpoint(
     val status: StopwatchStatus = StopwatchStatus.IDLE,
     val accumulatedNanos: Long = 0L,
     val startedAtNanos: Long? = null,
+    val savedAtEpochMillis: Long? = null,
     val laps: List<Lap> = emptyList(),
 )
 

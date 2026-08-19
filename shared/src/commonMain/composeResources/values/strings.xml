@@ -20,6 +20,7 @@
     <string name="action_delete">Delete</string>
     <string name="action_rename">Rename</string>
     <string name="action_save">Save</string>
+    <string name="action_close">Close</string>
 
     <string name="elapsed_time_description">Elapsed time %1$s</string>
     <string name="session_name_label">Session name</string>
@@ -86,6 +87,9 @@
     <string name="settings_desktop">Desktop</string>
     <string name="settings_mini_stopwatch">Floating mini stopwatch</string>
     <string name="settings_mini_stopwatch_summary">Show a compact always-on-top timer window.</string>
+    <string name="settings_shortcuts">Keyboard shortcuts</string>
+    <string name="settings_shortcuts_summary">Use keyboard controls without moving focus away from the stopwatch.</string>
+    <string name="settings_shortcuts_button">View shortcuts</string>
     <string name="settings_privacy">Privacy</string>
     <string name="settings_privacy_summary">TempoTrack does not require an account and does not transmit session data.</string>
     <string name="settings_data">Data</string>

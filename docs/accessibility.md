@@ -1,12 +1,12 @@
 # Accessibility
 
-TempoTrack's UI aims for WCAG-oriented practices even though Android/Desktop are native applications.
+TempoTrack's UI aims for WCAG-oriented practices even though Android/Desktop/iOS are native applications.
 
 ## Implemented
 
 - Large-control setting for primary stopwatch actions.
 - Text labels in addition to status meaning; fastest/slowest are not encoded by color alone.
-- Compose semantic description for elapsed time.
+- Compose semantic description for elapsed time on both the primary stopwatch and floating mini stopwatch.
 - Material components with keyboard/focus semantics.
 - Touch-friendly primary controls and shared minimum-size guidance.
 - Light/dark/system theme support.
@@ -15,6 +15,7 @@ TempoTrack's UI aims for WCAG-oriented practices even though Android/Desktop are
 - Desktop keyboard shortcuts for core stopwatch actions.
 - In-app Desktop shortcut help so keyboard controls are discoverable.
 - Persistent enable/disable control for global Desktop stopwatch shortcuts, so users can avoid collisions with assistive-technology or application key bindings.
+- Settings controls temporarily disable while their current persistence write is active, preventing conflicting rapid state changes.
 - Externalized visible UI strings, allowing accessibility copy to be localized with the rest of the interface.
 
 ## Keyboard controls
@@ -34,6 +35,7 @@ Shortcut actions persist the same active-checkpoint state used by button interac
 - [ ] Verify the shortcut help dialog can be opened, read, and dismissed from keyboard-only input.
 - [ ] Disable global stopwatch shortcuts and confirm Space/L/R no longer trigger stopwatch actions.
 - [ ] Re-enable shortcuts, restart the app, and confirm the persisted preference is honored.
+- [ ] Confirm the primary timer and mini timer announce a meaningful elapsed-time description with screen readers.
 - [ ] Run Android TalkBack through onboarding/start/pause/resume/lap/save/history/rename/restore/share/settings.
 - [ ] Test Android font scale at 200%.
 - [ ] Test large controls on a compact phone-sized window.
@@ -43,6 +45,7 @@ Shortcut actions persist the same active-checkpoint state used by button interac
 - [ ] Check fastest/slowest labels remain understandable without color.
 - [ ] Verify destructive session deletion has a usable undo path.
 - [ ] Verify mini stopwatch can be closed without trapping focus.
+- [ ] Verify Settings controls communicate disabled state while a save is in progress and recover after success/failure.
 - [ ] Review long translated strings for clipping or inaccessible truncation.
 
 ## Reduced motion

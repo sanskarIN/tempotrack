@@ -1,5 +1,7 @@
 package in.sanskar.tempotrack.data
 
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -27,16 +29,18 @@ class JsonPreferencesRepository(
     private val storage: StringStorage,
     private val codec: PreferencesStoreCodec = PreferencesStoreCodec(),
 ) : PreferencesRepository {
-    override suspend fun load(): AppPreferences {
-        val raw = storage.read()?.takeIf { it.isNotBlank() } ?: return AppPreferences()
-        val decoded = codec.decode(raw) ?: return AppPreferences()
+    private val mutex = Mutex()
+
+    override suspend fun load(): AppPreferences = mutex.withLock {
+        val raw = storage.read()?.takeIf { it.isNotBlank() } ?: return@withLock AppPreferences()
+        val decoded = codec.decode(raw) ?: return@withLock AppPreferences()
         if (decoded.needsMigration) {
             storage.write(codec.encode(decoded.preferences))
         }
-        return decoded.preferences
+        decoded.preferences
     }
 
-    override suspend fun save(preferences: AppPreferences) {
+    override suspend fun save(preferences: AppPreferences) = mutex.withLock {
         storage.write(codec.encode(preferences))
     }
 }

@@ -4,6 +4,9 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
+val tempoTrackVersion = providers.gradleProperty("appVersion").get()
+val tempoTrackVersionCode = providers.gradleProperty("appVersionCode").get().toInt()
+
 android {
     namespace = "in.sanskar.tempotrack"
     compileSdk = libs.versions.androidCompileSdk.get().toInt()
@@ -12,8 +15,8 @@ android {
         applicationId = "in.sanskar.tempotrack"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = tempoTrackVersionCode
+        versionName = tempoTrackVersion
     }
 
     buildFeatures {

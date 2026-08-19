@@ -80,11 +80,31 @@ class SessionRepositoryTest {
     }
 
     @Test
-    fun corruptedStorageFailsClosed() = runTest {
-        val storage = InMemoryStringStorage("{not-json")
+    fun malformedStorageFailsClosedWithoutRewrite() = runTest {
+        val original = "{not-json"
+        val storage = InMemoryStringStorage(original)
         val repository = JsonSessionRepository(storage)
 
-        assertEquals(emptyList(), repository.all())
+        assertFailsWith<SessionStoreCorruptionException> {
+            repository.all()
+        }
+        assertEquals(original, storage.value)
+    }
+
+    @Test
+    fun invalidStoredSessionFailsClosedWithoutDroppingOnlyBadRecord() = runTest {
+        val valid = session(id = "valid", createdAt = 10L)
+        val invalid = session(id = "invalid", createdAt = 20L).copy(
+            laps = listOf(Lap(index = 2, splitNanos = 1_000L, totalNanos = 1_000L)),
+        )
+        val original = SessionStoreCodec().encode(listOf(valid, invalid))
+        val storage = InMemoryStringStorage(original)
+        val repository = JsonSessionRepository(storage)
+
+        assertFailsWith<SessionStoreCorruptionException> {
+            repository.all()
+        }
+        assertEquals(original, storage.value)
     }
 
     private fun session(id: String, createdAt: Long): StopwatchSession = StopwatchSession(
@@ -97,7 +117,7 @@ class SessionRepositoryTest {
 }
 
 private class InMemoryStringStorage(
-    private var value: String? = null,
+    var value: String? = null,
 ) : StringStorage {
     override suspend fun read(): String? = value
 

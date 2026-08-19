@@ -81,5 +81,5 @@ dependencies {
     implementation(libs.androidx.core)
     implementation(libs.kotlinx.coroutines.core)
 
-    testImplementation(kotlin("test"))
+    testImplementation(libs.junit)
 }

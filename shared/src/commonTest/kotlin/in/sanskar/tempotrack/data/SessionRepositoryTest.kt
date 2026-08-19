@@ -1,0 +1,61 @@
+package in.sanskar.tempotrack.data
+
+import in.sanskar.tempotrack.domain.Lap
+import in.sanskar.tempotrack.domain.StopwatchSession
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlinx.coroutines.test.runTest
+
+class SessionRepositoryTest {
+    @Test
+    fun upsertPersistsAndSortsNewestFirst() = runTest {
+        val storage = InMemoryStringStorage()
+        val repository = JsonSessionRepository(storage)
+
+        repository.upsert(session(id = "old", createdAt = 10L))
+        repository.upsert(session(id = "new", createdAt = 20L))
+
+        assertEquals(listOf("new", "old"), repository.all().map(StopwatchSession::id))
+    }
+
+    @Test
+    fun replaceAllRejectsDuplicateIds() = runTest {
+        val repository = JsonSessionRepository(InMemoryStringStorage())
+        val duplicate = session(id = "same", createdAt = 10L)
+
+        assertFailsWith<IllegalArgumentException> {
+            repository.replaceAll(listOf(duplicate, duplicate.copy(createdAtEpochMillis = 20L)))
+        }
+    }
+
+    @Test
+    fun corruptedStorageFailsClosed() = runTest {
+        val storage = InMemoryStringStorage("{not-json")
+        val repository = JsonSessionRepository(storage)
+
+        assertEquals(emptyList(), repository.all())
+    }
+
+    private fun session(id: String, createdAt: Long): StopwatchSession = StopwatchSession(
+        id = id,
+        name = "Session $id",
+        createdAtEpochMillis = createdAt,
+        durationNanos = 1_000L,
+        laps = listOf(Lap(index = 1, splitNanos = 1_000L, totalNanos = 1_000L)),
+    )
+}
+
+private class InMemoryStringStorage(
+    private var value: String? = null,
+) : StringStorage {
+    override suspend fun read(): String? = value
+
+    override suspend fun write(content: String) {
+        value = content
+    }
+
+    override suspend fun clear() {
+        value = null
+    }
+}

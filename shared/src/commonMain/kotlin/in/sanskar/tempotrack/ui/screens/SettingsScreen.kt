@@ -1,7 +1,5 @@
 package in.sanskar.tempotrack.ui.screens
 
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,10 +8,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.weight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,11 +23,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import in.sanskar.tempotrack.data.AppPreferences
 import in.sanskar.tempotrack.data.PreferencesRepository
 import in.sanskar.tempotrack.data.ThemePreference
+import in.sanskar.tempotrack.resources.Res
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SettingsScreen(
@@ -37,6 +41,7 @@ fun SettingsScreen(
     setMiniStopwatchVisible: (Boolean) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    val uriHandler = LocalUriHandler.current
     var miniVisible by remember { mutableStateOf(false) }
 
     fun update(next: AppPreferences) {
@@ -45,9 +50,9 @@ fun SettingsScreen(
     }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
-        Text("Settings", style = MaterialTheme.typography.headlineMedium)
+        Text(stringResource(Res.string.settings_title), style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(16.dp))
-        Text("Appearance", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(Res.string.settings_appearance), style = MaterialTheme.typography.titleMedium)
 
         ThemePreference.entries.forEach { option ->
             Row(
@@ -58,31 +63,31 @@ fun SettingsScreen(
                     selected = preferences.theme == option,
                     onClick = { update(preferences.copy(theme = option)) },
                 )
-                Text(option.name.lowercase().replaceFirstChar { it.uppercase() })
+                Text(option.localizedLabel())
             }
         }
 
         Spacer(Modifier.height(16.dp))
-        Text("Accessibility", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(Res.string.settings_accessibility), style = MaterialTheme.typography.titleMedium)
         ToggleRow(
-            title = "Large controls",
-            subtitle = "Increase primary touch target and timer sizes.",
+            title = stringResource(Res.string.settings_large_controls),
+            subtitle = stringResource(Res.string.settings_large_controls_summary),
             checked = preferences.largeControls,
             onCheckedChange = { update(preferences.copy(largeControls = it)) },
         )
         ToggleRow(
-            title = "Reduced motion",
-            subtitle = "Prefer minimal motion where animations are used.",
+            title = stringResource(Res.string.settings_reduced_motion),
+            subtitle = stringResource(Res.string.settings_reduced_motion_summary),
             checked = preferences.reducedMotion,
             onCheckedChange = { update(preferences.copy(reducedMotion = it)) },
         )
 
         if (miniStopwatchSupported) {
             Spacer(Modifier.height(16.dp))
-            Text("Desktop", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(Res.string.settings_desktop), style = MaterialTheme.typography.titleMedium)
             ToggleRow(
-                title = "Floating mini stopwatch",
-                subtitle = "Show a compact always-on-top timer window.",
+                title = stringResource(Res.string.settings_mini_stopwatch),
+                subtitle = stringResource(Res.string.settings_mini_stopwatch_summary),
                 checked = miniVisible,
                 onCheckedChange = {
                     miniVisible = it
@@ -92,33 +97,43 @@ fun SettingsScreen(
         }
 
         Spacer(Modifier.height(20.dp))
-        Text("Privacy", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(Res.string.settings_privacy), style = MaterialTheme.typography.titleMedium)
         Text(
-            "TempoTrack does not require an account and does not transmit session data.",
+            stringResource(Res.string.settings_privacy_summary),
             style = MaterialTheme.typography.bodyMedium,
         )
 
         Spacer(Modifier.height(16.dp))
-        Text("Data", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(Res.string.settings_data), style = MaterialTheme.typography.titleMedium)
         Text(
-            "Saved sessions and preferences use application-private local storage. Use History to export JSON backups or CSV data.",
+            stringResource(Res.string.settings_data_summary),
             style = MaterialTheme.typography.bodyMedium,
         )
 
         Spacer(Modifier.height(16.dp))
-        Text("Updates", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(Res.string.settings_updates), style = MaterialTheme.typography.titleMedium)
         Text(
-            "Release information is published at https://github.com/sanskarIN/tempotrack/releases",
+            stringResource(Res.string.settings_updates_summary),
             style = MaterialTheme.typography.bodyMedium,
         )
+        TextButton(onClick = { uriHandler.openUri("https://github.com/sanskarIN/tempotrack/releases") }) {
+            Text(stringResource(Res.string.about_github))
+        }
 
         Spacer(Modifier.height(16.dp))
-        Text("About", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(Res.string.settings_about), style = MaterialTheme.typography.titleMedium)
         Text(
-            "Open-source MIT project • Made by the Sanskar",
+            stringResource(Res.string.settings_about_summary),
             style = MaterialTheme.typography.bodyMedium,
         )
     }
+}
+
+@Composable
+private fun ThemePreference.localizedLabel(): String = when (this) {
+    ThemePreference.SYSTEM -> stringResource(Res.string.settings_theme_system)
+    ThemePreference.LIGHT -> stringResource(Res.string.settings_theme_light)
+    ThemePreference.DARK -> stringResource(Res.string.settings_theme_dark)
 }
 
 @Composable

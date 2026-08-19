@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import in.sanskar.tempotrack.data.ExportError
 import in.sanskar.tempotrack.data.Exporter
 import in.sanskar.tempotrack.data.ExportResult
 import java.io.File
@@ -56,7 +57,7 @@ class AndroidExporter(
                 ExportResult.Success(target.absolutePath)
             }
         }.getOrElse {
-            ExportResult.Failure("Could not export this file on Android.")
+            ExportResult.Failure(ExportError.WRITE_FAILED)
         }
     }
 }

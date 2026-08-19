@@ -2,6 +2,8 @@ package in.sanskar.tempotrack
 
 import in.sanskar.tempotrack.data.StringStorage
 import java.io.File
+import java.io.IOException
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import kotlinx.coroutines.Dispatchers
@@ -11,30 +13,39 @@ class AndroidStringStorage(
     private val file: File,
 ) : StringStorage {
     override suspend fun read(): String? = withContext(Dispatchers.IO) {
-        if (file.exists()) file.readText() else null
+        if (file.exists()) file.readText(Charsets.UTF_8) else null
     }
 
     override suspend fun write(content: String) = withContext(Dispatchers.IO) {
-        file.parentFile?.mkdirs()
+        val parent = file.parentFile ?: throw IOException("Storage file must have a parent directory.")
+        if (!parent.exists() && !parent.mkdirs()) {
+            throw IOException("Could not create storage directory.")
+        }
+        if (!parent.isDirectory) {
+            throw IOException("Storage parent path is not a directory.")
+        }
+
         val target = file.toPath()
-        val temp = File(file.parentFile, "${file.name}.tmp").toPath()
+        val temp = File(parent, "${file.name}.tmp").toPath()
         Files.write(temp, content.toByteArray(Charsets.UTF_8))
-        runCatching {
+        try {
             Files.move(
                 temp,
                 target,
                 StandardCopyOption.REPLACE_EXISTING,
                 StandardCopyOption.ATOMIC_MOVE,
             )
-        }.recoverCatching {
+        } catch (_: AtomicMoveNotSupportedException) {
             Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING)
-        }.getOrThrow()
+        }
         Unit
     }
 
     override suspend fun clear() = withContext(Dispatchers.IO) {
         Files.deleteIfExists(file.toPath())
-        Files.deleteIfExists(File(file.parentFile, "${file.name}.tmp").toPath())
+        file.parentFile?.let { parent ->
+            Files.deleteIfExists(File(parent, "${file.name}.tmp").toPath())
+        }
         Unit
     }
 }

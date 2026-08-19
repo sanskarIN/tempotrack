@@ -10,6 +10,8 @@ import in.sanskar.tempotrack.data.ExportFileName
 import in.sanskar.tempotrack.data.Exporter
 import in.sanskar.tempotrack.data.ExportResult
 import java.io.File
+import java.io.IOException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -21,44 +23,65 @@ class AndroidExporter(
         mimeType: String,
         content: String,
     ): ExportResult = withContext(Dispatchers.IO) {
-        runCatching {
+        try {
             val safeName = ExportFileName.sanitize(suggestedFileName)
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                val values = ContentValues().apply {
-                    put(MediaStore.Downloads.DISPLAY_NAME, safeName)
-                    put(MediaStore.Downloads.MIME_TYPE, mimeType)
-                    put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/TempoTrack")
-                    put(MediaStore.Downloads.IS_PENDING, 1)
-                }
-
-                val uri = requireNotNull(
-                    context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values),
-                )
-
-                try {
-                    context.contentResolver.openOutputStream(uri, "w").use { output ->
-                        requireNotNull(output).writer(Charsets.UTF_8).use { it.write(content) }
-                    }
-                    values.clear()
-                    values.put(MediaStore.Downloads.IS_PENDING, 0)
-                    context.contentResolver.update(uri, values, null, null)
-                    ExportResult.Success(uri.toString())
-                } catch (error: Throwable) {
-                    context.contentResolver.delete(uri, null, null)
-                    throw error
-                }
+                exportWithMediaStore(safeName, mimeType, content)
             } else {
-                val directory = File(
-                    context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS),
-                    "TempoTrack",
-                ).apply { mkdirs() }
-                val target = File(directory, safeName)
-                target.writeText(content)
-                ExportResult.Success(target.absolutePath)
+                exportToAppDocuments(safeName, content)
             }
-        }.getOrElse {
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
             ExportResult.Failure(ExportError.WRITE_FAILED)
         }
+    }
+
+    private fun exportWithMediaStore(
+        safeName: String,
+        mimeType: String,
+        content: String,
+    ): ExportResult {
+        val values = ContentValues().apply {
+            put(MediaStore.Downloads.DISPLAY_NAME, safeName)
+            put(MediaStore.Downloads.MIME_TYPE, mimeType)
+            put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/TempoTrack")
+            put(MediaStore.Downloads.IS_PENDING, 1)
+        }
+
+        val uri = requireNotNull(
+            context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values),
+        )
+
+        try {
+            context.contentResolver.openOutputStream(uri, "w").use { output ->
+                requireNotNull(output).writer(Charsets.UTF_8).use { writer ->
+                    writer.write(content)
+                }
+            }
+            values.clear()
+            values.put(MediaStore.Downloads.IS_PENDING, 0)
+            context.contentResolver.update(uri, values, null, null)
+            return ExportResult.Success(uri.toString())
+        } catch (error: Exception) {
+            context.contentResolver.delete(uri, null, null)
+            throw error
+        }
+    }
+
+    private fun exportToAppDocuments(
+        safeName: String,
+        content: String,
+    ): ExportResult {
+        val baseDirectory = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
+            ?: throw IOException("External app documents directory is unavailable.")
+        val directory = File(baseDirectory, "TempoTrack")
+        if (!directory.exists() && !directory.mkdirs()) {
+            throw IOException("Could not create TempoTrack export directory.")
+        }
+        val target = File(directory, safeName)
+        target.writeText(content, Charsets.UTF_8)
+        return ExportResult.Success(target.absolutePath)
     }
 }

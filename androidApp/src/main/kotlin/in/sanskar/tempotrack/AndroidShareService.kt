@@ -22,6 +22,7 @@ class AndroidShareService(
         mimeType: String,
         content: String,
     ): ShareResult = withContext(Dispatchers.IO) {
+        var stagedFile: File? = null
         val shareIntent = try {
             val safeName = ExportFileName.sanitize(suggestedFileName)
             val directory = File(context.cacheDir, "shared-exports")
@@ -31,7 +32,8 @@ class AndroidShareService(
             if (!directory.isDirectory) {
                 throw IOException("Share cache path is not a directory.")
             }
-            val target = File(directory, safeName)
+            val target = createUniqueShareFile(directory, safeName)
+            stagedFile = target
             target.writeText(content, Charsets.UTF_8)
 
             val uri = FileProvider.getUriForFile(
@@ -52,8 +54,10 @@ class AndroidShareService(
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
         } catch (error: CancellationException) {
+            stagedFile?.delete()
             throw error
         } catch (_: Exception) {
+            stagedFile?.delete()
             return@withContext ShareResult.Failure(ShareError.PREPARE_FAILED)
         }
 
@@ -63,9 +67,21 @@ class AndroidShareService(
             }
             ShareResult.Started
         } catch (error: CancellationException) {
+            stagedFile?.delete()
             throw error
         } catch (_: Exception) {
+            stagedFile?.delete()
             ShareResult.Failure(ShareError.PLATFORM_SHARE_UNAVAILABLE)
         }
+    }
+
+    private fun createUniqueShareFile(directory: File, safeName: String): File {
+        val extension = safeName.substringAfterLast('.', missingDelimiterValue = "")
+        val suffix = extension.takeIf(String::isNotBlank)?.let { ".$it" } ?: ".tmp"
+        val stem = safeName
+            .removeSuffix(suffix)
+            .take(60)
+            .ifBlank { "tempotrack-export" }
+        return File.createTempFile("$stem-", suffix, directory)
     }
 }

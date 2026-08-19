@@ -66,6 +66,7 @@ import in.sanskar.tempotrack.resources.session_name_label
 import in.sanskar.tempotrack.resources.session_name_support
 import in.sanskar.tempotrack.resources.session_save_failed
 import in.sanskar.tempotrack.resources.session_saved_prefix
+import in.sanskar.tempotrack.util.suspendResult
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -131,7 +132,7 @@ fun StopwatchScreen(
                     modifier = Modifier.weight(1f).height(buttonHeight),
                     onClick = {
                         snapshot = engine.start()
-                        scope.launch { runCatching { activeStopwatch.save(engine.checkpoint()) } }
+                        scope.launch { suspendResult { activeStopwatch.save(engine.checkpoint()) } }
                     },
                 ) { Text(stringResource(Res.string.action_start)) }
 
@@ -140,14 +141,14 @@ fun StopwatchScreen(
                         modifier = Modifier.weight(1f).height(buttonHeight),
                         onClick = {
                             snapshot = engine.pause()
-                            scope.launch { runCatching { activeStopwatch.save(engine.checkpoint()) } }
+                            scope.launch { suspendResult { activeStopwatch.save(engine.checkpoint()) } }
                         },
                     ) { Text(stringResource(Res.string.action_pause)) }
                     FilledTonalButton(
                         modifier = Modifier.weight(1f).height(buttonHeight),
                         onClick = {
                             snapshot = engine.lap()
-                            scope.launch { runCatching { activeStopwatch.save(engine.checkpoint()) } }
+                            scope.launch { suspendResult { activeStopwatch.save(engine.checkpoint()) } }
                         },
                     ) { Text(stringResource(Res.string.action_lap)) }
                 }
@@ -157,7 +158,7 @@ fun StopwatchScreen(
                         modifier = Modifier.weight(1f).height(buttonHeight),
                         onClick = {
                             snapshot = engine.resume()
-                            scope.launch { runCatching { activeStopwatch.save(engine.checkpoint()) } }
+                            scope.launch { suspendResult { activeStopwatch.save(engine.checkpoint()) } }
                         },
                     ) { Text(stringResource(Res.string.action_resume)) }
                     OutlinedButton(
@@ -165,7 +166,7 @@ fun StopwatchScreen(
                         onClick = {
                             snapshot = engine.reset()
                             sessionName = ""
-                            scope.launch { runCatching { activeStopwatch.clear() } }
+                            scope.launch { suspendResult { activeStopwatch.clear() } }
                         },
                     ) { Text(stringResource(Res.string.action_reset)) }
                 }
@@ -197,7 +198,7 @@ fun StopwatchScreen(
                         laps = finalSnapshot.laps,
                     )
                     scope.launch {
-                        runCatching { sessions.upsert(session) }
+                        suspendResult { sessions.upsert(session) }
                             .onSuccess { savedMessage = "$savedPrefix “$safeName”" }
                             .onFailure { savedMessage = saveFailedMessage }
                     }

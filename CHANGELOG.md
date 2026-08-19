@@ -12,6 +12,8 @@ The format follows Keep a Changelog concepts and the project uses semantic versi
 - Android and Desktop application entry points.
 - iOS Kotlin/Native framework targets and Compose host entry point.
 - Native iOS JSON/CSV sharing through `UIActivityViewController` using sanitized temporary files.
+- Native iOS JSON/CSV document export through `UIDocumentPickerViewController`, including explicit user-cancellation results.
+- iOS simulator tests for temporary export-file isolation, sanitization and cleanup.
 - Monotonic stopwatch engine with pause/resume/reset/laps.
 - Fastest, slowest and average lap statistics.
 - Named local session history and search.
@@ -46,11 +48,12 @@ The format follows Keep a Changelog concepts and the project uses semantic versi
 - Active-stopwatch and preference stores now reject oversized payloads before decoding and bound encoded writes.
 - Live stopwatch lap recording stops at the same maximum accepted by persistence.
 - Large JSON/CSV serialization and JSON restore parsing run off the UI dispatcher; duplicate restore submissions are blocked while replacement is in progress.
-- Export cancellation is distinguished from write failures so Desktop users can cancel the native save dialog without receiving a false error.
+- Export cancellation is distinguished from write failures so Desktop and iOS users can cancel native destination pickers without receiving a false error.
 - Desktop native export reports a platform-unavailable error if a chooser cannot be created on the current host.
-- Android and Desktop export paths preserve coroutine cancellation instead of converting cancellation to ordinary write failures.
-- Android and Desktop export filenames use one bounded shared sanitization policy.
+- Android, Desktop and iOS export/share boundaries preserve coroutine cancellation instead of converting cancellation to ordinary write failures.
+- Platform export filenames use one bounded shared sanitization policy.
 - Android sharing preserves coroutine cancellation and distinguishes file-preparation failure from an unavailable system share activity.
+- iOS export/share staging uses unique temporary operation directories and removes them after completion/cancellation/failure paths.
 - Android and Desktop package versions are sourced from Gradle properties and release tags.
 - Desktop About version metadata uses the Gradle/tag version passed to the packaged JVM runtime.
 - iOS About version metadata uses the containing app's `CFBundleShortVersionString`.
@@ -60,7 +63,7 @@ The format follows Keep a Changelog concepts and the project uses semantic versi
 - Android signing secrets are scoped to only the workflow steps that need them.
 - The release publisher includes AAB files alongside APK/Desktop/iOS artifacts and generated SHA-256 checksums.
 - CI cancels superseded branch/PR verification while release runs are serialized per tag.
-- Privacy documentation explains Android cache sharing, iOS temporary share files, and operating-system destination selection.
+- Privacy documentation explains Android cache sharing, iOS temporary export/share staging, and operating-system destination selection.
 
 ### Fixed
 

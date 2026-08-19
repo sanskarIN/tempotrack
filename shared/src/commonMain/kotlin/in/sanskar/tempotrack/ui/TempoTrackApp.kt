@@ -163,6 +163,7 @@ private fun ScreenContent(
             onPreferencesChanged = onPreferencesChanged,
             miniStopwatchSupported = dependencies.miniStopwatchSupported,
             setMiniStopwatchVisible = dependencies.setMiniStopwatchVisible,
+            keyboardShortcutsSupported = dependencies.keyboardShortcutsSupported,
         )
 
         Destination.ABOUT -> AboutScreen(

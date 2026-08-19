@@ -202,28 +202,29 @@ fun StopwatchScreen(
                 modifier = Modifier.fillMaxWidth().height(buttonHeight),
                 enabled = !savingSession,
                 onClick = {
-                    if (savingSession) return@OutlinedButton
-                    val finalSnapshot = engine.snapshot()
-                    val now = wallClock.nowEpochMillis()
-                    val safeName = sessionName.trim().ifEmpty { "$sessionDefaultPrefix $now" }
-                    val session = StopwatchSession(
-                        id = "$now-${finalSnapshot.elapsedNanos}",
-                        name = safeName,
-                        createdAtEpochMillis = now,
-                        durationNanos = finalSnapshot.elapsedNanos,
-                        laps = finalSnapshot.laps,
-                    )
-                    savingSession = true
-                    scope.launch {
-                        suspendResult { sessions.upsert(session) }
-                            .onSuccess {
-                                savedMessage = "$savedPrefix “$safeName”"
-                                savingSession = false
-                            }
-                            .onFailure {
-                                savedMessage = saveFailedMessage
-                                savingSession = false
-                            }
+                    if (!savingSession) {
+                        val finalSnapshot = engine.snapshot()
+                        val now = wallClock.nowEpochMillis()
+                        val safeName = sessionName.trim().ifEmpty { "$sessionDefaultPrefix $now" }
+                        val session = StopwatchSession(
+                            id = "$now-${finalSnapshot.elapsedNanos}",
+                            name = safeName,
+                            createdAtEpochMillis = now,
+                            durationNanos = finalSnapshot.elapsedNanos,
+                            laps = finalSnapshot.laps,
+                        )
+                        savingSession = true
+                        scope.launch {
+                            suspendResult { sessions.upsert(session) }
+                                .onSuccess {
+                                    savedMessage = "$savedPrefix “$safeName”"
+                                    savingSession = false
+                                }
+                                .onFailure {
+                                    savedMessage = saveFailedMessage
+                                    savingSession = false
+                                }
+                        }
                     }
                 },
             ) { Text(stringResource(Res.string.save_session)) }

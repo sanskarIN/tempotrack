@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import in.sanskar.tempotrack.data.AppPreferences
 import in.sanskar.tempotrack.domain.StopwatchCheckpoint
 import in.sanskar.tempotrack.domain.StopwatchEngine
-import in.sanskar.tempotrack.resources.Res
+import in.sanskar.tempotrack.resources.*
 import in.sanskar.tempotrack.ui.screens.AboutScreen
 import in.sanskar.tempotrack.ui.screens.HistoryScreen
 import in.sanskar.tempotrack.ui.screens.OnboardingScreen

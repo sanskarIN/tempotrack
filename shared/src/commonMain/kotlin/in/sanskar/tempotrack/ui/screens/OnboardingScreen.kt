@@ -11,7 +11,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -25,9 +29,11 @@ import org.jetbrains.compose.resources.stringResource
 fun OnboardingScreen(
     preferences: AppPreferences,
     onContinue: () -> Unit,
-    onPersist: suspend (AppPreferences) -> Unit,
+    onPersist: suspend (AppPreferences) -> Boolean,
 ) {
     val scope = rememberCoroutineScope()
+    var saving by remember { mutableStateOf(false) }
+    var saveFailed by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier.fillMaxSize().padding(32.dp),
@@ -50,13 +56,32 @@ fun OnboardingScreen(
         Spacer(Modifier.height(32.dp))
         Button(
             modifier = Modifier.fillMaxWidth(),
+            enabled = !saving,
             onClick = {
                 val next = preferences.copy(onboardingCompleted = true)
-                scope.launch { onPersist(next) }
-                onContinue()
+                saving = true
+                saveFailed = false
+                scope.launch {
+                    val persisted = onPersist(next)
+                    saving = false
+                    if (persisted) {
+                        onContinue()
+                    } else {
+                        saveFailed = true
+                    }
+                }
             },
         ) {
             Text(stringResource(Res.string.onboarding_start))
+        }
+        if (saveFailed) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                stringResource(Res.string.onboarding_save_failed),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+            )
         }
         Spacer(Modifier.height(20.dp))
         Text(stringResource(Res.string.made_by), style = MaterialTheme.typography.labelLarge)

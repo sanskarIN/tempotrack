@@ -9,6 +9,8 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 
@@ -61,6 +63,25 @@ class ActiveStopwatchRepositoryTest {
 
         assertNotNull(repository.load())
         assertTrue(storage.value.orEmpty().contains("\"schemaVersion\":1"))
+    }
+
+    @Test
+    fun concurrentCheckpointSavesDoNotOverlapStorageWrites() = runTest {
+        val storage = ConcurrentWriteDetectingStorage()
+        val repository = JsonActiveStopwatchRepository(storage)
+
+        List(20) { index ->
+            launch {
+                repository.save(
+                    StopwatchCheckpoint(
+                        status = StopwatchStatus.PAUSED,
+                        accumulatedNanos = index.toLong(),
+                    ),
+                )
+            }
+        }.joinAll()
+
+        assertNotNull(ActiveStopwatchStoreCodec().decode(requireNotNull(storage.value)))
     }
 
     private fun validCheckpoint(): StopwatchCheckpoint = StopwatchCheckpoint(

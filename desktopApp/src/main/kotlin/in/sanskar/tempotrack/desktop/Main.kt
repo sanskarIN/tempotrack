@@ -96,7 +96,15 @@ fun main() = application {
 
     if (miniVisible && sharedEngine != null) {
         Window(
-            onCloseRequest = { miniVisible = false },
+            onCloseRequest = {
+                miniVisible = false
+                scope.launch {
+                    suspendResult {
+                        val current = dependencies.preferences.load()
+                        dependencies.preferences.save(current.copy(miniStopwatchVisible = false))
+                    }
+                }
+            },
             title = "TempoTrack Mini",
             alwaysOnTop = true,
             resizable = false,

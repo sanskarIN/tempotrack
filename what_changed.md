@@ -2,386 +2,438 @@
 
 ## Current milestone
 
-Phase 0 → Phase 6 implementation and release-candidate audit are in progress from the master prompt uploaded on 2026-08-19.
+Phase 0 → Phase 6 implementation, platform portability, reliability hardening, release engineering, documentation and release-candidate audit are in progress from the master prompt uploaded on 2026-08-19.
 
-The repository is now a substantial Kotlin + Jetpack Compose Multiplatform stopwatch implementation rather than scaffolding. This continuation preserved existing working code, audited the current `main` branch, closed remaining Android/Desktop export UX gaps, added secure Android system sharing, added persistent Desktop shortcut configuration, extended tests/documentation, and kept environment-gated release tasks explicitly open instead of claiming unverified completion.
+The repository is now a substantial Kotlin + Compose Multiplatform stopwatch implementation for Android/Desktop with a Kotlin/Native iOS framework and native iOS export/share bridges. This handoff records the current `main` state after the latest reliability/platform audit. Environment-gated items are left explicitly open instead of being represented as verified.
 
 ## Implementation contract
 
 - Public/open-source TempoTrack stopwatch.
-- Kotlin + Jetpack Compose Multiplatform.
-- Android and Desktop primary targets; Kotlin/Native/Compose iOS integration is present.
+- Kotlin + Compose Multiplatform.
+- Android and Desktop primary applications.
+- Kotlin/Native/Compose iOS framework/host integration.
 - MIT license.
-- Visible credit: **Made by the Sanskar**.
-- Business email: `sanskarin@outlook.in`.
-- Business email: `sanskarin.business@gmail.com`.
-- Support email: `supportramsandesh@gmail.com`.
+- Visible product credit: **Made by the Sanskar**.
+- Business: `sanskarin@outlook.in`.
+- Business: `sanskarin.business@gmail.com`.
+- Support: `supportramsandesh@gmail.com`.
 - GitHub: `https://github.com/sanskarIN`.
 - Buy Me a Coffee: `https://buymeacoffee.com/sanskarIN`.
-- Small, atomic, meaningful commits are preferred.
-- Requested maintainer Git email: `sanskarin@outlook.in`.
+- Small, atomic, meaningful commits are preferred and were used throughout this continuation.
+- Requested maintainer Git email remains `sanskarin@outlook.in`; connector-created commit author metadata cannot be guaranteed from the file-write interface, so local maintainers should still configure it explicitly.
 
-## Current repository capabilities
+## Current implementation
 
-### Stopwatch engine
+### Core stopwatch
 
-- Start, pause, resume and reset.
+- Start, pause, resume, reset.
 - Lap/split recording.
 - Millisecond display precision.
 - Injected monotonic clock abstraction.
-- Android timing uses `SystemClock.elapsedRealtimeNanos()` so elapsed timing is not based on wall-clock changes and includes device sleep.
-- Desktop timing uses `System.nanoTime()`.
-- iOS timing uses `NSProcessInfo.systemUptime`.
-- Active stopwatch checkpoint persistence.
-- Safe post-reboot/stale monotonic-clock recovery.
-- Checkpoint validation before persistence/restoration.
+- Elapsed accumulation saturates at `Long.MAX_VALUE` rather than wrapping negative.
+- Live lap recording stops at the same maximum accepted by persistence.
+- Running checkpoints are rebased at save time so persisted `accumulatedNanos` is the elapsed-at-save lower bound and `startedAtNanos` is the monotonic reading from that same save.
+- `StopwatchEngine` accepts an injected wall clock only for checkpoint recovery metadata; live elapsed duration remains purely monotonic.
 
-### Laps and statistics
+### Active checkpoint schema v2 and recovery
 
-- Recorded lap ordering.
-- Fastest-first and slowest-first views without mutating recorded order.
-- Fastest/slowest labels.
-- Average split statistics.
-- Validation of split and cumulative totals.
+`StopwatchCheckpoint` now includes nullable `savedAtEpochMillis`.
+
+Active-stopwatch persistence is schema version 2:
+
+- schema v2 round-trips current checkpoint metadata;
+- schema v1 envelopes migrate forward;
+- original unversioned checkpoints migrate forward;
+- unknown future versions fail closed;
+- oversized active-store payloads fail closed before decoding;
+- active checkpoint validation and encoded-size bounds remain enforced.
+
+Recovery behavior is platform-specific:
+
+- Android uses `SystemClock.elapsedRealtimeNanos()`.
+- iOS uses `NSProcessInfo.systemUptime` converted to nanoseconds.
+- Android/iOS compare elapsed uptime since save with elapsed wall time since save. If those deltas reasonably agree, a running timer can continue; if uptime/wall references moved backward, disagree beyond tolerance, or legacy metadata is ambiguous, the checkpoint is normalized to PAUSED at the last safely known elapsed value.
+- Desktop uses `System.nanoTime()` only inside the current JVM. A persisted RUNNING checkpoint is converted to PAUSED on a new Desktop process instead of comparing incompatible process-local origins.
+- Desktop persists a rebased RUNNING checkpoint every five seconds while active, bounding recent elapsed loss after forced process termination.
+- Recovery transformations are persisted once during application initialization.
+- Legacy checkpoints preserve known lap elapsed time when normalized.
+
+Decision documentation: `docs/adr/0005-platform-checkpoint-recovery.md`.
+
+### Laps/statistics
+
+- Recorded ordering.
+- Fastest-first / slowest-first views without mutating recorded order.
+- Fastest/slowest descriptors.
+- Integer overflow-safe rounded average split calculation; no `Double` conversion is required.
+- Sequential index validation.
+- Non-negative split/total validation.
+- Overflow-safe cumulative validation.
+- Explicit negative cumulative-total rejection.
+- Lap total may not exceed a saved session duration.
 
 ### Session history
 
 - Named local sessions.
 - Search.
 - Validated rename.
-- Delete with undo.
-- Newest-first persistence.
-- Duplicate-ID rejection.
-- Corrupt persistence fails closed instead of being silently rewritten.
-- Bounded store size.
+- Delete + undo.
+- Newest-first storage.
+- Duplicate ID rejection.
+- Corrupt stored history fails closed without silently rewriting the original data.
+- Bounded stored-session count and encoded character size.
+- Session names/IDs/lap records use shared validation contracts.
 
 ### Data portability
 
-- JSON export.
-- CSV export.
-- Spreadsheet-formula neutralization in CSV string fields.
+- Portable JSON export.
+- Seven-column CSV export.
+- No-lap CSV rows now match the header column count.
+- CSV fields escape quotes/commas and neutralize spreadsheet-formula prefixes.
 - Validated JSON restore.
 - Restore requires explicit replacement confirmation.
-- Import bounds for content size/session count.
-- Versioned internal storage envelopes with legacy migration.
-- Portable exported JSON intentionally stays independent of the internal persistence envelope.
-- Shared bounded filename sanitization for filesystem/share operations.
-- Desktop native save-file chooser.
-- Explicit Desktop export cancellation handling.
-- Android system share-sheet actions for JSON and CSV.
-- Android sharing uses a restricted non-exported `FileProvider` and temporary read grant rather than raw filesystem paths.
+- Restore content/session limits are aligned with persistence limits, so a valid self-backup is not rejected only because the importer was configured smaller than storage.
+- Large JSON/CSV serialization and JSON import parsing execute off the UI dispatcher.
+- Restore submission is single-flight.
+- History export/share preparation is single-flight and cannot overlap restore parsing.
+- Shared `ExportFileName` sanitization is used by platform file/share operations.
 
-### Preferences and UX
+### Android export/share
 
-- First-run onboarding.
+- MediaStore export on Android 10+.
+- App-specific Documents fallback on older supported Android.
+- Export directory creation is verified.
+- Android system sharing via `ACTION_SEND` chooser.
+- Non-exported `FileProvider` exposes only `cache/shared-exports/`.
+- Temporary read URI grant instead of raw filesystem paths.
+- Share cache creation/path type is verified.
+- Coroutine cancellation is preserved instead of being converted to an ordinary write/share failure.
+- Platform-unavailable and preparation failures remain distinct.
+
+### Desktop export/share-adjacent UX
+
+- Native `JFileChooser` save destination.
+- JSON/CSV filename/filter suggestions.
+- Explicit user cancellation result.
+- Headless/unavailable chooser path produces a platform-unavailable result.
+- Export writes use UTF-8 and preserve coroutine cancellation.
+
+### iOS native export/share
+
+`shared/src/iosMain` now contains real native data-portability bridges:
+
+- `IosTemporaryExportFile.kt` creates a unique operation directory below `NSTemporaryDirectory()` and writes a sanitized UTF-8 source file atomically.
+- `IosShareService.kt` presents `UIActivityViewController`, configures a popover source for regular-width/iPad-class presentation, holds one active activity sheet, and cleans temporary operation data when completion/dismissal is reported.
+- `IosDocumentExporter.kt` presents `UIDocumentPickerViewController(forExportingURLs:asCopy:)`, strongly retains its delegate for the operation, reports explicit success/cancellation/platform failure, serializes document-picker operations with a mutex, dismisses on coroutine cancellation, and performs non-cancellable temporary-directory cleanup.
+- `MainViewController()` wires both native services into the shared app.
+- About version metadata is derived from `CFBundleShortVersionString`.
+- `iosTest` covers temporary file sanitization, unique operation directories, creation and cleanup.
+
+Native iOS source still requires actual macOS/Xcode compilation/device-or-simulator verification before it can be represented as release-verified.
+
+### Preferences and UX reliability
+
+- First-run onboarding persists before advancing.
 - Light/dark/system theme.
-- Large-control accessibility option.
+- Large controls.
 - Reduced-motion preference.
-- Adaptive compact/wide navigation.
-- Shared design tokens.
-- Compose Multiplatform string resources for localization readiness.
-- Settings sections for appearance, accessibility, desktop controls, privacy, data, updates and About.
-- About content with project identity, version/platform, MIT license, GitHub, support/business contacts, Buy Me a Coffee and **Made by the Sanskar**.
+- Desktop mini-stopwatch visibility.
+- Desktop keyboard shortcut enable/disable preference.
+- Preferences persistence is versioned/migrated and size bounded.
+- Settings writes are single-flight; controls temporarily disable while saving.
+- Failed Settings writes revert both visible preferences and Desktop side effects.
+- Updated failure copy says the setting was reverted.
+- Stopwatch session saves are single-flight.
+- Saved-session feedback clears after timer/name changes.
+- Session-name input uses `SessionValidation.MAX_SESSION_NAME_LENGTH` instead of a duplicated literal.
 
-### Desktop
+### Accessibility
 
-- Desktop application entry point.
-- Floating always-on-top mini stopwatch.
-- Persistent mini-stopwatch visibility.
-- Default stopwatch shortcuts: Space = start/pause/resume, L = lap, R = reset.
-- Shortcut help dialog.
-- Persistent enable/disable setting for stopwatch shortcuts.
-- Disabled stopwatch shortcuts do not disable ordinary keyboard focus/navigation.
-- Native save-file chooser for export destination selection.
+- Main timer semantic elapsed-time description.
+- Mini stopwatch now exposes the same elapsed-time semantic description.
+- Material controls/labels.
+- Large-control setting.
+- Reduced-motion preference.
+- Fastest/slowest meaning is not encoded by color alone.
+- Desktop keyboard help and enable/disable option.
+- Shared string resources allow accessibility copy to be localized.
 
-### Android
+### Desktop mini window / shortcuts
 
-- Android application entry point.
-- Application-private storage.
-- Atomic replacement where supported with safe fallback.
-- MediaStore export on modern Android.
-- Restricted FileProvider share cache.
-- Android system share sheet for JSON/CSV backups/data.
-- Branded launch/splash treatment, including Android 12+ splash resources.
-- Android backup/data-extraction rules.
+- Always-on-top mini stopwatch.
+- Persisted visibility.
+- Closing the mini window also persists `miniStopwatchVisible = false`, so it does not unexpectedly reopen next launch.
+- Space = start/pause/resume.
+- L = lap.
+- R = reset.
+- Shortcut handling respects persisted enable/disable state.
+- Shortcut actions persist active checkpoints.
 
-### iOS
+### Atomic private storage
 
-- `iosX64`, `iosArm64` and `iosSimulatorArm64` Kotlin targets.
-- Static `TempoTrackShared` framework.
-- Compose `MainViewController()` entry point.
-- iOS clocks and local preferences/session adapters.
-- macOS CI tasks for iOS simulator framework/test verification.
-- Release workflow support for iOS arm64 framework packaging.
-- Native iOS document/share-sheet bridge intentionally remains host-layer work; shared code fails safely instead of pretending export succeeded.
+Android and Desktop private string storage now:
 
-### Repository and release engineering
+- validates the parent path;
+- creates required directories explicitly;
+- verifies the parent is a directory;
+- writes UTF-8 temporary content;
+- attempts atomic replace;
+- falls back only when the filesystem specifically reports `AtomicMoveNotSupportedException`;
+- clears stale sidecar `.tmp` files when the logical store is cleared.
 
-- MIT `LICENSE`.
-- `.gitignore`, `.editorconfig`, `.gitattributes`, `.env.example`.
-- README and complete policy/documentation baseline.
-- ADRs.
-- Issue templates and PR template.
-- Dependabot.
-- CI for shared/Desktop/Android plus macOS iOS verification.
+### Gradle/bootstrap integrity
+
+- Project Gradle version: 9.5.0.
+- `gradle/wrapper/gradle-wrapper.properties` pins the Gradle 9.5.0 binary distribution SHA-256:
+  `553c78f50dafcd54d65b9a444649057857469edf836431389695608536d6b746`.
+- Standard binary `gradle-wrapper.jar` is still not committed.
+- Unix `gradlew` and Windows `gradlew.bat` use the wrapper JAR when present.
+- When the JAR is absent, launchers require installed Gradle **exactly 9.5.0** and reject a mismatched fallback version.
+- Windows bootstrap uses delayed expansion correctly inside its version-detection block.
+- A trusted Gradle 9.5.0 installation should generate the standard wrapper JAR if full self-contained wrapper bootstrap is required.
+
+The connected GitHub text/file workflow cannot safely synthesize or transfer this binary JAR without risking corruption, so it is deliberately not fabricated.
+
+### Android release signing
+
+- Build script supports environment-backed release signing.
+- Partial signing configuration fails immediately.
+- Configured keystore path must be a real file.
+- Tag release workflow requires protected signing secrets.
+- Base64 keystore is decoded only into runner temporary storage.
+- Password/alias secrets are scoped to the build step that needs them.
+- Release job builds APK + AAB.
+- Release job verifies both output types exist.
+- Publish job includes APK/AAB/Desktop/iOS artifacts and `SHA256SUMS.txt`.
+- Build jobs use read-only repository permission; only the publish job receives `contents: write`.
+- Release tags must match `vMAJOR.MINOR.PATCH`.
+- Release workflows serialize by tag.
+
+Actual production signing secrets still have to be provisioned in protected repository/environment settings by the repository owner/admin.
+
+### CI/security/repository automation
+
+- Main/PR CI for shared/Desktop/Android/iOS/docs.
+- Superseded CI runs cancel by branch/PR.
+- iOS simulator framework link + simulator test jobs are configured on macOS.
+- Markdown local-link checker.
 - CodeQL.
 - Dependency review.
-- Secret scanning.
-- Markdown link checker.
-- Tag-driven versioning/package workflow.
-- Release artifact checksum generation.
-- GitHub Release publishing workflow.
+- Secret scanning with read-only permissions, timeout and superseded-run cancellation.
+- Dependabot.
+- Issue templates.
+- Pull request template.
+- Release workflow.
 
-## Work completed in the latest continuation batch
+## Important files added during the continuation series
 
-### Native Desktop export UX
-
-- Replaced fixed-folder Desktop export behavior with a native `JFileChooser` save dialog.
-- Suggested filenames and JSON/CSV filters are supplied to the chooser.
-- The selected destination remains under user control.
-- Cancel is represented as `ExportError.USER_CANCELLED` instead of a false write failure.
-- Shared UI maps cancellation to a localized user-safe message.
-
-### Secure Android sharing
-
-- Added a platform-neutral `ShareService` contract and stable share result/error types.
-- Added AndroidX Core required for `FileProvider`.
-- Registered a non-exported `FileProvider` using `${applicationId}.fileprovider`.
-- Limited provider exposure to `cache/shared-exports/`.
-- Added `AndroidShareService`.
-- Share files are created only after explicit user action.
-- The system chooser receives a `content://` URI with temporary read permission.
-- JSON and CSV share actions only appear when a platform share service is present.
-- iOS/Desktop hosts are not falsely advertised as sharing-capable through this contract unless a concrete service is supplied.
-
-### Export filename hardening
-
-- Added one shared `ExportFileName` sanitization policy.
-- Unsafe characters are replaced.
-- traversal-like leading punctuation is removed.
-- output is length bounded.
-- empty/unsafe-only names fall back to `tempotrack-export`.
-- Android export, Android share and Desktop export reuse the same policy.
-- Added common tests for normalization and bounds.
-
-### Desktop shortcut configuration
-
-- Added `keyboardShortcutsEnabled` to persisted preferences with a backwards-compatible default of `true`.
-- Added host callback wiring through `TempoTrackDependencies`.
-- App startup restores the preference into the Desktop runtime.
-- Settings exposes a persistent enable/disable control.
-- Desktop `onKeyEvent` ignores stopwatch shortcut handling when disabled.
-- Added preference codec coverage for explicit disabled state and legacy default behavior.
-
-### Documentation and privacy
-
-- Updated README for Android secure sharing, Desktop destination chooser, shortcut configuration, filename hardening, and data portability.
-- Updated `PRIVACY.md` with temporary share-cache behavior and operating-system destination selection.
-- Updated accessibility guidance for shortcut conflicts/assistive technologies.
-- Updated testing guidance with Android sharing, Desktop export, filename hardening, and shortcut persistence checks.
-- Updated changelog and roadmap.
-- Roadmap now marks Android system sharing and Desktop native save chooser complete.
-- Environment/credential/device-gated items remain open rather than being represented as complete.
-
-## Files added in the latest continuation batch
-
+- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/domain/SessionValidation.kt`
+- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/domain/StopwatchCheckpointRecovery.kt`
+- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/data/SessionImport.kt`
+- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/data/SessionStoreCodec.kt`
+- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/data/ExportFileName.kt`
+- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/data/ShareService.kt`
+- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/util/SuspendResult.kt`
+- `shared/src/commonMain/composeResources/values/shortcuts.xml`
+- `shared/src/commonMain/composeResources/values/reliability.xml`
+- `shared/src/iosMain/kotlin/in/sanskar/tempotrack/ios/IosPlatformAdapters.kt`
+- `shared/src/iosMain/kotlin/in/sanskar/tempotrack/ios/MainViewController.kt`
+- `shared/src/iosMain/kotlin/in/sanskar/tempotrack/ios/IosTemporaryExportFile.kt`
+- `shared/src/iosMain/kotlin/in/sanskar/tempotrack/ios/IosShareService.kt`
+- `shared/src/iosMain/kotlin/in/sanskar/tempotrack/ios/IosDocumentExporter.kt`
+- `shared/src/iosTest/kotlin/in/sanskar/tempotrack/ios/IosTemporaryExportFileTest.kt`
+- `shared/src/commonTest/kotlin/in/sanskar/tempotrack/StopwatchJourneyTest.kt`
+- `shared/src/commonTest/kotlin/in/sanskar/tempotrack/domain/StopwatchCheckpointRecoveryTest.kt`
+- `shared/src/commonTest/kotlin/in/sanskar/tempotrack/domain/LapStatisticsTest.kt`
+- `shared/src/commonTest/kotlin/in/sanskar/tempotrack/data/ExportFileNameTest.kt`
+- `shared/src/commonTest/kotlin/in/sanskar/tempotrack/util/SuspendResultTest.kt`
 - `androidApp/src/main/kotlin/in/sanskar/tempotrack/AndroidShareService.kt`
 - `androidApp/src/main/res/xml/file_paths.xml`
-- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/data/ExportFileName.kt`
-- `shared/src/commonMain/composeResources/values/shortcuts.xml`
-- `shared/src/commonTest/kotlin/in/sanskar/tempotrack/data/ExportFileNameTest.kt`
+- `docs/ios.md`
+- `docs/adr/0004-versioned-session-storage.md`
+- `docs/adr/0005-platform-checkpoint-recovery.md`
 
-## Files changed in the latest continuation batch
+## Significant files changed during this continuation series
 
-- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/data/Storage.kt`
-- `gradle/libs.versions.toml`
-- `androidApp/build.gradle.kts`
-- `androidApp/src/main/AndroidManifest.xml`
-- `androidApp/src/main/kotlin/in/sanskar/tempotrack/AndroidExporter.kt`
-- `androidApp/src/main/kotlin/in/sanskar/tempotrack/MainActivity.kt`
-- `desktopApp/src/main/kotlin/in/sanskar/tempotrack/desktop/DesktopExporter.kt`
-- `desktopApp/src/main/kotlin/in/sanskar/tempotrack/desktop/Main.kt`
+- `shared/build.gradle.kts`
+- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/domain/Models.kt`
+- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/domain/StopwatchEngine.kt`
+- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/domain/StopwatchCheckpointValidation.kt`
+- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/data/SessionRepository.kt`
+- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/data/SessionCodec.kt`
 - `shared/src/commonMain/kotlin/in/sanskar/tempotrack/data/PreferencesRepository.kt`
+- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/data/PreferencesStoreCodec.kt`
+- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/data/ActiveStopwatchRepository.kt`
+- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/data/ActiveStopwatchStoreCodec.kt`
 - `shared/src/commonMain/kotlin/in/sanskar/tempotrack/ui/TempoTrackDependencies.kt`
 - `shared/src/commonMain/kotlin/in/sanskar/tempotrack/ui/TempoTrackApp.kt`
+- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/ui/MiniStopwatch.kt`
+- `shared/src/commonMain/kotlin/in/sanskar/tempotrack/ui/screens/StopwatchScreen.kt`
 - `shared/src/commonMain/kotlin/in/sanskar/tempotrack/ui/screens/HistoryScreen.kt`
 - `shared/src/commonMain/kotlin/in/sanskar/tempotrack/ui/screens/SettingsScreen.kt`
-- `shared/src/commonMain/composeResources/values/strings.xml`
-- `shared/src/commonTest/kotlin/in/sanskar/tempotrack/data/PreferencesStoreCodecTest.kt`
+- shared Compose resources.
+- common persistence/domain regression tests.
+- `androidApp/build.gradle.kts`
+- `androidApp/src/main/AndroidManifest.xml`
+- `androidApp/src/main/kotlin/in/sanskar/tempotrack/MainActivity.kt`
+- `androidApp/src/main/kotlin/in/sanskar/tempotrack/AndroidExporter.kt`
+- `androidApp/src/main/kotlin/in/sanskar/tempotrack/AndroidStringStorage.kt`
+- Android backup/FileProvider resources.
+- `desktopApp/build.gradle.kts`
+- `desktopApp/src/main/kotlin/in/sanskar/tempotrack/desktop/Main.kt`
+- `desktopApp/src/main/kotlin/in/sanskar/tempotrack/desktop/DesktopExporter.kt`
+- `desktopApp/src/main/kotlin/in/sanskar/tempotrack/desktop/JvmStringStorage.kt`
+- `gradlew`
+- `gradlew.bat`
+- `gradle/wrapper/gradle-wrapper.properties`
+- `.github/workflows/ci.yml`
+- `.github/workflows/release.yml`
+- `.github/workflows/secret-scan.yml`
 - `README.md`
 - `PRIVACY.md`
 - `CHANGELOG.md`
 - `ROADMAP.md`
-- `docs/accessibility.md`
+- `docs/setup.md`
+- `docs/architecture.md`
+- `docs/performance.md`
 - `docs/testing.md`
+- `docs/release.md`
+- `docs/github.md`
+- `docs/accessibility.md`
 - `what_changed.md`
 
-## Earlier substantial continuation work retained
+## Latest reliability/audit commit themes
 
-The current branch also contains earlier audit/improvement work beyond the original handoff, including:
+The latest continuation intentionally used granular commits rather than one bulk change. Commit messages include:
 
-- externalized Compose string resources;
-- explicit generated resource imports;
-- localization documentation;
-- shared design tokens;
-- adaptive layout/navigation;
-- versioned preference and active-stopwatch storage;
-- validation and migration tests;
-- concurrency-safe repository writes;
-- corrupted-history fail-closed behavior;
-- session-store size limits;
-- Android API-compatible storage writes;
-- Android splash resources;
-- release tag/version/checksum improvements;
-- Markdown link checking;
-- expanded accessibility/testing/architecture documentation.
+- `fix: avoid implicit button lambda return label`
+- `fix: serialize history export and share launches`
+- `a11y: describe mini stopwatch elapsed time`
+- `fix: align settings failure copy with rollback`
+- `docs: describe checkpoint v2 recovery architecture`
+- `docs: record platform checkpoint recovery decision`
+- `docs: document checkpoint heartbeat performance`
+- `docs: expand checkpoint recovery verification`
+- `docs: document resilient checkpoint recovery`
+- `docs: clarify exact Gradle bootstrap requirements`
+- `docs: record checkpoint v2 and UI reliability work`
+- `docs: align release guide with native iOS export`
+- `fix: use explicit iOS document export initializer`
+- `feat: timestamp persisted stopwatch checkpoints`
+- `feat: record wall time with engine checkpoints`
+- `fix: validate persisted checkpoint wall timestamps`
+- `feat: migrate active stopwatch schema to v2`
+- `test: cover active checkpoint v1 migration`
+- `feat: detect uptime clock resets safely`
+- `test: cover uptime reboot detection`
+- `refactor: attach wall clock to checkpoint metadata`
+- `fix: detect Android uptime resets on restore`
+- `fix: detect iOS uptime resets on restore`
+- `test: cover checkpoint wall metadata`
+- `feat: add safe running checkpoint recovery policy`
+- `test: cover safe process restart recovery`
+- `feat: expose checkpoint recovery policy`
+- `feat: apply platform checkpoint recovery on launch`
+- `fix: pause Desktop timers across JVM restarts`
+- `feat: expose checkpoint heartbeat interval`
+- `feat: persist running checkpoint heartbeats`
+- `feat: enable Desktop checkpoint heartbeat`
+- `fix: allow arbitrary monotonic timestamp origins`
+- `fix: preserve legacy running checkpoints`
+- `fix: rebase running checkpoints at persistence time`
+- `test: accept negative monotonic clock origins`
+- `test: cover rebased running checkpoints`
+- `fix: saturate stopwatch elapsed overflow`
+- `test: cover elapsed overflow saturation`
+- `fix: compute lap averages without floating point`
+- `test: cover overflow-safe lap averages`
+- `fix: make session lap validation overflow-safe`
+- `test: cover negative lap totals`
+- `fix: serialize preference writes from Settings`
+- `fix: serialize stopwatch session saves`
+- `fix: align backup restore limits with storage`
+- `test: lock restore limits to persistence contract`
+- `fix: align active checkpoint lap limit`
+- `test: lock checkpoint lap limit to session limit`
+- `fix: bound active stopwatch persistence size`
+- `fix: bound preference persistence size`
+- `test: reject oversized preference payloads`
+- `fix: keep empty-lap CSV rows schema-aligned`
+- `test: verify empty-lap CSV column count`
+- `perf: move history serialization off UI thread`
+- `fix: persist mini stopwatch close state`
+- `fix: preserve Android export cancellation`
+- `fix: preserve Desktop export cancellation`
+- `fix: verify Android share cache creation`
+- `fix: harden Android atomic string storage`
+- `fix: harden Desktop atomic string storage`
+- `build: validate fallback Gradle version on Unix`
+- `build: validate fallback Gradle version on Windows`
+- `fix: use delayed expansion in Windows bootstrap`
+- `build: pin Gradle distribution checksum`
+- `ci: validate semantic release tags`
+- `ci: serialize release workflow per tag`
+- `ci: cancel superseded branch verification`
+- `ci: cancel superseded secret scans`
+- `feat: add native iOS file share service`
+- `refactor: centralize iOS temporary export files`
+- `fix: isolate iOS temporary export files`
+- `fix: clean up iOS share files after dismissal`
+- `feat: add native iOS document exporter`
+- `fix: harden iOS export destination label`
+- `feat: wire native iOS document export`
+- `test: cover iOS temporary export files`
 
-These existing changes were preserved and integrated with the newest work instead of rewritten.
+This list is intentionally detailed because the project instruction asks for many small commits and a durable handoff instead of chat-heavy narration.
 
-## Verification performed in this continuation
+## Verification performed
 
-- Repository metadata/current tree/source files were inspected through the connected GitHub API.
-- Recent commit history was inspected after writes.
-- Repository search for `TODO FIXME` returned no results in the current indexed repository state.
-- Changed files were re-read where necessary to avoid stale-SHA overwrites.
-- A stale-SHA write conflict on `AndroidShareService.kt` was detected, the current file was re-fetched, and the update was safely reapplied rather than force-overwriting concurrent work.
-- GitHub combined-status lookup on commit `c6d845910867570c68157bb2ef50fc017751ba8e` returned no status contexts through the connector at the time checked.
-- A container-side clean clone was attempted earlier in this project continuation but failed because the execution environment could not resolve `github.com`; therefore Gradle dependencies/repository contents could not be obtained through the container for a local build.
+- Current repository tree and relevant source/config/document files were inspected through the connected GitHub API.
+- Changed files were re-fetched before sequential writes when a current blob SHA was required.
+- Repository search for `TODO`, `FIXME`, `runCatching`, stale iOS-export placeholder wording, and related obsolete terms returned no indexed results in the final sweep used for this handoff.
+- Earlier stale-SHA conflicts were resolved by re-fetching current content instead of force-overwriting concurrent repository changes.
+- GitHub combined-status checks have not exposed a usable passing status matrix for the latest push commits through this connector.
+- A clean local clone/build attempt from the execution container could not resolve `github.com`, so a full Gradle dependency/build/test run could not be executed in that container.
+- The native iOS bridge was source-audited and `iosTest` coverage was added, but no macOS/Xcode compiler result is claimed from this chat environment.
 
-## Verification integrity / limitations
+## Verification integrity / current release status
 
-This handoff does **not** claim the complete Android/Desktop/iOS build, lint and test matrix has passed after the newest commits because that result has not been observable in the available environment.
+This handoff does **not** claim that the newest `main` commit has passed the complete Android/Desktop/iOS build, lint, test, packaging and manual-device matrix.
 
-The repository CI is configured to perform the appropriate checks, but the connector currently returns no combined status contexts for the latest checked commit. Build/test status must therefore remain `not observed`, not `passed` or `failed`.
+Configured automation and tests are extensive, but results that were not actually observable remain **not observed**, not “passed”.
 
-The GitHub contents connector can create/update UTF-8 text files but cannot conveniently generate or safely author the binary `gradle-wrapper.jar`. Existing bootstrap scripts delegate to an installed Gradle if the wrapper JAR is absent. A trusted local Gradle installation should regenerate the standard wrapper JAR if full wrapper self-containment is required.
-
-## Known remaining environment/host-gated items
-
-### Required before a truthful release-candidate declaration
-
-1. Observe a clean CI run after the current commits and repair any compile/lint/test failure.
-2. Run or observe Android debug/release build and lint.
-3. Run or observe Desktop compilation/tests/package task on supported desktop hosts.
-4. Run or observe iOS simulator framework link/tests on macOS/Xcode.
-5. Run/observe secret scan, dependency review, CodeQL and documentation-link checks.
-6. Capture real Android/Desktop screenshots from verified builds and replace placeholders.
-
-### Host/product decisions intentionally still open
-
-- Native iOS document/share-sheet export bridge must be implemented/verified in the iOS host layer.
-- Per-action Desktop key rebinding is intentionally not implemented merely to increase feature count; the complete shortcut layer is currently configurable on/off and documented. Add individual key remapping only if there is a clear user need and a collision-safe binding model.
-- Optional encrypted local backup remains deferred until there is a concrete threat model and platform-appropriate key-management design; inventing custom crypto would conflict with the security requirements.
-- Production Android signing requires private signing material configured outside source control. Signing secrets must never be committed.
-
-## Definition-of-Done status
-
-### Implemented in source
-
-- [x] Core stopwatch flows.
-- [x] Monotonic timing architecture.
-- [x] Laps/statistics/sorting.
-- [x] Named/searchable history.
-- [x] Local persistence with versioning/migration/validation.
-- [x] JSON/CSV export.
-- [x] JSON restore/import validation.
-- [x] Android system sharing.
-- [x] Desktop native export destination selection.
-- [x] Accessibility preferences and keyboard support.
-- [x] Android/Desktop entry points.
-- [x] iOS framework/Compose entry-point readiness.
-- [x] Documentation/policies/CI/security workflow baseline.
-- [x] Contact/funding/license/credit requirements.
-
-### Still requires external verification/assets
-
-- [ ] Clean-checkout quality suite observed passing after newest commits.
-- [ ] Supported release packages observed building from the current head.
-- [ ] Production Android signing configured securely.
-- [ ] Native iOS host export/share bridge.
-- [ ] Real release screenshots.
-
-## Commit author identity limitation
-
-The connected GitHub write API does not expose custom author/committer email fields for file writes. Therefore connector-generated commits cannot be forced to use `sanskarin@outlook.in` as their Git author email.
-
-Maintainer/local Git configuration remains:
+Before declaring a release candidate, observe/execute:
 
 ```bash
-git config user.email "sanskarin@outlook.in"
+./gradlew quality
+./gradlew :androidApp:testDebugUnitTest :androidApp:lintRelease :androidApp:assembleRelease :androidApp:bundleRelease
+./gradlew :desktopApp:test :desktopApp:compileKotlin :desktopApp:packageDistributionForCurrentOS
+python tools/check_markdown_links.py
 ```
 
-No claim is made that connector-generated commit metadata uses that email.
+On macOS with Xcode:
 
-## Latest continuation commits
+```bash
+./gradlew :shared:iosSimulatorArm64Test :shared:linkDebugFrameworkIosSimulatorArm64 :shared:linkReleaseFrameworkIosArm64
+```
 
-- `3149b15` — `feat: distinguish cancelled export operations`
-- `20b9d27` — `feat: use native desktop save-file chooser`
-- `314c713` — `feat: add localized export cancellation message`
-- `be7066e` — `fix: handle cancelled export operations`
-- `2da2eab` — `feat: define portable share service contract`
-- `7c2f919` — `build: add AndroidX Core for secure file sharing`
-- `0bc6fdd` — `build: enable Android secure share provider dependency`
-- `0f84988` — `feat: register secure Android file provider`
-- `22dd16e` — `feat: restrict Android shared files to export cache`
-- `6bc81b8` — `feat: add Android system share-sheet service`
-- `252f950` — `feat: expose optional platform share service`
-- `348145a` — `feat: wire Android share service into app`
-- `2dde871` — `feat: pass share service to history UI`
-- `dae3ee7` — `feat: add localized history sharing labels`
-- `7a4868b` — `feat: add platform share actions to history`
-- `9d83f48` — `refactor: centralize safe export filenames`
-- `acd58cd` — `refactor: reuse safe export filename policy`
-- `25449e0` — `refactor: sanitize Android shared export filenames`
-- `95ca1c8` — `refactor: reuse safe desktop export filenames`
-- `f5a8823` — `test: cover safe export filename normalization`
-- `ab2275d` — `feat: persist desktop shortcut enablement`
-- `d5b8e7a` — `feat: expose desktop shortcut preference callback`
-- `9dac828` — `feat: apply persisted desktop shortcut setting`
-- `e1d6258` — `feat: add localized shortcut configuration strings`
-- `3129156` — `feat: add persistent desktop shortcut toggle`
-- `1fa8d33` — `feat: honor desktop shortcut preference at runtime`
-- `9247a1e` — `test: cover shortcut preference persistence`
-- `e8b03e3` — `docs: document temporary share-cache behavior`
-- `a43a380` — `docs: mark completed export and shortcut polish`
-- `ad03e13` — `docs: record export sharing and shortcut improvements`
-- `a648302` — `docs: document native export and sharing workflows`
-- `867920f` — `docs: document configurable keyboard accessibility`
-- `c6d8459` — `docs: add export and sharing verification checks`
+Also complete the manual lifecycle/export/share/accessibility checks documented in `docs/testing.md`.
 
-## Earlier continuation commits retained in history
+## Remaining externally gated items
 
-- `0813995` — `build: add iOS targets to shared module`
-- `d764e9c` — `feat: add iOS clocks and local storage adapter`
-- `225c326` — `feat: add iOS Compose entry point`
-- `f659fb5` — `feat: validate persisted stopwatch sessions`
-- `267a73f` — `fix: reject invalid persisted session data`
-- `77cdc6c` — `test: cover session validation rules`
-- `43935c9` — `feat: add validated JSON session import parser`
-- `9254a78` — `test: cover safe JSON session imports`
-- `e8b7126` — `feat: add JSON history restore workflow`
-- `d6fc007` — `test: cover session repository persistence`
-- `c4f29a4` — `docs: document iOS host integration`
-- `df53f6f` — `ci: verify iOS shared framework on macOS`
-- `3f9eb84` — `feat: version the persisted session schema`
-- `62ff179` — `feat: migrate legacy session storage automatically`
-- `e1d04d8` — `test: cover session schema migration`
-- `4bfb334` — `fix: avoid experimental serialization configuration`
-- `2c68ee6` — `fix: keep session schema codec on stable serialization API`
-- `8d2763f` — `docs: update changelog for reliability and iOS work`
-- `3039402` — `docs: refresh roadmap after portability work`
-- `ef443f2` — `docs: add iOS setup commands`
-- `46788f6` — `docs: record versioned session storage decision`
+These items cannot be honestly completed only by editing repository text/source through the current connector:
 
-## Next exact tasks for the next continuation
+1. **Standard Gradle wrapper binary** — `gradle-wrapper.jar` remains absent. It should be generated from a trusted Gradle 9.5.0 installation; wrapper properties already pin the distribution checksum and launchers enforce the exact fallback version.
+2. **Production Android signing secrets** — source/workflow support is complete, but repository/environment secrets must be provisioned by an authorized admin before a distributable Android tag release.
+3. **Observed CI/build result** — GitHub Actions result contexts for the newest pushes have not been exposed through the connected status interface here.
+4. **macOS/Xcode Native verification** — iOS framework, document picker, activity sheet, delegate lifetimes and simulator/device lifecycle behavior need an actual macOS/Xcode run.
+5. **Real release screenshots** — must be captured from verified builds, not fabricated or represented by placeholders.
+6. **Manual device/accessibility verification** — Android TalkBack/font scaling, Desktop keyboard/focus behavior, iOS picker/share presentation, reboot/restart lifecycle recovery and large-history responsiveness need target-host execution.
 
-1. Inspect/observe GitHub Actions for the current `main` head and fix every build/test/lint/security failure before calling the repository release-ready.
-2. If a macOS/Xcode host is available, implement the native iOS share/document bridge and verify it with the Compose host.
-3. Regenerate the standard Gradle wrapper JAR from a trusted Gradle 9.5.0 installation if wrapper self-containment is required.
-4. Capture real release screenshots only after verified Android/Desktop builds run successfully.
-5. Configure Android production signing through repository/environment secrets without committing signing material.
-6. Perform the final clean-checkout release audit and update this file, `CHANGELOG.md`, `ROADMAP.md`, and release notes with only observed results.
+Optional roadmap items such as per-action Desktop key rebinding and encrypted backup remain intentionally optional and should not be implemented merely to mark boxes without user demand/threat-model justification.
 
-## Release notes draft
+## Repository state conclusion
 
-TempoTrack's unreleased line is a local-first stopwatch for Android and Desktop with shared Compose Multiplatform domain/UI code, iOS framework readiness, monotonic timing, laps/statistics, persistent searchable named history, validated JSON restore, JSON/CSV export, Android system sharing, Desktop native export selection, versioned/migrating local data, themes/accessibility controls, adaptive navigation, Desktop shortcuts and mini stopwatch, documentation and automated repository quality/security workflows. Release status remains pre-candidate until the newest head is observed passing the full build/test/lint/security matrix and real release assets are captured.
+Source-level functional gaps identified during this continuation have been addressed with atomic commits, regression tests, platform-specific recovery rules, native iOS data portability, safer storage, bounded persistence/import contracts, single-flight UI writes, release-signing support and synchronized documentation.
+
+The remaining blockers are verification/environment/credential/binary-artifact tasks rather than knowingly unfinished `TODO`/`FIXME` source work.

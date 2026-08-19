@@ -11,6 +11,11 @@ permissions:
 jobs:
   android:
     runs-on: ubuntu-latest
+    env:
+      TEMPOTRACK_KEYSTORE_PASSWORD: ${{ secrets.TEMPOTRACK_KEYSTORE_PASSWORD }}
+      TEMPOTRACK_KEY_ALIAS: ${{ secrets.TEMPOTRACK_KEY_ALIAS }}
+      TEMPOTRACK_KEY_PASSWORD: ${{ secrets.TEMPOTRACK_KEY_PASSWORD }}
+      TEMPOTRACK_KEYSTORE_BASE64: ${{ secrets.TEMPOTRACK_KEYSTORE_BASE64 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -23,9 +28,22 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "9.5.0"
-      - name: Verify and build Android release
+      - name: Prepare Android signing material
         shell: bash
         run: |
+          set -euo pipefail
+          : "${TEMPOTRACK_KEYSTORE_BASE64:?Configure TEMPOTRACK_KEYSTORE_BASE64 as a GitHub Actions secret}"
+          : "${TEMPOTRACK_KEYSTORE_PASSWORD:?Configure TEMPOTRACK_KEYSTORE_PASSWORD as a GitHub Actions secret}"
+          : "${TEMPOTRACK_KEY_ALIAS:?Configure TEMPOTRACK_KEY_ALIAS as a GitHub Actions secret}"
+          : "${TEMPOTRACK_KEY_PASSWORD:?Configure TEMPOTRACK_KEY_PASSWORD as a GitHub Actions secret}"
+          KEYSTORE_PATH="$RUNNER_TEMP/tempotrack-release.jks"
+          printf '%s' "$TEMPOTRACK_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
+          echo "TEMPOTRACK_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
+      - name: Verify and build signed Android release
+        shell: bash
+        run: |
+          set -euo pipefail
           VERSION="${GITHUB_REF_NAME#v}"
           gradle \
             -PappVersion="$VERSION" \
@@ -34,11 +52,20 @@ jobs:
             :androidApp:lintRelease \
             :androidApp:testDebugUnitTest \
             :androidApp:assembleRelease \
+            :androidApp:bundleRelease \
             --stacktrace
+      - name: Verify signed Android outputs exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$(find androidApp/build/outputs/apk/release -type f -name '*.apk' -print -quit)"
+          test -n "$(find androidApp/build/outputs/bundle/release -type f -name '*.aab' -print -quit)"
       - uses: actions/upload-artifact@v4
         with:
-          name: tempotrack-android-release-unsigned
-          path: androidApp/build/outputs/apk/release/*.apk
+          name: tempotrack-android-release
+          path: |
+            androidApp/build/outputs/apk/release/*.apk
+            androidApp/build/outputs/bundle/release/*.aab
 
   desktop:
     strategy:
@@ -119,7 +146,7 @@ jobs:
             cp "$file" release-assets/
           done < <(
             find artifacts -type f \
-              \( -name '*.apk' -o -name '*.deb' -o -name '*.dmg' -o -name '*.msi' -o -name '*.zip' \) \
+              \( -name '*.apk' -o -name '*.aab' -o -name '*.deb' -o -name '*.dmg' -o -name '*.msi' -o -name '*.zip' \) \
               -print0
           )
           test "$(find release-assets -type f | wc -l)" -gt 0

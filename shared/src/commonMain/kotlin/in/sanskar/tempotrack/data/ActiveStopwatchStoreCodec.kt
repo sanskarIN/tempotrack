@@ -5,7 +5,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
-internal const val CURRENT_ACTIVE_STOPWATCH_SCHEMA_VERSION = 1
+internal const val CURRENT_ACTIVE_STOPWATCH_SCHEMA_VERSION = 2
+private const val PREVIOUS_ACTIVE_STOPWATCH_SCHEMA_VERSION = 1
 
 @Serializable
 internal data class ActiveStopwatchStoreEnvelope(
@@ -29,8 +30,19 @@ internal class ActiveStopwatchStoreCodec(
         if (raw.isBlank()) return null
 
         decodeEnvelope(raw)?.let { envelope ->
-            if (envelope.schemaVersion != CURRENT_ACTIVE_STOPWATCH_SCHEMA_VERSION) return null
-            return DecodedActiveStopwatchStore(envelope.checkpoint, needsMigration = false)
+            return when (envelope.schemaVersion) {
+                CURRENT_ACTIVE_STOPWATCH_SCHEMA_VERSION -> DecodedActiveStopwatchStore(
+                    checkpoint = envelope.checkpoint,
+                    needsMigration = false,
+                )
+
+                PREVIOUS_ACTIVE_STOPWATCH_SCHEMA_VERSION -> DecodedActiveStopwatchStore(
+                    checkpoint = envelope.checkpoint,
+                    needsMigration = true,
+                )
+
+                else -> null
+            }
         }
 
         val legacy = decodeLegacy(raw) ?: return null

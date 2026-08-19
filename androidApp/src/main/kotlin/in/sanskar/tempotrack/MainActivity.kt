@@ -1,17 +1,17 @@
-package in.sanskar.tempotrack
+package `in`.sanskar.tempotrack
 
 import android.os.Bundle
 import android.os.SystemClock
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import in.sanskar.tempotrack.data.JsonActiveStopwatchRepository
-import in.sanskar.tempotrack.data.JsonPreferencesRepository
-import in.sanskar.tempotrack.data.JsonSessionRepository
-import in.sanskar.tempotrack.domain.MonotonicClock
-import in.sanskar.tempotrack.domain.StopwatchCheckpointRecovery
-import in.sanskar.tempotrack.domain.WallClock
-import in.sanskar.tempotrack.ui.TempoTrackApp
-import in.sanskar.tempotrack.ui.TempoTrackDependencies
+import `in`.sanskar.tempotrack.data.JsonActiveStopwatchRepository
+import `in`.sanskar.tempotrack.data.JsonPreferencesRepository
+import `in`.sanskar.tempotrack.data.JsonSessionRepository
+import `in`.sanskar.tempotrack.domain.MonotonicClock
+import `in`.sanskar.tempotrack.domain.StopwatchCheckpointRecovery
+import `in`.sanskar.tempotrack.domain.WallClock
+import `in`.sanskar.tempotrack.ui.TempoTrackApp
+import `in`.sanskar.tempotrack.ui.TempoTrackDependencies
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

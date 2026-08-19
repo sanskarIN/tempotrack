@@ -25,6 +25,7 @@
 - Named, searchable sessions stored locally, with rename and undo-delete flows.
 - CSV and JSON export plus validated JSON history restore.
 - Android JSON/CSV system sharing through a restricted `FileProvider` cache path.
+- iOS JSON/CSV system sharing through a native `UIActivityViewController` bridge.
 - Desktop native save-file chooser with explicit cancellation handling.
 - Bounded shared export-filename sanitization for platform file operations.
 - Versioned local session, preference, and active-stopwatch storage with legacy migration.
@@ -53,7 +54,7 @@ Real release screenshots will replace these placeholders once verified tagged bu
 |---|---|
 | Android 8.0+ (API 26+) | Primary |
 | Windows/macOS/Linux Desktop | Primary |
-| iOS | Shared framework + Compose host entry point; native document/share bridge still requires the host app |
+| iOS | Shared framework + Compose host entry point + native system sharing; direct document-picker export remains host work |
 
 ## Tech stack
 
@@ -110,7 +111,7 @@ See [docs/setup.md](docs/setup.md) for full setup instructions.
 
 TempoTrack uses a modular-monolith structure:
 
-- `shared/` — domain model, versioned storage contracts/codecs, serialization, shared Compose UI/resources, tests, and iOS adapters.
+- `shared/` — domain model, versioned storage contracts/codecs, serialization, shared Compose UI/resources, tests, and iOS adapters/share bridge.
 - `androidApp/` — Android entry point, Android monotonic clock, atomic private-file storage, MediaStore export, and secure operating-system sharing.
 - `desktopApp/` — Desktop entry point, atomic JVM storage, native export destination selection, keyboard shortcuts, and mini-window integration.
 
@@ -120,7 +121,9 @@ See [docs/architecture.md](docs/architecture.md) and [docs/adr/0001-monotonic-ti
 
 ## Data portability
 
-History can be exported as JSON or CSV. JSON exports can be restored after validation and explicit replacement confirmation. On Android, the same JSON/CSV payloads can be sent to the system share sheet; TempoTrack grants temporary read access only to the selected content URI. Desktop export opens the platform file chooser so the destination remains under user control.
+History can be exported as JSON or CSV. JSON exports can be restored after validation and explicit replacement confirmation. Android can send the same JSON/CSV payloads to the system share sheet through a restricted `FileProvider`. iOS prepares a sanitized temporary UTF-8 file only after a user share action and presents the native activity sheet. Desktop export opens the platform file chooser so the destination remains under user control.
+
+Direct document-picker export on iOS remains separate from the native share flow and is intentionally reported unavailable rather than silently writing to an undiscoverable location.
 
 The internal persistence format is independently versioned and migrated; portable JSON exports remain plain session lists so backups are not coupled to the internal storage envelope.
 
@@ -144,13 +147,13 @@ Desktop packages:
 ./gradlew :desktopApp:packageDistributionForCurrentOS
 ```
 
-Android release builds require production signing configuration before public distribution. Signing secrets are intentionally not committed. Tag builds derive package versions from `v*` tags, package platform artifacts, generate SHA-256 checksums, and publish GitHub Release assets after the jobs succeed.
+Android release builds require production signing configuration before public distribution. Signing secrets are intentionally not committed. Tag builds derive package versions from strict `vMAJOR.MINOR.PATCH` tags, package platform artifacts, generate SHA-256 checksums, and publish GitHub Release assets after the jobs succeed.
 
 See [docs/release.md](docs/release.md).
 
 ## Privacy and security
 
-TempoTrack is local-first. The application includes no analytics, ads, authentication service, or app-managed cloud synchronization. Export and sharing happen only after explicit user actions. Android sharing uses an app-cache file exposed through a non-exported `FileProvider` with temporary read permission. Android platform backup/device-transfer behavior is documented separately because it is controlled by the operating system.
+TempoTrack is local-first. The application includes no analytics, ads, authentication service, or app-managed cloud synchronization. Export and sharing happen only after explicit user actions. Android sharing uses an app-cache file exposed through a non-exported `FileProvider` with temporary read permission. iOS sharing uses an app-temporary file passed to the operating-system activity sheet. Android platform backup/device-transfer behavior is documented separately because it is controlled by the operating system.
 
 Read [PRIVACY.md](PRIVACY.md) and [SECURITY.md](SECURITY.md).
 

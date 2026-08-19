@@ -72,8 +72,14 @@ jobs:
         with:
           python-version: "3.13"
       - name: Compile repository tooling
-        run: python -m py_compile tools/check_markdown_links.py tools/check_kotlin_package_keywords.py
+        run: >-
+          python -m py_compile
+          tools/check_markdown_links.py
+          tools/check_kotlin_package_keywords.py
+          tools/check_repository_reference.py
       - name: Validate Kotlin package keyword escaping
         run: python tools/check_kotlin_package_keywords.py
+      - name: Validate tracked file documentation coverage
+        run: python tools/check_repository_reference.py
       - name: Validate local Markdown links
         run: python tools/check_markdown_links.py

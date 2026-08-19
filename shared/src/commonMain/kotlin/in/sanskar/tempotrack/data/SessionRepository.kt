@@ -70,7 +70,9 @@ class JsonSessionRepository(
             "Session ids must be unique."
         }
         sessions.forEach(SessionValidation::requireValid)
-        persistUnlocked(sessions.sortedByDescending(StopwatchSession::createdAtEpochMillis))
+        val normalized = sessions.sortedByDescending(StopwatchSession::createdAtEpochMillis)
+        if (normalized == loadUnlocked()) return@withLock
+        persistUnlocked(normalized)
     }
 
     private suspend fun loadUnlocked(): List<StopwatchSession> {

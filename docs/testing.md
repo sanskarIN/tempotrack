@@ -8,23 +8,39 @@
 
 Android Lint runs separately because it also checks manifests/resources and Android-specific correctness.
 
-## Unit tests
+## Shared unit tests
 
 `shared/src/commonTest` covers platform-independent rules:
 
 - pause/resume excludes paused time;
 - monotonic-clock jumps represent device sleep correctly;
 - lap split/cumulative math;
+- fastest/slowest/average lap statistics;
 - stale post-reboot monotonic checkpoints recover safely;
 - reset behavior;
+- repeated timer snapshots reuse unchanged immutable lap history;
 - duration formatting;
-- CSV escaping, spreadsheet-formula neutralization and JSON export content.
+- CSV quote/comma escaping;
+- spreadsheet-formula neutralization across common dangerous prefixes, including leading whitespace;
+- Unicode JSON export content.
 
 Run:
 
 ```bash
 ./gradlew :shared:allTests
 ```
+
+## Repository integration tests
+
+The in-memory storage integration suite verifies:
+
+- session repository JSON round trips and newest-first ordering;
+- corrupt session data fails closed instead of crashing;
+- preference persistence and safe default recovery;
+- active-stopwatch checkpoint save/load/clear behavior;
+- malformed active checkpoint data is rejected safely.
+
+These tests exercise real serializers/repositories without requiring production files or credentials.
 
 ## Android checks
 
@@ -55,4 +71,4 @@ See `docs/accessibility.md`.
 
 ## Security automation
 
-Pull requests and main-branch changes are checked by the repository secret-scan workflow. CodeQL analyzes Kotlin/Java build output, and dependency review checks dependency changes on pull requests.
+Pull requests and main-branch changes are checked by the repository secret-scan workflow. CodeQL analyzes Kotlin/Java build output, and dependency review checks dependency changes on pull requests. Workflow concurrency cancels superseded verification runs so only the latest branch state consumes CI capacity.

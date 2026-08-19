@@ -15,11 +15,19 @@ The format follows Keep a Changelog concepts and the project uses semantic versi
 - Named local session history and search.
 - JSON/CSV export.
 - Persistent preferences and active timer checkpoint.
-- Light/dark/system themes and large-control accessibility option.
-- Desktop mini-stopwatch integration.
-- Unit tests for timing edge cases and exports.
+- Branded light/dark/system themes, design tokens, and adaptive bottom-navigation/navigation-rail layouts.
+- Large-control accessibility option and reduced-motion preference.
+- Injectable English UI string catalog for localization-ready shared screens.
+- Desktop mini-stopwatch integration and keyboard shortcuts.
+- Unit and repository-integration tests for timing, persistence, statistics, serialization, and export security edge cases.
 - CI, security scanning, dependency updates, issue templates and release workflow.
+- Workflow concurrency that cancels superseded branch verification runs.
 - Complete project documentation baseline.
+
+### Changed
+
+- Timer snapshots now reuse immutable lap history between lap mutations to avoid copying the full list every display refresh.
+- Shared Android target configuration uses the current AGP Android-KMP DSL.
 
 ### Fixed
 

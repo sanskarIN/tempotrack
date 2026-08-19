@@ -9,7 +9,7 @@ Default development values live in `gradle.properties`:
 - `appVersion`
 - `appVersionCode`
 
-Android and Desktop package builds read these properties. On a `vMAJOR.MINOR.PATCH` tag, the release workflow removes the leading `v` and passes the tag version to Gradle. Android release versionCode is derived deterministically as:
+Android and Desktop package builds read these properties. On a canonical `vMAJOR.MINOR.PATCH` tag, the release workflow removes the leading `v` and passes the tag version to Gradle. Numeric version components do not use leading zeros, so tags such as `v02.0.12`, `v2.00.12`, and `v2.0.012` are rejected. Android release versionCode is derived deterministically as:
 
 ```text
 MAJOR * 10000 + MINOR * 100 + PATCH
@@ -17,7 +17,7 @@ MAJOR * 10000 + MINOR * 100 + PATCH
 
 For that mapping, MINOR and PATCH must each be between 0 and 99, and the resulting Android versionCode must remain in the supported `1..2100000000` range. This keeps source defaults and tagged Android artifacts on the same monotonic versioning scheme instead of tying install ordering to an unrelated workflow run number.
 
-The release workflow rejects tags that do not exactly match `vMAJOR.MINOR.PATCH`, validates the Android mapping, and serializes release runs per tag.
+The release workflow rejects tags that do not exactly match canonical `vMAJOR.MINOR.PATCH`, validates the Android mapping, and serializes release runs per tag.
 
 ## Version 2.0.12 release line
 

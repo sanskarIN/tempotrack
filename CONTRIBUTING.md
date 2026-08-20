@@ -6,12 +6,12 @@ Thank you for helping improve TempoTrack.
 
 - Git and Python 3 for repository-local integrity checks.
 - JDK 17 or newer.
-- Gradle 9.5.0.
+- Gradle 9.7.0.
 - Android SDK 37 for Android work.
 - A supported Desktop host for Compose Desktop work.
 - macOS with Xcode for iOS framework/host verification.
 
-The repository currently does not commit the standard binary `gradle-wrapper.jar`. Until a trusted Gradle 9.5.0 installation generates it, `gradlew`/`gradlew.bat` deliberately require an installed Gradle exactly matching 9.5.0.
+The repository currently does not commit the standard binary `gradle-wrapper.jar`. Until a trusted Gradle 9.7.0 installation generates it, `gradlew`/`gradlew.bat` deliberately require an installed Gradle exactly matching 9.7.0.
 
 See [`docs/setup.md`](docs/setup.md) for full environment preparation and [`docs/README.md`](docs/README.md) for the complete documentation index.
 
@@ -31,10 +31,13 @@ Do not add unescaped `package in.sanskar...` or `import in.sanskar...` directive
 Run the deterministic repository checks:
 
 ```bash
+python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
+
+`check_gradle_version_alignment.py` verifies that wrapper metadata, both bootstrap launchers, CI, CodeQL, and release automation agree on the Gradle version and preserve checksum/retry hardening.
 
 `check_repository_reference.py` requires every tracked file from `git ls-files` to appear with its exact path in `docs/repository-reference.md`. If your change adds, renames, or removes a tracked file, update that reference in the same PR.
 
@@ -87,6 +90,7 @@ Do not mix unrelated formatting/refactors with behavior changes unless required 
 - Keep Android `FileProvider` restricted to the intended share-cache subtree.
 - Update documentation when behavior, setup, security, privacy, recovery, build, or release steps change.
 - Update `docs/repository-reference.md` for every tracked-file addition/removal/rename.
+- Keep Gradle wrapper metadata, launchers, and every Gradle-bearing workflow aligned; update the alignment guard if another workflow starts installing Gradle.
 - Do not claim a platform/build/check passed unless it actually ran.
 - Keep third-party assets license-compatible with MIT distribution.
 

@@ -4,6 +4,7 @@
 
 ## Verification
 
+- [ ] `python tools/check_gradle_version_alignment.py` passes.
 - [ ] `python tools/check_kotlin_package_keywords.py` passes.
 - [ ] `python tools/check_repository_reference.py` passes.
 - [ ] `python tools/check_markdown_links.py` passes.

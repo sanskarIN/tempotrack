@@ -11,8 +11,11 @@ ROOT = Path(__file__).resolve().parents[1]
 WRAPPER_PROPERTIES = ROOT / "gradle" / "wrapper" / "gradle-wrapper.properties"
 UNIX_LAUNCHER = ROOT / "gradlew"
 WINDOWS_LAUNCHER = ROOT / "gradlew.bat"
-CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
-RELEASE_WORKFLOW = ROOT / ".github" / "workflows" / "release.yml"
+GRADLE_WORKFLOWS = (
+    ROOT / ".github" / "workflows" / "ci.yml",
+    ROOT / ".github" / "workflows" / "codeql.yml",
+    ROOT / ".github" / "workflows" / "release.yml",
+)
 
 VERSION_PATTERN = r"[0-9]+\.[0-9]+\.[0-9]+"
 
@@ -89,13 +92,16 @@ def main() -> int:
         require_retry_policy(properties)
         require_launcher_version(UNIX_LAUNCHER, read(UNIX_LAUNCHER), expected)
         require_launcher_version(WINDOWS_LAUNCHER, read(WINDOWS_LAUNCHER), expected)
-        require_workflow_versions(CI_WORKFLOW, read(CI_WORKFLOW), expected)
-        require_workflow_versions(RELEASE_WORKFLOW, read(RELEASE_WORKFLOW), expected)
+        for workflow in GRADLE_WORKFLOWS:
+            require_workflow_versions(workflow, read(workflow), expected)
     except ValueError as error:
         print(f"Gradle alignment check failed: {error}")
         return 1
 
-    print(f"Gradle {expected} is aligned across wrapper metadata, launchers, CI and release automation.")
+    print(
+        f"Gradle {expected} is aligned across wrapper metadata, launchers, "
+        "CI, CodeQL and release automation."
+    )
     return 0
 
 

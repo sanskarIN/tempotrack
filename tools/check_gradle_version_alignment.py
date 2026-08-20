@@ -11,11 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 WRAPPER_PROPERTIES = ROOT / "gradle" / "wrapper" / "gradle-wrapper.properties"
 UNIX_LAUNCHER = ROOT / "gradlew"
 WINDOWS_LAUNCHER = ROOT / "gradlew.bat"
-GRADLE_WORKFLOWS = (
-    ROOT / ".github" / "workflows" / "ci.yml",
-    ROOT / ".github" / "workflows" / "codeql.yml",
-    ROOT / ".github" / "workflows" / "release.yml",
-)
+WORKFLOWS_DIR = ROOT / ".github" / "workflows"
+SETUP_GRADLE_ACTION = "gradle/actions/setup-gradle"
 
 VERSION_PATTERN = r"[0-9]+\.[0-9]+\.[0-9]+"
 
@@ -71,10 +68,28 @@ def require_launcher_version(path: Path, text: str, expected: str) -> None:
         )
 
 
+def gradle_workflows() -> list[tuple[Path, str]]:
+    if not WORKFLOWS_DIR.is_dir():
+        raise ValueError(f"Missing workflows directory: {WORKFLOWS_DIR.relative_to(ROOT)}")
+
+    workflows: list[tuple[Path, str]] = []
+    for pattern in ("*.yml", "*.yaml"):
+        for path in sorted(WORKFLOWS_DIR.glob(pattern)):
+            text = read(path)
+            if SETUP_GRADLE_ACTION in text:
+                workflows.append((path, text))
+
+    if not workflows:
+        raise ValueError("No workflow using gradle/actions/setup-gradle was found")
+    return workflows
+
+
 def require_workflow_versions(path: Path, text: str, expected: str) -> None:
     versions = re.findall(rf'gradle-version:\s*["\']?({VERSION_PATTERN})["\']?', text)
     if not versions:
-        raise ValueError(f"No setup-gradle version found in {path.relative_to(ROOT)}")
+        raise ValueError(
+            f"{path.relative_to(ROOT)} uses {SETUP_GRADLE_ACTION} but does not pin gradle-version"
+        )
 
     mismatches = sorted({version for version in versions if version != expected})
     if mismatches:
@@ -92,15 +107,17 @@ def main() -> int:
         require_retry_policy(properties)
         require_launcher_version(UNIX_LAUNCHER, read(UNIX_LAUNCHER), expected)
         require_launcher_version(WINDOWS_LAUNCHER, read(WINDOWS_LAUNCHER), expected)
-        for workflow in GRADLE_WORKFLOWS:
-            require_workflow_versions(workflow, read(workflow), expected)
+        workflows = gradle_workflows()
+        for workflow, text in workflows:
+            require_workflow_versions(workflow, text, expected)
     except ValueError as error:
         print(f"Gradle alignment check failed: {error}")
         return 1
 
+    workflow_names = ", ".join(path.name for path, _ in workflows)
     print(
-        f"Gradle {expected} is aligned across wrapper metadata, launchers, "
-        "CI, CodeQL and release automation."
+        f"Gradle {expected} is aligned across wrapper metadata, launchers and "
+        f"Gradle-bearing workflows: {workflow_names}."
     )
     return 0
 

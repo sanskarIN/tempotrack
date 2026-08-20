@@ -9,7 +9,7 @@ This guide prepares a checkout for shared, Android, Desktop, and (on macOS) iOS 
 - Git
 - Python 3 for repository-local documentation/source guards
 - JDK 17 or newer
-- Gradle 9.5.0 while the standard wrapper JAR remains absent
+- Gradle 9.7.0 while the standard wrapper JAR remains absent
 
 ### Android development
 
@@ -62,12 +62,12 @@ Other contributors should use their own Git identity rather than impersonating t
 
 ## Gradle bootstrap state
 
-`gradle/wrapper/gradle-wrapper.properties` pins Gradle 9.5.0 and its binary distribution SHA-256. The standard binary `gradle-wrapper.jar` is not committed in the current repository state.
+`gradle/wrapper/gradle-wrapper.properties` pins Gradle 9.7.0 and its official binary distribution SHA-256. It also enables bounded download retries/backoff and distribution URL validation. The standard binary `gradle-wrapper.jar` is not committed in the current repository state.
 
 Therefore:
 
 - if a trusted standard wrapper JAR is generated/added later, `gradlew`/`gradlew.bat` will use it and Gradle can validate the pinned distribution checksum;
-- while that JAR is absent, the bootstrap scripts require an installed **Gradle 9.5.0** and reject a different installed Gradle version instead of silently changing the toolchain.
+- while that JAR is absent, the bootstrap scripts require an installed **Gradle 9.7.0** and reject a different installed Gradle version instead of silently changing the toolchain.
 
 Verify installed Gradle:
 
@@ -75,10 +75,10 @@ Verify installed Gradle:
 gradle --version
 ```
 
-Generate the wrapper binary only from a trusted Gradle 9.5.0 installation:
+Generate the wrapper binary only from a trusted Gradle 9.7.0 installation:
 
 ```bash
-gradle wrapper --gradle-version 9.5.0
+gradle wrapper --gradle-version 9.7.0
 ```
 
 Do not hand-create, base64-invent, or copy an unverified wrapper binary.
@@ -99,10 +99,13 @@ CI uses Temurin JDK 17, so JDK 17 is the best local baseline even if a newer JDK
 Before Gradle dependency resolution, run:
 
 ```bash
+python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
+
+The Gradle alignment guard verifies wrapper metadata, checksum/retry settings, both launcher fallback versions, and the Gradle pins used by CI, CodeQL, and release automation.
 
 The Kotlin namespace guard exists because the runtime package starts with `in`, a Kotlin keyword. Source must use escaped syntax:
 
@@ -128,7 +131,7 @@ Windows PowerShell:
 .\gradlew.bat --version
 ```
 
-The command should report Gradle 9.5.0.
+The command should report Gradle 9.7.0.
 
 If it reports a fallback mismatch, install/select the exact project Gradle version rather than modifying scripts to accept arbitrary versions.
 
@@ -249,6 +252,7 @@ They can edit the repository, but Android/iOS native integration is easier to ve
 Once required SDK/tooling is available:
 
 ```bash
+python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
 ./gradlew quality :androidApp:assembleDebug :desktopApp:packageDistributionForCurrentOS
@@ -275,7 +279,7 @@ This avoids debugging installer/signing problems before basic compilation is pro
 
 - [`user-guide.md`](user-guide.md) — product behavior.
 - [`architecture.md`](architecture.md) — module/dependency design.
-- [`development.md`](development.md) — day-to-day coding workflow.
+- [`development.md`](development.md) — day-to-day coding workflow reference.
 - [`maintainer-guide.md`](maintainer-guide.md) — safe change recipes.
 - [`testing.md`](testing.md) — complete verification matrix.
 - [`build-and-ci.md`](build-and-ci.md) — build/CI/release automation internals.

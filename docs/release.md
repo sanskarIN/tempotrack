@@ -45,17 +45,20 @@ Before a release, also update:
 
 ## Gradle bootstrap integrity
 
-`gradle/wrapper/gradle-wrapper.properties` pins Gradle 9.5.0 and the binary distribution SHA-256. The standard `gradle-wrapper.jar` is not committed in the current repository state, so local bootstrap scripts require an installed Gradle 9.5.0 until a trusted wrapper binary is generated.
+`gradle/wrapper/gradle-wrapper.properties` pins Gradle 9.7.0, the official binary distribution SHA-256, URL validation, and bounded retry/backoff settings. The standard `gradle-wrapper.jar` is not committed in the current repository state, so local bootstrap scripts require an installed Gradle 9.7.0 until a trusted wrapper binary is generated.
 
-Do not create a release from a machine silently using another Gradle version. Either use the exact fallback version or generate the standard wrapper JAR from a trusted Gradle 9.5.0 installation before the release-candidate audit.
+Do not create a release from a machine silently using another Gradle version. Either use the exact fallback version or generate the standard wrapper JAR from a trusted Gradle 9.7.0 installation before the release-candidate audit.
 
-A Gradle-wrapper upgrade is not part of the 2.0.12 release freeze unless its wrapper properties, launcher/bootstrap assumptions, CI Gradle installation, documentation, and full build matrix are updated and verified together.
+Run `python tools/check_gradle_version_alignment.py` before release work. It verifies that wrapper metadata, both launchers, main CI, CodeQL, and release automation all use the same Gradle version and that the wrapper checksum/retry contract remains present.
+
+A Gradle-wrapper upgrade is part of the release-candidate build surface and must update wrapper properties, launcher/bootstrap assumptions, CI/CodeQL/release Gradle installation, documentation, and the full build matrix together.
 
 ## Pre-release gate
 
 From a clean Git checkout, first verify deterministic repository integrity:
 
 ```bash
+python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
 python tools/check_markdown_links.py
@@ -91,7 +94,7 @@ Do not tag until the relevant supported-platform checks are actually green.
 
 Before tagging:
 
-1. Run all three repository-local Python guards.
+1. Run all four repository-local Python guards.
 2. Confirm `README.md` and `docs/README.md` point to the current documentation set.
 3. Confirm every tracked file is present in `docs/repository-reference.md`.
 4. Confirm persistence/recovery/platform behavior matches `state-and-recovery.md`, `data-model-and-storage.md`, and `platforms.md`.

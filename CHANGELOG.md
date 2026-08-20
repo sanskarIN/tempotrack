@@ -6,7 +6,15 @@ The format follows Keep a Changelog concepts and the project uses semantic versi
 
 ## [Unreleased]
 
-No unreleased changes are recorded after the 2.0.12 release-preparation freeze.
+### Added
+
+- Repository-local `tools/check_gradle_version_alignment.py` guard that verifies one Gradle version across wrapper metadata, Unix/Windows launchers, CI, CodeQL, and release automation while requiring checksum and retry/backoff hardening.
+
+### Changed
+
+- Upgraded the active development/build automation toolchain from Gradle 9.5.0 to Gradle 9.7.0 using the official binary-distribution SHA-256.
+- Added bounded Gradle-wrapper download retry/backoff settings and kept distribution URL validation enabled.
+- Updated CI, CodeQL, release automation, README, setup, testing, release, troubleshooting, contributor, roadmap, and repository-reference guidance for the Gradle 9.7.0 toolchain.
 
 ## [2.0.12] - 2026-08-19
 

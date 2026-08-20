@@ -15,7 +15,7 @@ TempoTrack
 
 ## Toolchain versions
 
-The authoritative dependency/plugin/SDK catalog is `gradle/libs.versions.toml`.
+The authoritative dependency/plugin/SDK catalog is `gradle/libs.versions.toml`. Gradle itself is pinned by `gradle/wrapper/gradle-wrapper.properties` and cross-checked against launchers/workflows by `tools/check_gradle_version_alignment.py`.
 
 Current declared versions:
 
@@ -32,7 +32,7 @@ Current declared versions:
 | JUnit | 4.13.2 |
 | Android compile/target SDK | 37 |
 | Android min SDK | 26 |
-| Gradle | 9.5.0 |
+| Gradle | 9.7.0 |
 | JVM target | 17 |
 
 When updating one item, review compatibility with Kotlin compiler, Compose compiler/plugin, AGP, Gradle, Android SDK, Kotlin/Native, and CI runner images together.
@@ -82,18 +82,18 @@ Tagged release jobs override `appVersion` from the semantic tag and derive Andro
 
 ## Wrapper/bootstrap behavior
 
-`gradle/wrapper/gradle-wrapper.properties` pins the official Gradle 9.5.0 binary distribution and SHA-256.
+`gradle/wrapper/gradle-wrapper.properties` pins the official Gradle 9.7.0 binary distribution and SHA-256. It also configures bounded download retries/backoff and URL validation so future standard-wrapper use is more resilient without silently accepting a different distribution.
 
 The standard binary `gradle-wrapper.jar` is not currently tracked. Therefore `gradlew`/`gradlew.bat`:
 
 1. use the standard wrapper JAR when a trusted generated copy is present;
 2. otherwise locate installed Gradle;
-3. require the installed version to be exactly 9.5.0;
+3. require the installed version to be exactly 9.7.0;
 4. fail instead of silently building with another Gradle version.
 
-Do not fabricate or hand-encode a wrapper JAR. Generate it from a trusted Gradle 9.5.0 installation and verify the official distribution chain.
+Do not fabricate or hand-encode a wrapper JAR. Generate it from a trusted Gradle 9.7.0 installation and verify the official distribution chain.
 
-A future Gradle-wrapper upgrade must update the wrapper/bootstrap contract as one verified change. Do not change only the distribution URL or only CI's Gradle version while leaving the rest of the repository pinned to another version.
+A future Gradle-wrapper upgrade must update the wrapper/bootstrap contract as one verified change. Do not change only the distribution URL or only CI's Gradle version while leaving the rest of the repository pinned to another version. The Gradle-alignment guard is designed to fail that type of partial upgrade.
 
 ## Shared module
 
@@ -187,10 +187,26 @@ Desktop package metadata uses `appVersion`.
 These run without a full Gradle dependency resolution:
 
 ```bash
+python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
+
+### Gradle version alignment check
+
+`tools/check_gradle_version_alignment.py` prevents a partial build-tool upgrade. It treats the Gradle version encoded in `gradle/wrapper/gradle-wrapper.properties` as the expected version and verifies:
+
+- the wrapper distribution URL contains a semantic Gradle version;
+- a 64-character lowercase SHA-256 distribution checksum is present;
+- wrapper download retries and retry backoff are positive;
+- `gradlew` requires the same fallback version;
+- `gradlew.bat` requires the same fallback version;
+- every `gradle-version` entry in main CI uses the same version;
+- every `gradle-version` entry in CodeQL uses the same version;
+- every `gradle-version` entry in the release workflow uses the same version.
+
+This guard intentionally checks alignment, not whether a new Gradle version is compatible with every project plugin. Compilation/tests remain the compatibility proof.
 
 ### Kotlin package keyword check
 
@@ -244,7 +260,7 @@ Action-major upgrades are release-engineering changes. Review runtime requiremen
 
 ### `shared-and-desktop`
 
-Ubuntu + JDK 17 + Gradle 9.5.0:
+Ubuntu + JDK 17 + Gradle 9.7.0:
 
 ```text
 :shared:ktlintCheck
@@ -256,7 +272,7 @@ Ubuntu + JDK 17 + Gradle 9.5.0:
 
 ### `android`
 
-Ubuntu + JDK 17 + Android SDK + Gradle 9.5.0:
+Ubuntu + JDK 17 + Android SDK + Gradle 9.7.0:
 
 ```text
 :androidApp:ktlintCheck
@@ -269,7 +285,7 @@ The workflow explicitly installs Android platform 37 and build-tools 36.0.0 afte
 
 ### `ios-shared`
 
-macOS + JDK 17 + Gradle 9.5.0:
+macOS + JDK 17 + Gradle 9.7.0:
 
 ```text
 :shared:linkDebugFrameworkIosSimulatorArm64
@@ -283,13 +299,14 @@ This verifies shared iOS framework linkage/simulator tests, not a complete signe
 Ubuntu + Python 3.13:
 
 ```text
-python -m py_compile tools/check_markdown_links.py tools/check_kotlin_package_keywords.py tools/check_repository_reference.py
+python -m py_compile tools/check_gradle_version_alignment.py tools/check_markdown_links.py tools/check_kotlin_package_keywords.py tools/check_repository_reference.py
+python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
 
-The job therefore checks Python syntax, Kotlin namespace source syntax, exhaustive tracked-file documentation coverage, and local Markdown navigation.
+The job therefore checks Python syntax, Gradle toolchain alignment, Kotlin namespace source syntax, exhaustive tracked-file documentation coverage, and local Markdown navigation.
 
 ## CodeQL workflow
 
@@ -299,7 +316,7 @@ The job therefore checks Python syntax, Kotlin namespace source syntax, exhausti
 - main pull requests;
 - weekly schedule.
 
-It initializes CodeQL v4 for `java-kotlin`, installs JDK/Android SDK/Gradle, builds Android debug + Desktop Kotlin, then runs analysis.
+It initializes CodeQL v4 for `java-kotlin`, installs JDK/Android SDK/Gradle 9.7.0, builds Android debug + Desktop Kotlin, then runs analysis.
 
 Permissions are limited to what CodeQL needs (`security-events: write` plus read permissions).
 
@@ -338,6 +355,8 @@ Review generated updates like any other dependency change; green compilation is 
 Only `vMAJOR.MINOR.PATCH` proceeds. The validation job also checks the Android semantic-to-versionCode mapping before any platform build starts.
 
 Release concurrency is per tag and does **not** cancel an in-progress release.
+
+All platform release jobs use Gradle 9.7.0 through `gradle/actions/setup-gradle@v5`; the repository alignment guard protects that pin from drifting away from CI/bootstrap metadata.
 
 ### Android release job
 
@@ -444,7 +463,7 @@ If the connected API/tool cannot expose a job result, record it as **not observe
 3. Use least-privilege permissions.
 4. Add timeout/concurrency behavior when long/repeated jobs can waste runners.
 5. Pin to intentional action major versions.
-6. Keep build tool versions aligned with repository catalog/wrapper.
+6. Keep build tool versions aligned with repository catalog/wrapper and update `tools/check_gradle_version_alignment.py` if another Gradle-bearing workflow is introduced.
 7. Update `testing.md`, `github.md`, this document, and PR template if contributors must satisfy a new requirement.
 8. If the check adds a tracked file, update `repository-reference.md` before enabling its coverage guard.
 

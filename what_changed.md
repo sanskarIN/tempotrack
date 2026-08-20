@@ -879,3 +879,97 @@ The source tree can be merged as the 2.0.12 release line without claiming a prod
 7. real release screenshots captured from verified builds.
 
 No `v2.0.12` tag should be created merely to test these prerequisites. The source release preparation and the production release are deliberately separated so unverified artifacts are never represented as release-ready.
+
+---
+
+## Continuation checkpoint — 2026-08-20 Gradle 9.7 and CI/toolchain hardening
+
+### Work completed
+
+- Created `chore/gradle-9.7-ci-hardening` from 2.0.12 source-preparation `main` commit `22bf308e339369ab3e05207594f7d5e399ef6c08`.
+- Upgraded the active Gradle distribution, exact Unix fallback, exact Windows fallback, main CI, CodeQL, and tagged-release build jobs from Gradle 9.5.0 to Gradle 9.7.0.
+- Pinned the official Gradle 9.7.0 binary-distribution SHA-256: `84fbba45c7f4c64abc77460e1c00f541e9f960e3c7ed2538f1ede19eacd873ae`.
+- Added `retries=3` and `retryBackOffMs=1000` to wrapper properties while retaining `networkTimeout=10000` and `validateDistributionUrl=true`.
+- Added `tools/check_gradle_version_alignment.py` so a partial future Gradle upgrade fails deterministically.
+- The alignment guard treats the wrapper distribution version as canonical and checks the distribution checksum, retry/backoff policy, Unix launcher, Windows launcher, CI, CodeQL, and release automation.
+- Main CI compiles the new Python tool and runs it before the existing Kotlin package-keyword, exhaustive repository-reference, and local Markdown link guards.
+- Synchronized the Gradle 9.7/current-guard contract across `README.md`, `CONTRIBUTING.md`, `.github/pull_request_template.md`, `ROADMAP.md`, `CHANGELOG.md`, `docs/setup.md`, `docs/testing.md`, `docs/build-and-ci.md`, `docs/release.md`, `docs/troubleshooting.md`, `docs/github.md`, `docs/maintainer-guide.md`, and `docs/repository-reference.md`.
+- Corrected the stale maintainer-guide application-version example from `1.0.0` / `1` to the real current source baseline `2.0.12` / `20012`.
+- Kept the historical Gradle 9.5.0 statements in earlier dated handoff/release-history sections intact; this new checkpoint supersedes them for the current branch state rather than rewriting history.
+
+### Compatibility and configuration evidence
+
+- Official Gradle documentation identifies Gradle 9.7.0 as a stable release from August 6, 2026.
+- Android Gradle Plugin 9.3 requires Gradle 9.5.0 or newer.
+- Gradle 9.7.0's compatibility documentation lists tested Android Gradle Plugin coverage spanning AGP 9.0 through 9.4.0-alpha03, which includes TempoTrack's AGP 9.3.1.
+- Gradle's Wrapper API/user guide documents `retries` and `retryBackOffMs`; these properties are not repository-specific inventions.
+
+### Verification observed before the PR
+
+- The new alignment guard source was compiled with Python successfully.
+- A representative temporary repository layout containing the current wrapper, launchers, and workflow Gradle pins executed `tools/check_gradle_version_alignment.py` successfully and returned: `Gradle 9.7.0 is aligned across wrapper metadata, launchers, CI, CodeQL and release automation.`
+- A `main...chore/gradle-9.7-ci-hardening` comparison before this handoff append showed the branch 22 commits ahead, zero commits behind, 20 changed files, and no file deletions.
+- The current execution container still cannot clone `github.com` over DNS, so no local Gradle dependency-resolution/build/test result is claimed.
+- PR #15 (`build: upgrade and harden Gradle 9.7 toolchain`) was opened against `main` to run the real hosted platform matrix.
+- At the first observed PR status, CI, Secret Scan, CodeQL, and Dependency Review were all registered and **queued**. Queued is intentionally not recorded as passing.
+
+### Atomic commits in this continuation before this checkpoint
+
+- `ca99b70c2e31a10350df69d6d59da53194fe8c0c` — `build: upgrade Gradle distribution to 9.7.0`.
+- `818bbaf2d5aa404173945dd476b86a1fa9a40813` — `build: require Gradle 9.7.0 on Unix fallback`.
+- `99a6630aa5eac182e3c34b075432252d1d00e048` — `build: require Gradle 9.7.0 on Windows fallback`.
+- `569693caea77d7e808e8bde6515d22983a3d48e5` — `ci: verify builds with Gradle 9.7.0`.
+- `b615b9d6b8b45d4526d579dcf45cbf9733f14146` — `ci: release with Gradle 9.7.0`.
+- `b76097eef0d468e633ea7ebf66147937a9f23cce` — `tooling: add Gradle version alignment guard`.
+- `6b63c9c6b07ef58981338bac88d2a6964c3d9f5d` — `ci: enforce Gradle version alignment`.
+- Additional granular CodeQL/alignment-guard and documentation commits follow in branch history; this handoff deliberately records the branch/PR as the authoritative full sequence rather than guessing missing SHAs.
+- `e03ab06c6983e7fd6b029ed4ffee341ade5e5d65` — `docs: update setup for Gradle 9.7.0`.
+- `e1f912692a32cbb25dcd0ff85624aa6c79a6e415` — `docs: align release guide with Gradle 9.7.0`.
+- `609345046882db0073898b5bcab33274b2c2f7f1` — `docs: add Gradle alignment verification to testing`.
+- `b6b6c53ec0e783a38696de459bf3dbc049559339` — `docs: align contributing guide with Gradle 9.7.0`.
+- `2b2cb968b7b3d80cd1aa79b73890a2e4c9bff4ff` — `docs: update Gradle troubleshooting to 9.7.0`.
+- `0a647431fab6febdaeedfbfa47d45a4249e04e97` — `docs: update README to Gradle 9.7.0`.
+- `45c2dc4d4488146df6237bf6073249189f4888d5` — `docs: record Gradle 9.7.0 roadmap hardening`.
+- `8cded643f03794ce8c32ada5e3aecaa81b2df595` — `docs: record Gradle 9.7.0 as unreleased`.
+- `7e95d2a02f5a922cf5cb3fbf069d582ee6e8dfa7` — `docs: add Gradle alignment to PR checklist`.
+- `8d94ad5ff0fbd153f8bed45c89cabc5eb9f97323` — `docs: document Gradle alignment GitHub policy`.
+- `ea6dcbdca896fa07145fea425817d86c7b4c28a9` — `docs: harden maintainer build-tool procedures`.
+
+The commit appending this section follows the list above and is the durable checkpoint for this continuation.
+
+### Current release safety boundary
+
+No `v2.0.12` tag was created. The Gradle/toolchain upgrade is a source/automation hardening change and does not override the existing production-release gates.
+
+The following remain externally gated until actually observed:
+
+1. PR #15 hosted CI/CodeQL/dependency/secret-scan results for the newest branch head.
+2. A trusted standard Gradle 9.7.0 `gradle-wrapper.jar` if the project decides to restore a fully self-contained standard Wrapper; it must be generated from a trusted Gradle installation/distribution chain rather than fabricated.
+3. Protected production Android signing secrets and a successful signed APK/AAB tag workflow.
+4. Release artifact/checksum inspection.
+5. Desktop packaging verification on intended hosts.
+6. Native iOS simulator/device document-picker/share-sheet/lifecycle verification on macOS/Xcode.
+7. Manual Android/Desktop/iOS accessibility and lifecycle checks.
+8. Real release screenshots captured from verified builds.
+
+### Next exact verification sequence
+
+From a real clean Git checkout after this branch/PR head is available:
+
+```bash
+python tools/check_gradle_version_alignment.py
+python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
+python tools/check_markdown_links.py
+./gradlew quality
+./gradlew :androidApp:testDebugUnitTest :androidApp:lintRelease :androidApp:assembleRelease :androidApp:bundleRelease
+./gradlew :desktopApp:test :desktopApp:compileKotlin :desktopApp:packageDistributionForCurrentOS
+```
+
+On macOS/Xcode:
+
+```bash
+./gradlew :shared:iosSimulatorArm64Test :shared:linkDebugFrameworkIosSimulatorArm64 :shared:linkReleaseFrameworkIosArm64
+```
+
+If PR #15 exposes a failing hosted job, inspect and fix that concrete failure before merging. If all source-level hosted checks are observed green, merge the Gradle/toolchain hardening without creating a production tag; signing/device/native/manual release gates remain separate.

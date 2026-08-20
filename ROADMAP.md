@@ -8,7 +8,8 @@
 - [x] Document the exact `v2.0.12` release/tag contract.
 - [x] Harden CI for Android SDK 37 and maintained Node 24-compatible action majors.
 - [x] Keep generated Compose/resource Kotlin outside repository-owned ktlint checks.
-- [x] Keep Gradle 9.5.0, bootstrap scripts, CI installation, wrapper properties, and documentation aligned for this release freeze.
+- [x] Upgrade Gradle to 9.7.0 with the official binary-distribution checksum and wrapper retry/backoff hardening.
+- [x] Keep Gradle wrapper metadata, Unix/Windows launchers, CI, CodeQL, release automation, and documentation aligned through an executable guard.
 - [ ] Observe the complete 2.0.12 CI/build/test matrix on supported runners before tagging.
 - [ ] Provision protected production Android signing secrets before a distributable `v2.0.12` tag.
 - [ ] Inspect actual signed release artifacts and generated SHA-256 checksums.
@@ -63,6 +64,7 @@
 - [x] Add deep source/API, state/recovery, persistence/data lifecycle, platform, user, maintainer, build/CI, and security guides.
 - [x] Add a deterministic Kotlin namespace guard for the `in.sanskar...` keyword-package syntax.
 - [x] Add a Git-backed repository-reference coverage guard so newly tracked files cannot silently remain undocumented.
+- [x] Add an executable Gradle-version alignment guard covering wrapper metadata, launchers, CI, CodeQL, and release automation.
 - [x] Run the documentation/source guards in CI and expose them in contributor/PR/release guidance.
 - [x] Correct stale troubleshooting guidance for corrupt history and platform checkpoint recovery.
 - [ ] Observe a clean-checkout run of the complete documentation guards in an execution environment with GitHub/network access.
@@ -74,6 +76,7 @@
 - [x] Add environment-backed Android release signing configuration.
 - [x] Require signed APK/AAB outputs before the tag workflow can publish Android release artifacts.
 - [x] Scope Android signing secrets to only the workflow steps that require them.
+- [x] Pin the current Gradle distribution checksum and enforce build-tool version consistency in automation.
 - [ ] Provision the actual production Android signing secrets in protected repository/environment settings before creating a distributable Android tag release.
 
 Roadmap items are not promises or release dates. Items that require private signing credentials, a macOS/Xcode host, physical/emulated devices, observed CI/clean-checkout execution, verified iOS picker/share behavior, or release screenshots remain intentionally open until they can be verified in the correct environment.

@@ -25,7 +25,7 @@ jobs:
           cache: gradle
       - uses: gradle/actions/setup-gradle@v5
         with:
-          gradle-version: "9.5.0"
+          gradle-version: "9.7.0"
       - name: Verify shared and desktop
         run: gradle :shared:ktlintCheck :desktopApp:ktlintCheck :shared:allTests :desktopApp:test :desktopApp:compileKotlin --stacktrace
 
@@ -43,7 +43,7 @@ jobs:
         run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
       - uses: gradle/actions/setup-gradle@v5
         with:
-          gradle-version: "9.5.0"
+          gradle-version: "9.7.0"
       - name: Test, lint and build Android
         run: gradle :androidApp:ktlintCheck :androidApp:testDebugUnitTest :androidApp:lintDebug :androidApp:assembleDebug --stacktrace
 
@@ -58,7 +58,7 @@ jobs:
           cache: gradle
       - uses: gradle/actions/setup-gradle@v5
         with:
-          gradle-version: "9.5.0"
+          gradle-version: "9.7.0"
       - name: Compile iOS simulator framework
         run: gradle :shared:linkDebugFrameworkIosSimulatorArm64 --stacktrace
       - name: Test iOS simulator target
@@ -74,9 +74,12 @@ jobs:
       - name: Compile repository tooling
         run: >-
           python -m py_compile
+          tools/check_gradle_version_alignment.py
           tools/check_markdown_links.py
           tools/check_kotlin_package_keywords.py
           tools/check_repository_reference.py
+      - name: Validate Gradle version alignment
+        run: python tools/check_gradle_version_alignment.py
       - name: Validate Kotlin package keyword escaping
         run: python tools/check_kotlin_package_keywords.py
       - name: Validate tracked file documentation coverage

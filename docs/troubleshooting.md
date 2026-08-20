@@ -10,7 +10,7 @@ The included `gradlew`/`gradlew.bat` scripts therefore:
 
 1. use the standard wrapper JAR if a trusted generated copy exists;
 2. otherwise delegate to installed Gradle;
-3. require the installed version to be **exactly 9.5.0**.
+3. require the installed version to be **exactly 9.7.0**.
 
 Check:
 
@@ -18,15 +18,15 @@ Check:
 gradle --version
 ```
 
-If the version differs, install/use Gradle 9.5.0.
+If the version differs, install/use Gradle 9.7.0.
 
-Maintainers should regenerate the official wrapper only from a trusted Gradle 9.5.0 installation:
+Maintainers should regenerate the official wrapper only from a trusted Gradle 9.7.0 installation:
 
 ```bash
-gradle wrapper --gradle-version 9.5.0
+gradle wrapper --gradle-version 9.7.0
 ```
 
-Do not fabricate the binary JAR. `gradle/wrapper/gradle-wrapper.properties` already pins the expected distribution/checksum.
+Do not fabricate the binary JAR. `gradle/wrapper/gradle-wrapper.properties` already pins the expected distribution/checksum and download retry/backoff settings.
 
 ## Gradle cannot find Java
 
@@ -43,9 +43,17 @@ CI uses Temurin JDK 17.
 
 ## Gradle fallback says the version is wrong
 
-This is intentional. The bootstrap scripts reject an installed fallback Gradle version other than 9.5.0 so local behavior does not silently depend on a different build tool.
+This is intentional. The bootstrap scripts reject an installed fallback Gradle version other than 9.7.0 so local behavior does not silently depend on a different build tool.
 
-Use Gradle 9.5.0 or restore a trusted standard wrapper JAR.
+Use Gradle 9.7.0 or restore a trusted standard wrapper JAR.
+
+If a repository branch appears to mix Gradle versions, run:
+
+```bash
+python tools/check_gradle_version_alignment.py
+```
+
+The guard reports drift between wrapper metadata, Unix/Windows launchers, CI, CodeQL, and release automation.
 
 ## Android SDK not found
 
@@ -124,10 +132,12 @@ Run the component tasks separately to isolate the failure:
 ./gradlew :desktopApp:compileKotlin --stacktrace
 ```
 
-For documentation/source syntax checks:
+For deterministic repository/source/documentation checks:
 
 ```bash
+python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
 

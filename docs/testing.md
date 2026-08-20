@@ -8,6 +8,16 @@
 
 Android Lint runs separately because it also checks manifests/resources and Android-specific correctness.
 
+## Gradle toolchain alignment check
+
+Before dependency resolution or platform builds, verify that the repository has not drifted between different Gradle versions:
+
+```bash
+python tools/check_gradle_version_alignment.py
+```
+
+The guard requires the wrapper distribution, Unix/Windows fallback launchers, CI, CodeQL, and release automation to use one Gradle version. It also requires a pinned distribution SHA-256 plus positive wrapper retry/backoff settings. This catches partial toolchain upgrades before they turn into platform-specific build failures.
+
 ## Kotlin namespace syntax check
 
 TempoTrack's runtime namespace starts with `in.sanskar...`, but `in` is a Kotlin keyword. Kotlin source must therefore spell the leading segment with backticks, for example:
@@ -184,9 +194,10 @@ For a generated large history near supported limits, manually verify:
 
 ## Documentation checks
 
-Repository-local Markdown destinations, Kotlin namespace syntax, and tracked-file documentation coverage are validated by:
+Gradle alignment, repository-local Markdown destinations, Kotlin namespace syntax, and tracked-file documentation coverage are validated by:
 
 ```bash
+python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
 python tools/check_markdown_links.py
@@ -197,6 +208,7 @@ The Markdown checker intentionally skips external URLs and focuses on links that
 ## Full local quality gate
 
 ```bash
+python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
 ./gradlew quality :androidApp:assembleDebug :desktopApp:packageDistributionForCurrentOS

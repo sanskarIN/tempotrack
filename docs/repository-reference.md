@@ -38,8 +38,8 @@ When a file is added, renamed, or removed, update this reference in the same cha
 | `.github/ISSUE_TEMPLATE/feature_request.yml` | Structured feature proposals. | Encourage problem/use-case descriptions, not only implementation requests. |
 | `.github/dependabot.yml` | Automated dependency update configuration. | Review cadence/ecosystems when build tooling changes. |
 | `.github/pull_request_template.md` | Pull-request quality/security/documentation checklist. | Keep required checks synchronized with `docs/testing.md`. |
-| `.github/workflows/ci.yml` | Main Android/Desktop/shared/iOS/documentation CI matrix. | Includes Kotlin package-keyword, repository-reference, and Markdown guards; keep tool versions aligned with Gradle/version catalog. |
-| `.github/workflows/codeql.yml` | CodeQL static analysis. | Maintain least-privilege permissions and supported build behavior. |
+| `.github/workflows/ci.yml` | Main Android/Desktop/shared/iOS/documentation CI matrix. | Includes Gradle-alignment, Kotlin package-keyword, repository-reference, and Markdown guards; keep tool versions aligned. |
+| `.github/workflows/codeql.yml` | CodeQL static analysis. | Maintain least-privilege permissions and keep its Gradle version aligned with the main build. |
 | `.github/workflows/dependency-review.yml` | Pull-request dependency risk review. | Runs only where dependency diffs are available. |
 | `.github/workflows/release.yml` | Semantic-tag build/package/checksum/publish workflow. | Android release requires protected signing secrets; release tags must remain strict semantic versions. |
 | `.github/workflows/secret-scan.yml` | Secret scanning for pushes/PRs. | Never weaken patterns/permissions merely to silence a real finding. |
@@ -49,9 +49,9 @@ When a file is added, renamed, or removed, update this reference in the same cha
 | File | Responsibility | Maintenance notes |
 |---|---|---|
 | `gradle/libs.versions.toml` | Central dependency/plugin/SDK version catalog. | Update versions here first; verify compatibility across Android, Desktop, and Kotlin/Native. |
-| `gradle/wrapper/gradle-wrapper.properties` | Pins the Gradle distribution URL and SHA-256. | Current project expects Gradle 9.5.0; regenerate wrapper artifacts only from a trusted installation. |
+| `gradle/wrapper/gradle-wrapper.properties` | Pins the Gradle distribution URL and SHA-256 plus wrapper download resilience settings. | Current project expects Gradle 9.7.0; regenerate wrapper artifacts only from a trusted installation. |
 
-`gradle/wrapper/gradle-wrapper.jar` is intentionally absent in the current repository state and therefore is not a tracked file. The launchers require an installed Gradle 9.5.0 when the standard wrapper JAR is unavailable.
+`gradle/wrapper/gradle-wrapper.jar` is intentionally absent in the current repository state and therefore is not a tracked file. The launchers require an installed Gradle 9.7.0 when the standard wrapper JAR is unavailable.
 
 ## Android application module
 
@@ -195,6 +195,7 @@ Kotlin source uses ``package `in`.sanskar...`` because `in` is a Kotlin keyword.
 
 | File | Responsibility | Maintenance notes |
 |---|---|---|
+| `tools/check_gradle_version_alignment.py` | Verifies one Gradle version across wrapper metadata, Unix/Windows launchers, CI, CodeQL, and release automation; also requires checksum and retry settings. | Run for every Gradle upgrade; CI executes it before the other repository guards. |
 | `tools/check_kotlin_package_keywords.py` | Fails on unescaped `package in.sanskar...` / `import in.sanskar...` Kotlin source. | Required because `in` is a Kotlin keyword; CI runs it. |
 | `tools/check_markdown_links.py` | Checks deterministic repository-local Markdown link destinations. | External URLs are intentionally not treated as deterministic local checks. |
 | `tools/check_repository_reference.py` | Compares `git ls-files` against exact backticked paths in this document and fails when any tracked file is undocumented. | Run whenever tracked files change; CI enforces complete file-documentation coverage. |
@@ -243,5 +244,5 @@ Use this map to avoid partial changes:
 - **Change Android share/export paths** → Android adapter, manifest/provider XML/backup rules as applicable, Android staging tests, privacy/testing/platform docs.
 - **Change iOS export/share** → iOS staging + bridge, iOS tests, `ios.md`, privacy/testing/platform docs.
 - **Change Desktop shortcut/mini-window behavior** → Desktop `Main.kt`, shared preference/dependency/UI files, resource strings, tests/docs where applicable.
-- **Change build dependency/tool version** → `libs.versions.toml`, affected module build scripts, setup/testing/release docs, CI/release workflow if the runner/tool installation must change.
+- **Change build dependency/tool version** → wrapper metadata, launchers, affected module build scripts, setup/testing/release docs, CI/CodeQL/release workflow, and the Gradle-alignment guard as applicable.
 - **Add a tracked file** → update this document, run `tools/check_repository_reference.py`, and ensure local Markdown checks can resolve any new links.

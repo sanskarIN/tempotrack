@@ -68,7 +68,7 @@ Real release screenshots will replace these placeholders once verified tagged bu
 - Compose Multiplatform 1.11.1
 - Android Gradle Plugin 9.3.1
 - AndroidX Core 1.19.0
-- Gradle 9.5.0
+- Gradle 9.7.0
 - Kotlinx Coroutines 1.11.0
 - Kotlinx Serialization 1.11.0
 
@@ -77,16 +77,22 @@ Real release screenshots will replace these placeholders once verified tagged bu
 Requirements:
 
 - JDK 17 or newer
-- Gradle 9.5.0
+- Gradle 9.7.0
 - Android Studio with Android SDK 37 for Android builds
 - A desktop OS supported by Compose Desktop
 - macOS with Xcode for iOS framework compilation/tests and iOS host execution
 
-The launcher scripts use `gradle/wrapper/gradle-wrapper.jar` when that standard binary is present. In this repository state the wrapper JAR is not committed, so the launchers deliberately require an installed **Gradle 9.5.0** and reject a mismatched fallback version instead of silently building with a different toolchain. The wrapper properties pin the Gradle 9.5.0 binary distribution SHA-256 for a future trusted wrapper generation.
+The launcher scripts use `gradle/wrapper/gradle-wrapper.jar` when that standard binary is present. In this repository state the wrapper JAR is not committed, so the launchers deliberately require an installed **Gradle 9.7.0** and reject a mismatched fallback version instead of silently building with a different toolchain. The wrapper properties pin the Gradle 9.7.0 binary distribution SHA-256 and bounded retry/backoff settings for a future trusted wrapper generation.
 
 ```bash
 git clone https://github.com/sanskarIN/tempotrack.git
 cd tempotrack
+
+# Verify deterministic repository/toolchain guards
+python tools/check_gradle_version_alignment.py
+python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
+python tools/check_markdown_links.py
 
 # Linux/macOS
 ./gradlew quality
@@ -152,6 +158,7 @@ The complete documentation index is [docs/README.md](docs/README.md). High-value
 ## Testing
 
 ```bash
+python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
 ./gradlew :shared:allTests
@@ -161,7 +168,7 @@ python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
 
-CI also performs Android/Desktop builds, iOS simulator framework verification, documentation-link checks, Kotlin namespace syntax checks, exhaustive tracked-file documentation coverage, and security scanning. See [docs/testing.md](docs/testing.md).
+CI also performs Gradle-version alignment verification, Android/Desktop builds, iOS simulator framework verification, documentation-link checks, Kotlin namespace syntax checks, exhaustive tracked-file documentation coverage, and security scanning. See [docs/testing.md](docs/testing.md).
 
 Kotlin source uses `` `in`.sanskar... `` rather than unescaped `in.sanskar...` because `in` is a Kotlin keyword; the compiled/runtime package is still `in.sanskar...`.
 

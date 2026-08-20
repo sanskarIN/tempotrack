@@ -24,11 +24,30 @@ The checked-in CI matrix verifies four areas:
 - **shared-and-desktop** — shared/Desktop ktlint, shared tests, Desktop tests, Desktop compilation;
 - **android** — Android ktlint, JVM unit tests, Android Lint, debug assembly;
 - **ios-shared** — iOS simulator framework link and simulator target tests on macOS;
-- **documentation** — Python tool compilation, Kotlin keyword-package syntax, exhaustive tracked-file documentation coverage, and local Markdown links.
+- **documentation** — Python tool compilation, Gradle toolchain alignment, Kotlin keyword-package syntax, exhaustive tracked-file documentation coverage, and local Markdown links.
 
 Superseded branch/PR CI runs are cancelled through workflow concurrency.
 
 A configured workflow is not proof that a particular commit passed. Use the actual Actions/check result before marking work verified.
+
+## Gradle toolchain alignment policy
+
+TempoTrack treats `gradle/wrapper/gradle-wrapper.properties` as the canonical Gradle version source. CI runs:
+
+```bash
+python tools/check_gradle_version_alignment.py
+```
+
+The guard verifies the same version is used by:
+
+- wrapper distribution metadata;
+- Unix fallback launcher;
+- Windows fallback launcher;
+- main CI;
+- CodeQL;
+- release automation.
+
+It also requires the wrapper distribution SHA-256 plus positive retry/backoff settings. A Gradle upgrade should change the complete set together rather than editing only one workflow or launcher.
 
 ## Repository documentation coverage policy
 
@@ -58,7 +77,7 @@ CI runs `tools/check_kotlin_package_keywords.py` to prevent a repository-wide co
 
 ### CodeQL
 
-CodeQL analyzes Java/Kotlin on main pushes, pull requests, and its weekly schedule. The workflow builds Android debug and Desktop Kotlin before analysis so the analyzer sees project code/build context.
+CodeQL analyzes Java/Kotlin on main pushes, pull requests, and its weekly schedule. The workflow builds Android debug and Desktop Kotlin before analysis so the analyzer sees project code/build context. Its Gradle installation is covered by the toolchain-alignment guard.
 
 ### Dependency review
 
@@ -186,7 +205,7 @@ Security reports must follow `SECURITY.md`, not a public issue template.
 
 The repository PR template asks contributors to confirm:
 
-- three deterministic repository guards;
+- four deterministic repository guards, including Gradle toolchain alignment;
 - relevant tests/quality/builds;
 - manual platform checks where affected;
 - no secrets/private data/signing material;

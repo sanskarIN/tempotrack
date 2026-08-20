@@ -12,6 +12,7 @@ This guide is for maintainers making code, documentation, dependency, schema, pl
 6. **Validate before migration rewrite.** A legacy file must be understood and validated before it is replaced by a current envelope.
 7. **Document the behavior you actually ship.** Do not record a build/device/signing check as passing unless observed.
 8. **Keep changes atomic.** Separate feature/fix/test/docs/tooling commits when practical and meaningful.
+9. **Keep the build toolchain coherent.** Wrapper metadata, fallback launchers, CI, CodeQL, and release automation must not silently use different Gradle versions.
 
 ## Before changing code
 
@@ -46,12 +47,16 @@ Do not rename the runtime package merely to avoid the source escape unless there
 
 ## Repository quality commands
 
-Fast deterministic documentation/source guard:
+Fast deterministic repository guards:
 
 ```bash
+python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
+
+The Gradle guard checks wrapper distribution/version/checksum/retry metadata, both fallback launchers, main CI, CodeQL, and release automation. If a new workflow starts installing Gradle, add it to the guard in the same change.
 
 Primary shared quality gate:
 
@@ -281,13 +286,28 @@ Add the manual case to [`accessibility.md`](accessibility.md) and [`testing.md`]
 3. Add ktlint/test/build tasks to CI and root `quality` where appropriate.
 4. Update architecture, repository reference, setup, testing, release packaging if relevant.
 
+## Changing the Gradle build tool version
+
+Gradle is pinned outside the dependency catalog. Treat an upgrade as one coordinated change:
+
+1. Update `gradle/wrapper/gradle-wrapper.properties` to the intended official binary distribution.
+2. Pin the official SHA-256 and preserve URL validation plus bounded retry/backoff settings.
+3. Update the exact fallback version in `gradlew` and `gradlew.bat`.
+4. Update every Gradle-bearing workflow currently covered by `tools/check_gradle_version_alignment.py`.
+5. Update the alignment guard if a new Gradle-bearing workflow exists.
+6. Update README/setup/build/testing/release/troubleshooting/contributor guidance.
+7. Run `python tools/check_gradle_version_alignment.py` before Gradle dependency resolution.
+8. Run the full supported platform build/test matrix; alignment alone does not prove plugin/tool compatibility.
+
+Do not fabricate `gradle-wrapper.jar`. Generate a standard wrapper binary only from a trusted Gradle installation/distribution chain.
+
 ## Version changes
 
 Application versions currently come from `gradle.properties`:
 
 ```properties
-appVersion=1.0.0
-appVersionCode=1
+appVersion=2.0.12
+appVersionCode=20012
 ```
 
 Android consumes both. Desktop consumes `appVersion` for package metadata/About runtime property.
@@ -303,7 +323,7 @@ Before changing versions:
 - decide whether this is a development bump or release bump;
 - update changelog/release notes;
 - keep Android versionCode monotonically increasing for store distribution;
-- ensure tag version and Gradle version agree according to the release workflow contract.
+- ensure tag version and Gradle application version agree according to the release workflow contract.
 
 ## Android release signing
 
@@ -332,7 +352,7 @@ Never:
 
 Use [`release.md`](release.md) as the canonical procedure. A maintainer should observe:
 
-- namespace/doc guards;
+- Gradle alignment plus namespace/documentation guards;
 - common tests;
 - Android unit/lint/release assembly + bundle;
 - Desktop test/compile/package on intended hosts;
@@ -353,7 +373,7 @@ An unsigned Android APK may prove compilation but is not a production-signed rel
 | Domain/API behavior | code reference, architecture/state docs |
 | Persistence/schema | data model/storage, ADR if architectural, changelog, testing |
 | Platform adapter | platforms, privacy/security as applicable, testing |
-| Build/tool version | setup, testing, README tech stack, CI/release workflow docs |
+| Build/tool version | setup, testing, README tech stack, build/CI, release, troubleshooting, contributor/PR guidance |
 | Release process | release, GitHub automation, contributing/PR template if checks change |
 | Accessibility | accessibility, user guide/testing |
 | Localization | localization, resource reference/test guidance |
@@ -390,4 +410,5 @@ Before merging/releasing a change, ask:
 - Are localized strings/accessibility semantics updated?
 - Are automated tests and manual test cases updated?
 - Is every new tracked file in `repository-reference.md`?
+- Does `tools/check_gradle_version_alignment.py` pass after build-tool/workflow changes?
 - Are claims in documentation based on observed verification?

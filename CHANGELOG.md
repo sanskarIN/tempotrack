@@ -15,6 +15,7 @@ The format follows Keep a Changelog concepts and the project uses semantic versi
 - Hardened the supported Gradle 9.5.0 baseline with the official binary-distribution SHA-256, bounded wrapper download retries/backoff, and distribution URL validation.
 - Added CI enforcement so wrapper metadata, launchers, CodeQL, and release automation cannot silently drift to different Gradle versions.
 - Reverted an experimental Gradle 9.7.0 bump after compatibility review showed Kotlin 2.4.10 is fully supported through Gradle 9.5.0; API 37 support remains unchanged.
+- Moved the active Android Gradle Plugin baseline from 9.3.1 to 9.1.1. Kotlin 2.4.10's published compatibility table lists AGP through 9.1.0 as fully supported, while Android API 37 requires AGP 9.1.1, making 9.1.1 the closest stable API-37-compatible baseline and leaving the one-patch gap for hosted build verification.
 - Updated README, setup, testing, release, troubleshooting, contributor, roadmap, and repository-reference guidance for the hardened Gradle 9.5.0 baseline.
 
 ## [2.0.12] - 2026-08-19

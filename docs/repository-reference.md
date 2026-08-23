@@ -49,9 +49,9 @@ When a file is added, renamed, or removed, update this reference in the same cha
 | File | Responsibility | Maintenance notes |
 |---|---|---|
 | `gradle/libs.versions.toml` | Central dependency/plugin/SDK version catalog. | Update versions here first; verify compatibility across Android, Desktop, and Kotlin/Native. |
-| `gradle/wrapper/gradle-wrapper.properties` | Pins the Gradle distribution URL and SHA-256 plus wrapper download resilience settings. | Current project expects Gradle 9.7.0; regenerate wrapper artifacts only from a trusted installation. |
+| `gradle/wrapper/gradle-wrapper.properties` | Pins the Gradle distribution URL and SHA-256 plus wrapper download resilience settings. | Current project expects Gradle 9.5.0; regenerate wrapper artifacts only from a trusted installation. |
 
-`gradle/wrapper/gradle-wrapper.jar` is intentionally absent in the current repository state and therefore is not a tracked file. The launchers require an installed Gradle 9.7.0 when the standard wrapper JAR is unavailable.
+`gradle/wrapper/gradle-wrapper.jar` is intentionally absent in the current repository state and therefore is not a tracked file. The launchers require an installed Gradle 9.5.0 when the standard wrapper JAR is unavailable.
 
 ## Android application module
 

@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-set REQUIRED_GRADLE_VERSION=9.7.0
+set REQUIRED_GRADLE_VERSION=9.5.0
 set DIRNAME=%~dp0
 if "%DIRNAME%"=="" set DIRNAME=.
 set APP_HOME=%DIRNAME%

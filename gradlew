@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-REQUIRED_GRADLE_VERSION="9.7.0"
+REQUIRED_GRADLE_VERSION="9.5.0"
 APP_HOME=$(cd "${0%/*}" >/dev/null 2>&1 && pwd -P)
 WRAPPER_JAR="$APP_HOME/gradle/wrapper/gradle-wrapper.jar"
 

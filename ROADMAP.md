@@ -8,8 +8,9 @@
 - [x] Document the exact `v2.0.12` release/tag contract.
 - [x] Harden CI for Android SDK 37 and maintained Node 24-compatible action majors.
 - [x] Keep generated Compose/resource Kotlin outside repository-owned ktlint checks.
-- [x] Upgrade Gradle to 9.7.0 with the official binary-distribution checksum and wrapper retry/backoff hardening.
+- [x] Harden the Gradle 9.5.0 baseline with the official binary-distribution checksum and wrapper retry/backoff settings.
 - [x] Keep Gradle wrapper metadata, Unix/Windows launchers, CI, CodeQL, release automation, and documentation aligned through an executable guard.
+- [x] Revert the experimental Gradle 9.7.0 bump after compatibility review showed Kotlin 2.4.10 is fully supported only through Gradle 9.5.0.
 - [ ] Observe the complete 2.0.12 CI/build/test matrix on supported runners before tagging.
 - [ ] Provision protected production Android signing secrets before a distributable `v2.0.12` tag.
 - [ ] Inspect actual signed release artifacts and generated SHA-256 checksums.

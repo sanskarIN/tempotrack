@@ -22,7 +22,7 @@ Current declared versions:
 | Tool/library | Version |
 |---|---:|
 | Kotlin | 2.4.10 |
-| Android Gradle Plugin | 9.3.1 |
+| Android Gradle Plugin | 9.1.1 |
 | Compose Multiplatform | 1.11.1 |
 | Kotlinx Coroutines | 1.11.0 |
 | Kotlinx Serialization | 1.11.0 |
@@ -35,7 +35,7 @@ Current declared versions:
 | Gradle | 9.5.0 |
 | JVM target | 17 |
 
-When updating one item, review compatibility with Kotlin compiler, Compose compiler/plugin, AGP, Gradle, Android SDK, Kotlin/Native, and CI runner images together. In particular, Kotlin 2.4.10's fully supported Gradle range ends at 9.5.0; do not raise the Gradle pin solely because a newer distribution exists.
+When updating one item, review compatibility with Kotlin compiler, Compose compiler/plugin, AGP, Gradle, Android SDK, Kotlin/Native, and CI runner images together. Kotlin 2.4.10's compatibility table lists Gradle through 9.5.0 and AGP through 9.1.0 as fully supported. Android API 37 requires AGP 9.1.1, so TempoTrack uses AGP 9.1.1 as the closest stable API-37-compatible baseline to that listed AGP ceiling; the one-patch gap must still be proven by the hosted build/test matrix rather than described as fully supported without evidence.
 
 ## Root Gradle configuration
 

@@ -18,6 +18,8 @@ python tools/check_gradle_version_alignment.py
 
 The guard requires the wrapper distribution, Unix/Windows fallback launchers, CI, CodeQL, and release automation to use one Gradle version. It also requires a pinned distribution SHA-256 plus positive wrapper retry/backoff settings. This catches partial toolchain upgrades before they turn into platform-specific build failures.
 
+A passing alignment guard does not prove that a newly selected Gradle release is supported by the pinned Kotlin or Android Gradle Plugin versions. Review the official compatibility matrices before changing the pin, then use compilation/tests as the final compatibility evidence.
+
 ## Kotlin namespace syntax check
 
 TempoTrack's runtime namespace starts with `in.sanskar...`, but `in` is a Kotlin keyword. Kotlin source must therefore spell the leading segment with backticks, for example:

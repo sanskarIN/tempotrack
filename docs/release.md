@@ -45,13 +45,13 @@ Before a release, also update:
 
 ## Gradle bootstrap integrity
 
-`gradle/wrapper/gradle-wrapper.properties` pins Gradle 9.7.0, the official binary distribution SHA-256, URL validation, and bounded retry/backoff settings. The standard `gradle-wrapper.jar` is not committed in the current repository state, so local bootstrap scripts require an installed Gradle 9.7.0 until a trusted wrapper binary is generated.
+`gradle/wrapper/gradle-wrapper.properties` pins Gradle 9.5.0, the official binary distribution SHA-256, URL validation, and bounded retry/backoff settings. The standard `gradle-wrapper.jar` is not committed in the current repository state, so local bootstrap scripts require an installed Gradle 9.5.0 until a trusted wrapper binary is generated.
 
-Do not create a release from a machine silently using another Gradle version. Either use the exact fallback version or generate the standard wrapper JAR from a trusted Gradle 9.7.0 installation before the release-candidate audit.
+Do not create a release from a machine silently using another Gradle version. Either use the exact fallback version or generate the standard wrapper JAR from a trusted Gradle 9.5.0 installation before the release-candidate audit.
 
 Run `python tools/check_gradle_version_alignment.py` before release work. It verifies that wrapper metadata, both launchers, main CI, CodeQL, and release automation all use the same Gradle version and that the wrapper checksum/retry contract remains present.
 
-A Gradle-wrapper upgrade is part of the release-candidate build surface and must update wrapper properties, launcher/bootstrap assumptions, CI/CodeQL/release Gradle installation, documentation, and the full build matrix together.
+A Gradle-wrapper upgrade is part of the release-candidate build surface and must update wrapper properties, launcher/bootstrap assumptions, CI/CodeQL/release Gradle installation, documentation, and the full build matrix together. Review Kotlin/Gradle/AGP compatibility before changing the pinned version; matching pins alone are not compatibility evidence.
 
 ## Pre-release gate
 

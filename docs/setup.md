@@ -13,7 +13,7 @@ This guide prepares a checkout for shared, Android, Desktop, and (on macOS) iOS 
 
 ### Android development
 
-- Android Studio compatible with Android Gradle Plugin 9.3
+- Android Studio compatible with Android Gradle Plugin 9.1.1
 - Android SDK Platform 37
 - Android SDK build tools compatible with the project (CI installs 36.0.0)
 
@@ -105,7 +105,7 @@ python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
 
-The Gradle alignment guard verifies wrapper metadata, checksum/retry settings, both launcher fallback versions, and the Gradle pins used by CI, CodeQL, and release automation. Alignment is only one part of a toolchain update; review Kotlin/Gradle/AGP compatibility before changing the pin.
+The Gradle alignment guard verifies wrapper metadata, checksum/retry settings, both launcher fallback versions, and the Gradle pins used by CI, CodeQL, and release automation. Alignment is only one part of a toolchain update; review Kotlin/Gradle/AGP compatibility before changing the pin. The current API 37 baseline uses AGP 9.1.1 because Android requires at least 9.1.1 for API 37; Kotlin 2.4.10's published compatibility table lists AGP through 9.1.0 as fully supported, so the one-patch gap remains something the hosted build/test matrix must verify.
 
 The Kotlin namespace guard exists because the runtime package starts with `in`, a Kotlin keyword. Source must use escaped syntax:
 

@@ -6,12 +6,12 @@ Thank you for helping improve TempoTrack.
 
 - Git and Python 3 for repository-local integrity checks.
 - JDK 17 or newer.
-- Gradle 9.7.0.
+- Gradle 9.5.0.
 - Android SDK 37 for Android work.
 - A supported Desktop host for Compose Desktop work.
 - macOS with Xcode for iOS framework/host verification.
 
-The repository currently does not commit the standard binary `gradle-wrapper.jar`. Until a trusted Gradle 9.7.0 installation generates it, `gradlew`/`gradlew.bat` deliberately require an installed Gradle exactly matching 9.7.0.
+The repository currently does not commit the standard binary `gradle-wrapper.jar`. Until a trusted Gradle 9.5.0 installation generates it, `gradlew`/`gradlew.bat` deliberately require an installed Gradle exactly matching 9.5.0.
 
 See [`docs/setup.md`](docs/setup.md) for full environment preparation and [`docs/README.md`](docs/README.md) for the complete documentation index.
 
@@ -91,6 +91,7 @@ Do not mix unrelated formatting/refactors with behavior changes unless required 
 - Update documentation when behavior, setup, security, privacy, recovery, build, or release steps change.
 - Update `docs/repository-reference.md` for every tracked-file addition/removal/rename.
 - Keep Gradle wrapper metadata, launchers, and every Gradle-bearing workflow aligned; update the alignment guard if another workflow starts installing Gradle.
+- Review Kotlin/Gradle/AGP compatibility before changing the pinned build toolchain; alignment alone does not prove compatibility.
 - Do not claim a platform/build/check passed unless it actually ran.
 - Keep third-party assets license-compatible with MIT distribution.
 

@@ -49,6 +49,8 @@ The guard verifies the same version is used by:
 
 It also requires the wrapper distribution SHA-256 plus positive retry/backoff settings. A Gradle upgrade should change the complete set together rather than editing only one workflow or launcher.
 
+Alignment is necessary but not sufficient for a Gradle upgrade. Before changing the canonical pin, compare the proposed Gradle version against the pinned Kotlin and Android Gradle Plugin compatibility ranges; then require the normal hosted build/test matrix to prove the repository still compiles and tests successfully.
+
 ## Repository documentation coverage policy
 
 Every tracked file must be documented in [`repository-reference.md`](repository-reference.md).

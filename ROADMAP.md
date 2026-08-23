@@ -4,13 +4,14 @@
 
 - [x] Set canonical application defaults to `2.0.12` / Android development versionCode `20012`.
 - [x] Freeze a dated 2.0.12 changelog section.
-- [x] Synchronize README toolchain metadata with Compose Multiplatform 1.11.1 and Android Gradle Plugin 9.3.1.
+- [x] Synchronize README toolchain metadata with Compose Multiplatform 1.11.1 and the current Android Gradle Plugin baseline.
 - [x] Document the exact `v2.0.12` release/tag contract.
 - [x] Harden CI for Android SDK 37 and maintained Node 24-compatible action majors.
 - [x] Keep generated Compose/resource Kotlin outside repository-owned ktlint checks.
 - [x] Harden the Gradle 9.5.0 baseline with the official binary-distribution checksum and wrapper retry/backoff settings.
 - [x] Keep Gradle wrapper metadata, Unix/Windows launchers, CI, CodeQL, release automation, and documentation aligned through an executable guard.
 - [x] Revert the experimental Gradle 9.7.0 bump after compatibility review showed Kotlin 2.4.10 is fully supported only through Gradle 9.5.0.
+- [x] Reduce AGP from 9.3.1 to 9.1.1, the minimum stable AGP for API 37 and the closest API-37-compatible baseline to Kotlin 2.4.10's published 9.1.0 AGP ceiling.
 - [ ] Observe the complete 2.0.12 CI/build/test matrix on supported runners before tagging.
 - [ ] Provision protected production Android signing secrets before a distributable `v2.0.12` tag.
 - [ ] Inspect actual signed release artifacts and generated SHA-256 checksums.

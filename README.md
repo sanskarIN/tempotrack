@@ -89,6 +89,7 @@ git clone https://github.com/sanskarIN/tempotrack.git
 cd tempotrack
 
 # Deterministic repository/toolchain guards
+python tools/check_release_metadata.py
 python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
@@ -158,6 +159,7 @@ The complete documentation index is [docs/README.md](docs/README.md). High-value
 ## Testing
 
 ```bash
+python tools/check_release_metadata.py
 python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
@@ -180,7 +182,7 @@ Desktop packages:
 ./gradlew :desktopApp:packageDistributionForCurrentOS
 ```
 
-Android release builds require production signing configuration before public distribution. Signing secrets are intentionally not committed. Tag builds derive package versions from strict `vMAJOR.MINOR.PATCH` tags, package platform artifacts, generate SHA-256 checksums, and publish GitHub Release assets after the jobs succeed. The release tag gate also requires `gradle.properties`, this README release marker, `CHANGELOG.md`, and `ROADMAP.md` to agree with the tag before platform builds begin.
+Android release builds require production signing configuration before public distribution. Signing secrets are intentionally not committed. Tag builds derive package versions from strict `vMAJOR.MINOR.PATCH` tags, package platform artifacts, generate SHA-256 checksums, and publish GitHub Release assets after the jobs succeed. The release tag gate runs the repository release-metadata and Gradle-alignment guards against the tagged commit before platform builds begin.
 
 See [docs/release.md](docs/release.md) and [docs/build-and-ci.md](docs/build-and-ci.md).
 

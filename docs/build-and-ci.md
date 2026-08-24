@@ -15,7 +15,7 @@ TempoTrack
 
 ## Toolchain versions
 
-The authoritative dependency/plugin/SDK catalog is `gradle/libs.versions.toml`.
+The authoritative dependency/plugin/SDK catalog is `gradle/libs.versions.toml`. Gradle itself is pinned by `gradle/wrapper/gradle-wrapper.properties` and cross-checked against launchers/workflows by `tools/check_gradle_version_alignment.py`.
 
 Current declared versions:
 
@@ -35,7 +35,7 @@ Current declared versions:
 | Gradle | 9.5.0 |
 | JVM target | 17 |
 
-When updating one item, review compatibility with Kotlin compiler, Compose compiler/plugin, AGP, Gradle, Android SDK, Kotlin/Native, and CI runner images together.
+When updating one item, review compatibility with Kotlin compiler, Compose compiler/plugin, AGP, Gradle, Android SDK, Kotlin/Native, and CI runner images together. A successful version-alignment guard proves consistency, not compatibility; build and test evidence is still required for any toolchain upgrade.
 
 ## Root Gradle configuration
 
@@ -82,7 +82,7 @@ Tagged release jobs override `appVersion` from the semantic tag and derive Andro
 
 ## Wrapper/bootstrap behavior
 
-`gradle/wrapper/gradle-wrapper.properties` pins the official Gradle 9.5.0 binary distribution and SHA-256.
+`gradle/wrapper/gradle-wrapper.properties` pins the official Gradle 9.5.0 binary distribution and SHA-256. It also configures bounded download retries/backoff and URL validation so future standard-wrapper use is more resilient without silently accepting a different distribution.
 
 The standard binary `gradle-wrapper.jar` is not currently tracked. Therefore `gradlew`/`gradlew.bat`:
 
@@ -93,7 +93,7 @@ The standard binary `gradle-wrapper.jar` is not currently tracked. Therefore `gr
 
 Do not fabricate or hand-encode a wrapper JAR. Generate it from a trusted Gradle 9.5.0 installation and verify the official distribution chain.
 
-A future Gradle-wrapper upgrade must update the wrapper/bootstrap contract as one verified change. Do not change only the distribution URL or only CI's Gradle version while leaving the rest of the repository pinned to another version.
+A future Gradle-wrapper upgrade must update the wrapper/bootstrap contract as one verified change. Do not change only the distribution URL or only CI's Gradle version while leaving the rest of the repository pinned to another version. The Gradle-alignment guard is designed to fail that type of partial upgrade.
 
 ## Shared module
 
@@ -187,10 +187,24 @@ Desktop package metadata uses `appVersion`.
 These run without a full Gradle dependency resolution:
 
 ```bash
+python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
+
+### Gradle version alignment check
+
+`tools/check_gradle_version_alignment.py` prevents a partial build-tool upgrade. It treats the Gradle version encoded in `gradle/wrapper/gradle-wrapper.properties` as the expected version and verifies:
+
+- the wrapper distribution URL contains a semantic Gradle version;
+- a 64-character lowercase SHA-256 distribution checksum is present;
+- wrapper download retries and retry backoff are positive;
+- `gradlew` requires the same fallback version;
+- `gradlew.bat` requires the same fallback version;
+- every `gradle-version` entry in a workflow using `gradle/actions/setup-gradle` matches the wrapper version.
+
+This guard intentionally checks alignment, not whether a newly selected Gradle version is compatible with every project plugin. Compilation/tests and an explicit Kotlin/AGP compatibility review remain required for a toolchain upgrade.
 
 ### Kotlin package keyword check
 
@@ -228,7 +242,7 @@ Repository workflows intentionally use maintained action majors compatible with 
 
 - `actions/checkout@v7`;
 - `actions/setup-java@v5`;
-- `actions/setup-python@v6`;
+- `actions/setup-python@v7`;
 - `android-actions/setup-android@v4`;
 - `github/codeql-action@v4`;
 - `actions/dependency-review-action@v5`;
@@ -282,16 +296,18 @@ This verifies shared iOS framework linkage/simulator tests, not a complete signe
 
 ### `documentation`
 
-Ubuntu + Python 3.13:
+Ubuntu + Python 3.13 using `actions/setup-python@v7`:
 
 ```text
-python -m py_compile tools/check_markdown_links.py tools/check_kotlin_package_keywords.py tools/check_repository_reference.py
+python -m py_compile tools/check_gradle_version_alignment.py tools/check_markdown_links.py tools/check_kotlin_package_keywords.py tools/check_repository_reference.py
+validate appVersion/appVersionCode plus README/CHANGELOG/ROADMAP release metadata consistency
+python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
 
-The job therefore checks Python syntax, Kotlin namespace source syntax, exhaustive tracked-file documentation coverage, and local Markdown navigation.
+The job therefore checks Python syntax, release metadata consistency, Gradle toolchain alignment, Kotlin namespace source syntax, exhaustive tracked-file documentation coverage, and local Markdown navigation.
 
 ## CodeQL workflow
 
@@ -340,6 +356,8 @@ Review generated updates like any other dependency change; green compilation is 
 Only canonical `vMAJOR.MINOR.PATCH` proceeds. The validation job then derives Android `versionCode`, reads `appVersion` and `appVersionCode` from `gradle.properties`, and fails if the source defaults do not exactly match the tag and mapping. It also requires the README current-release marker, a matching `CHANGELOG.md` section, and a matching `ROADMAP.md` release-hardening section before any Android/Desktop/iOS release job starts.
 
 Release concurrency is per tag and does **not** cancel an in-progress release.
+
+All platform release jobs use Gradle 9.5.0 through `gradle/actions/setup-gradle@v5`; main CI's Gradle-alignment guard protects that pin from drifting away from bootstrap and other Gradle-bearing workflow metadata before a release candidate is promoted.
 
 ### Android release job
 
@@ -446,7 +464,7 @@ If the connected API/tool cannot expose a job result, record it as **not observe
 3. Use least-privilege permissions.
 4. Add timeout/concurrency behavior when long/repeated jobs can waste runners.
 5. Pin to intentional action major versions.
-6. Keep build tool versions aligned with repository catalog/wrapper.
+6. Keep build tool versions aligned with repository catalog/wrapper and update `tools/check_gradle_version_alignment.py` if another Gradle-bearing workflow is introduced.
 7. Update `testing.md`, `github.md`, this document, and PR template if contributors must satisfy a new requirement.
 8. If the check adds a tracked file, update `repository-reference.md` before enabling its coverage guard.
 

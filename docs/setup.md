@@ -7,7 +7,7 @@ This guide prepares a checkout for shared, Android, Desktop, and (on macOS) iOS 
 ### All development environments
 
 - Git
-- Python 3 for repository-local documentation/source guards
+- Python 3 for repository-local release/toolchain/documentation/source guards
 - JDK 17 or newer
 - Gradle 9.5.0 while the standard wrapper JAR remains absent
 
@@ -62,7 +62,7 @@ Other contributors should use their own Git identity rather than impersonating t
 
 ## Gradle bootstrap state
 
-`gradle/wrapper/gradle-wrapper.properties` pins Gradle 9.5.0 and its binary distribution SHA-256. The standard binary `gradle-wrapper.jar` is not committed in the current repository state.
+`gradle/wrapper/gradle-wrapper.properties` pins Gradle 9.5.0 and its binary distribution SHA-256, keeps distribution URL validation enabled, and defines bounded retry/backoff settings. The standard binary `gradle-wrapper.jar` is not committed in the current repository state.
 
 Therefore:
 
@@ -96,13 +96,19 @@ CI uses Temurin JDK 17, so JDK 17 is the best local baseline even if a newer JDK
 
 ## Verify repository-local guards
 
-Before Gradle dependency resolution, run:
+Before Gradle dependency resolution, run all five deterministic guards:
 
 ```bash
+python tools/check_release_metadata.py
+python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
+
+The release-metadata guard checks the canonical application version, Android `versionCode` mapping, README release marker, dated changelog release heading, and roadmap release section.
+
+The Gradle-alignment guard verifies that wrapper metadata, Unix/Windows fallback launchers, and all Gradle-bearing workflows use the same Gradle version while preserving checksum/retry hardening.
 
 The Kotlin namespace guard exists because the runtime package starts with `in`, a Kotlin keyword. Source must use escaped syntax:
 
@@ -249,6 +255,8 @@ They can edit the repository, but Android/iOS native integration is easier to ve
 Once required SDK/tooling is available:
 
 ```bash
+python tools/check_release_metadata.py
+python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
 ./gradlew quality :androidApp:assembleDebug :desktopApp:packageDistributionForCurrentOS

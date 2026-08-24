@@ -16,7 +16,7 @@
 
 > **Made by the Sanskar**
 >
-> Current release line: **2.0.12**
+> Current release line: **2.12.4**
 
 ## Highlights
 
@@ -173,7 +173,7 @@ Desktop packages:
 ./gradlew :desktopApp:packageDistributionForCurrentOS
 ```
 
-Android release builds require production signing configuration before public distribution. Signing secrets are intentionally not committed. Tag builds derive package versions from strict `vMAJOR.MINOR.PATCH` tags, package platform artifacts, generate SHA-256 checksums, and publish GitHub Release assets after the jobs succeed.
+Android release builds require production signing configuration before public distribution. Signing secrets are intentionally not committed. Tag builds derive package versions from strict `vMAJOR.MINOR.PATCH` tags, package platform artifacts, generate SHA-256 checksums, and publish GitHub Release assets after the jobs succeed. The release tag gate also requires `gradle.properties`, this README release marker, `CHANGELOG.md`, and `ROADMAP.md` to agree with the tag before platform builds begin.
 
 See [docs/release.md](docs/release.md) and [docs/build-and-ci.md](docs/build-and-ci.md).
 

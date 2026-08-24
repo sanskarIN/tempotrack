@@ -82,11 +82,17 @@ Requirements:
 - A desktop OS supported by Compose Desktop
 - macOS with Xcode for iOS framework compilation/tests and iOS host execution
 
-The launcher scripts use `gradle/wrapper/gradle-wrapper.jar` when that standard binary is present. In this repository state the wrapper JAR is not committed, so the launchers deliberately require an installed **Gradle 9.5.0** and reject a mismatched fallback version instead of silently building with a different toolchain. The wrapper properties pin the Gradle 9.5.0 binary distribution SHA-256 for a future trusted wrapper generation.
+The launcher scripts use `gradle/wrapper/gradle-wrapper.jar` when that standard binary is present. In this repository state the wrapper JAR is not committed, so the launchers deliberately require an installed **Gradle 9.5.0** and reject a mismatched fallback version instead of silently building with a different toolchain. The wrapper properties pin the Gradle 9.5.0 binary distribution SHA-256 plus bounded retry/backoff settings for a future trusted wrapper generation.
 
 ```bash
 git clone https://github.com/sanskarIN/tempotrack.git
 cd tempotrack
+
+# Deterministic repository/toolchain guards
+python tools/check_gradle_version_alignment.py
+python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
+python tools/check_markdown_links.py
 
 # Linux/macOS
 ./gradlew quality
@@ -152,6 +158,7 @@ The complete documentation index is [docs/README.md](docs/README.md). High-value
 ## Testing
 
 ```bash
+python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
 ./gradlew :shared:allTests
@@ -161,7 +168,7 @@ python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
 
-CI also performs Android/Desktop builds, iOS simulator framework verification, documentation-link checks, Kotlin namespace syntax checks, exhaustive tracked-file documentation coverage, and security scanning. See [docs/testing.md](docs/testing.md).
+CI also verifies release metadata and Gradle-version alignment, performs Android/Desktop builds and iOS simulator framework verification, checks documentation links/Kotlin namespace syntax/exhaustive tracked-file documentation coverage, and runs security automation. See [docs/testing.md](docs/testing.md).
 
 Kotlin source uses `` `in`.sanskar... `` rather than unescaped `in.sanskar...` because `in` is a Kotlin keyword; the compiled/runtime package is still `in.sanskar...`.
 

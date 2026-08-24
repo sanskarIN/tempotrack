@@ -1,6 +1,23 @@
 # Roadmap
 
-## 2.0.12 — Release hardening
+## 2.12.4 — Release hardening
+
+- [x] Set canonical application defaults to `2.12.4` / Android development versionCode `21204`.
+- [x] Freeze a dated 2.12.4 changelog section.
+- [x] Synchronize the README current release marker with 2.12.4.
+- [x] Require release tags to match `gradle.properties`, README, CHANGELOG, ROADMAP, and the derived Android versionCode before platform release builds start.
+- [x] Keep the canonical semantic tag contract at `v2.12.4` without leading-zero aliases.
+- [x] Retain Gradle 9.5.0, Compose Multiplatform 1.11.1, Android Gradle Plugin 9.3.1, Android SDK 37, and maintained Node 24-compatible action majors for this release line.
+- [ ] Observe the complete 2.12.4 CI/build/test matrix on supported runners before tagging.
+- [ ] Observe all repository-local documentation/source guards from a clean checkout.
+- [ ] Provision protected production Android signing secrets before a distributable `v2.12.4` tag.
+- [ ] Inspect actual signed release artifacts and generated SHA-256 checksums.
+- [ ] Capture real release screenshots from verified builds.
+- [ ] Complete Android target-device accessibility/lifecycle/share/export/restore checks.
+- [ ] Complete Desktop Windows/macOS/Linux packaging and restart/mini-window/shortcut checks.
+- [ ] Complete native iOS framework, document-picker, activity-sheet, cancellation, cleanup, and lifecycle verification on macOS/Xcode.
+
+## 2.0.12 — Previous release-preparation baseline
 
 - [x] Set canonical application defaults to `2.0.12` / Android development versionCode `20012`.
 - [x] Freeze a dated 2.0.12 changelog section.
@@ -8,12 +25,7 @@
 - [x] Document the exact `v2.0.12` release/tag contract.
 - [x] Harden CI for Android SDK 37 and maintained Node 24-compatible action majors.
 - [x] Keep generated Compose/resource Kotlin outside repository-owned ktlint checks.
-- [x] Keep Gradle 9.5.0, bootstrap scripts, CI installation, wrapper properties, and documentation aligned for this release freeze.
-- [ ] Observe the complete 2.0.12 CI/build/test matrix on supported runners before tagging.
-- [ ] Provision protected production Android signing secrets before a distributable `v2.0.12` tag.
-- [ ] Inspect actual signed release artifacts and generated SHA-256 checksums.
-- [ ] Capture real release screenshots from verified builds.
-- [ ] Complete target-device accessibility/lifecycle checks and native iOS picker/share verification.
+- [x] Keep Gradle 9.5.0, bootstrap scripts, CI installation, wrapper properties, and documentation aligned for that release freeze.
 
 ## 1.0 — Reliable local stopwatch
 
@@ -74,6 +86,7 @@
 - [x] Add environment-backed Android release signing configuration.
 - [x] Require signed APK/AAB outputs before the tag workflow can publish Android release artifacts.
 - [x] Scope Android signing secrets to only the workflow steps that require them.
+- [x] Require tag/source version and release-document consistency before release jobs run.
 - [ ] Provision the actual production Android signing secrets in protected repository/environment settings before creating a distributable Android tag release.
 
 Roadmap items are not promises or release dates. Items that require private signing credentials, a macOS/Xcode host, physical/emulated devices, observed CI/clean-checkout execution, verified iOS picker/share behavior, or release screenshots remain intentionally open until they can be verified in the correct environment.

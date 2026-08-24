@@ -10,17 +10,26 @@ No unreleased changes are recorded after the 2.12.4 release-preparation freeze.
 
 ## [2.12.4] - 2026-08-24
 
+### Added
+
+- A deterministic `tools/check_gradle_version_alignment.py` guard now verifies wrapper version/checksum/retry policy, Unix/Windows fallback launchers, and every Gradle-bearing GitHub workflow remain aligned.
+- Main CI now validates canonical application version metadata and requires `gradle.properties`, README, CHANGELOG, and ROADMAP to identify the same release line.
+
 ### Changed
 
 - Canonical application defaults are advanced to version 2.12.4 with Android development `versionCode` 21204.
 - Release-tag validation now checks that the semantic tag agrees with `gradle.properties` before any platform release build starts.
 - Release-tag validation also requires the README release marker, changelog release section, and roadmap release-hardening section to identify the same release version.
 - Canonical tag examples and release documentation are aligned to the `v2.12.4` release line.
+- Gradle wrapper metadata retains Gradle 9.5.0 and its pinned distribution SHA-256 while adding bounded download retries and retry backoff.
+- README, testing, build/CI, release, contribution, pull-request, and repository-reference guidance now use the four deterministic repository/toolchain guards.
+- Documentation CI uses `actions/setup-python@v7` while preserving Python 3.13 verification.
+- Obsolete Gradle 9.7 and superseded Gradle-hardening pull requests were closed after the useful release-safe hardening was carried into current `main` without the stale version metadata or unrelated AGP downgrade.
 
 ### Release status
 
 - This section records source-tree release preparation only; it does not claim that a production `v2.12.4` tag has been created or published.
-- Full CI/build/test observation, protected Android production signing, signed artifact inspection/checksum verification, real release screenshots, target-device accessibility/lifecycle testing, and native iOS picker/share verification remain release gates.
+- Full CI/build/test observation, protected Android production signing, signed artifact inspection/checksum verification, real release screenshots, target-device accessibility/lifecycle testing, Desktop cross-host verification, and native iOS picker/share verification remain release gates.
 
 ## [2.0.12] - 2026-08-19
 

@@ -71,14 +71,14 @@ This is the primary local cross-module verification task but it is not a substit
 - AndroidX;
 - non-transitive Android R classes.
 
-The file also contains the version 2.0.12 application defaults:
+The file also contains the version 2.12.4 application defaults:
 
 ```properties
-appVersion=2.0.12
-appVersionCode=20012
+appVersion=2.12.4
+appVersionCode=21204
 ```
 
-Tagged release jobs override `appVersion` from the semantic tag and derive Android `appVersionCode` as `MAJOR * 10000 + MINOR * 100 + PATCH`, so `v2.0.12` maps to `20012` and remains aligned with the source default.
+Tagged release jobs override `appVersion` from the semantic tag and derive Android `appVersionCode` as `MAJOR * 10000 + MINOR * 100 + PATCH`, so `v2.12.4` maps to `21204` and remains aligned with the source default.
 
 ## Wrapper/bootstrap behavior
 
@@ -206,6 +206,8 @@ Correct source:
 package `in`.sanskar.tempotrack
 ```
 
+because `in` is a Kotlin keyword.
+
 CI compiles the checker with Python and runs it in the documentation job.
 
 ### Repository reference coverage check
@@ -329,13 +331,13 @@ Review generated updates like any other dependency change; green compilation is 
 
 ## Release workflow
 
-`.github/workflows/release.yml` runs on tags matching the broad trigger `v*`, but the first job strictly validates:
+`.github/workflows/release.yml` runs on tags matching the broad trigger `v*`, but the first job checks out the tagged source and strictly validates canonical tags equivalent to:
 
 ```text
-^v[0-9]+\.[0-9]+\.[0-9]+$
+^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$
 ```
 
-Only `vMAJOR.MINOR.PATCH` proceeds. The validation job also checks the Android semantic-to-versionCode mapping before any platform build starts.
+Only canonical `vMAJOR.MINOR.PATCH` proceeds. The validation job then derives Android `versionCode`, reads `appVersion` and `appVersionCode` from `gradle.properties`, and fails if the source defaults do not exactly match the tag and mapping. It also requires the README current-release marker, a matching `CHANGELOG.md` section, and a matching `ROADMAP.md` release-hardening section before any Android/Desktop/iOS release job starts.
 
 Release concurrency is per tag and does **not** cancel an in-progress release.
 
@@ -348,7 +350,7 @@ Runs on Ubuntu.
 3. Decode keystore into `$RUNNER_TEMP/tempotrack-release.jks` with restrictive permissions.
 4. Require key/password/alias secrets only on the build step.
 5. Derive `appVersion` from tag without leading `v`.
-6. Derive `appVersionCode` as `MAJOR * 10000 + MINOR * 100 + PATCH`; `v2.0.12` therefore produces `20012`.
+6. Derive `appVersionCode` as `MAJOR * 10000 + MINOR * 100 + PATCH`; `v2.12.4` therefore produces `21204`.
 7. Run shared tests, Android release lint, Android unit tests, signed APK assembly, and AAB bundle.
 8. Verify at least one APK and AAB exist.
 9. Upload Android artifact bundle.
@@ -416,11 +418,11 @@ Do not put these values into:
 
 ## Version/tag relationship
 
-Development defaults live in `gradle.properties`. For the 2.0.12 release line they are `appVersion=2.0.12` and `appVersionCode=20012`.
+Development defaults live in `gradle.properties`. For the 2.12.4 release line they are `appVersion=2.12.4` and `appVersionCode=21204`.
 
-Release jobs override `appVersion` from the semantic tag and derive Android `versionCode` from the same semantic components. For the intended 2.0.12 release tag, `v2.0.12` therefore remains versionName `2.0.12` / versionCode `20012`.
+Release jobs override `appVersion` from the semantic tag and derive Android `versionCode` from the same semantic components. For the intended 2.12.4 release tag, `v2.12.4` therefore remains versionName `2.12.4` / versionCode `21204`.
 
-For a release rehearsal or real release, confirm that generated application metadata and intended tag are consistent before public publishing.
+The release validation job automatically rejects a tag when these source defaults or the required release-document markers disagree. For a release rehearsal or real release, still confirm generated application metadata and actual artifacts before public publishing.
 
 ## CI verification integrity
 

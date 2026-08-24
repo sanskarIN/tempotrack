@@ -74,6 +74,7 @@ jobs:
       - name: Compile repository tooling
         run: >-
           python -m py_compile
+          tools/check_gradle_version_alignment.py
           tools/check_markdown_links.py
           tools/check_kotlin_package_keywords.py
           tools/check_repository_reference.py
@@ -104,6 +105,8 @@ jobs:
           grep -Fq "Current release line: **$VERSION**" README.md
           grep -Fq "## [$VERSION]" CHANGELOG.md
           grep -Fq "## $VERSION —" ROADMAP.md
+      - name: Validate Gradle version alignment
+        run: python tools/check_gradle_version_alignment.py
       - name: Validate Kotlin package keyword escaping
         run: python tools/check_kotlin_package_keywords.py
       - name: Validate tracked file documentation coverage

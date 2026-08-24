@@ -31,10 +31,13 @@ Do not add unescaped `package in.sanskar...` or `import in.sanskar...` directive
 Run the deterministic repository checks:
 
 ```bash
+python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
+
+`check_gradle_version_alignment.py` verifies that wrapper metadata, both bootstrap launchers, and every workflow using `gradle/actions/setup-gradle` agree on the Gradle version and preserve checksum/retry hardening.
 
 `check_repository_reference.py` requires every tracked file from `git ls-files` to appear with its exact path in `docs/repository-reference.md`. If your change adds, renames, or removes a tracked file, update that reference in the same PR.
 
@@ -87,6 +90,8 @@ Do not mix unrelated formatting/refactors with behavior changes unless required 
 - Keep Android `FileProvider` restricted to the intended share-cache subtree.
 - Update documentation when behavior, setup, security, privacy, recovery, build, or release steps change.
 - Update `docs/repository-reference.md` for every tracked-file addition/removal/rename.
+- Keep Gradle wrapper metadata, launchers, and every Gradle-bearing workflow aligned; update the alignment guard if another workflow starts installing Gradle.
+- Review Kotlin/Gradle/AGP compatibility before changing the pinned build toolchain; alignment alone does not prove compatibility.
 - Do not claim a platform/build/check passed unless it actually ran.
 - Keep third-party assets license-compatible with MIT distribution.
 

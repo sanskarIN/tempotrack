@@ -16,12 +16,13 @@ jobs:
   validate-tag:
     runs-on: ubuntu-latest
     steps:
-      - name: Validate release tag and Android version code
+      - uses: actions/checkout@v7
+      - name: Validate release tag and source metadata
         shell: bash
         run: |
           set -euo pipefail
           if [[ ! "$GITHUB_REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
-            echo "Release tags must use canonical vMAJOR.MINOR.PATCH without leading zeros, for example v2.0.12." >&2
+            echo "Release tags must use canonical vMAJOR.MINOR.PATCH without leading zeros, for example v2.12.4." >&2
             exit 1
           fi
 
@@ -48,7 +49,35 @@ jobs:
             exit 1
           fi
 
-          echo "Validated $GITHUB_REF_NAME -> Android versionCode $VERSION_CODE"
+          SOURCE_VERSION="$(sed -n 's/^appVersion=//p' gradle.properties)"
+          SOURCE_VERSION_CODE="$(sed -n 's/^appVersionCode=//p' gradle.properties)"
+
+          if [[ "$SOURCE_VERSION" != "$VERSION" ]]; then
+            echo "gradle.properties appVersion=$SOURCE_VERSION does not match release tag $VERSION." >&2
+            exit 1
+          fi
+
+          if [[ "$SOURCE_VERSION_CODE" != "$VERSION_CODE" ]]; then
+            echo "gradle.properties appVersionCode=$SOURCE_VERSION_CODE does not match derived release versionCode $VERSION_CODE." >&2
+            exit 1
+          fi
+
+          if ! grep -Fq "Current release line: **$VERSION**" README.md; then
+            echo "README.md current release line does not identify $VERSION." >&2
+            exit 1
+          fi
+
+          if ! grep -Fq "## [$VERSION]" CHANGELOG.md; then
+            echo "CHANGELOG.md does not contain a release section for $VERSION." >&2
+            exit 1
+          fi
+
+          if ! grep -Fq "## $VERSION —" ROADMAP.md; then
+            echo "ROADMAP.md does not contain a release-hardening section for $VERSION." >&2
+            exit 1
+          fi
+
+          echo "Validated $GITHUB_REF_NAME -> Android versionCode $VERSION_CODE with synchronized source metadata"
 
   android:
     needs: validate-tag

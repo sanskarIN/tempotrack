@@ -849,7 +849,7 @@ Direct shell verification observed during this continuation:
 - `e67f0ae247bd30b5c000eedb45a9d6563919ada8` — `docs: document 2.0.12 build metadata`.
 - `2ab7e417213ca5db4242386231c0240b3308bc9d` — `docs: freeze changelog for 2.0.12`.
 - `7f2d497e3df20f28dca26149f2d5f42dd7f1a1e8` — `docs: prepare 2.0.12 release procedure`.
-- `df4b8be9cba0a97adcaadfe1a60fd741e61ffc32` — `docs: add 2.0.12 release roadmap`.
+- `df4b8be9cba0a97adca26149f2d5f42dd7f1a1e8` — `docs: add 2.0.12 release roadmap`.
 - `d7a6132eec55248c0d610aa6b32877de2ee091c3` — `fix: derive Android versionCode from release tag`.
 - `256c1c4a1392fa6cbff1c093bf3994a89430090e` — `docs: document semantic Android version codes`.
 - `7681c9bc28b2c712a192b489165c648cd4d2ebcd` — `docs: align CI docs with semantic version codes`.
@@ -879,3 +879,98 @@ The source tree can be merged as the 2.0.12 release line without claiming a prod
 7. real release screenshots captured from verified builds.
 
 No `v2.0.12` tag should be created merely to test these prerequisites. The source release preparation and the production release are deliberately separated so unverified artifacts are never represented as release-ready.
+
+---
+
+## Version 2.12.4 release-preparation checkpoint — 2026-08-24
+
+### Canonical 2.12.4 metadata
+
+- `main` now defines `appVersion=2.12.4` and Android source/development `appVersionCode=21204`.
+- The intended release tag is canonical `v2.12.4`; leading-zero aliases remain invalid.
+- The semantic Android mapping remains `MAJOR * 10000 + MINOR * 100 + PATCH`, so 2.12.4 maps deterministically to 21204.
+- README, CHANGELOG, ROADMAP, release guide, and build/CI guide identify the 2.12.4 release line.
+- The release workflow now rejects a tag before platform builds when the tag/versionCode disagree with `gradle.properties` or when README/CHANGELOG/ROADMAP release markers are stale.
+- No `v2.12.4` tag has been created by this continuation. Source preparation and production release remain separate.
+
+### Toolchain/repository drift hardening
+
+- Gradle remains pinned to 9.5.0 for this release line.
+- `gradle/wrapper/gradle-wrapper.properties` keeps the official Gradle 9.5.0 SHA-256 pin and URL validation and now adds `retries=3` plus `retryBackOffMs=1000`.
+- Added `tools/check_gradle_version_alignment.py`.
+- The new guard validates the wrapper version/checksum/retry policy, Unix/Windows exact fallback versions, and every GitHub workflow that uses `gradle/actions/setup-gradle`.
+- Main CI compiles and executes the Gradle alignment guard alongside the Kotlin package guard, tracked-file coverage guard, Markdown-link guard, and release-metadata consistency check.
+- README, `docs/testing.md`, `docs/build-and-ci.md`, `docs/release.md`, `CONTRIBUTING.md`, `.github/pull_request_template.md`, `docs/repository-reference.md`, CHANGELOG, and ROADMAP were synchronized with the four deterministic guard contract.
+- The repository intentionally retains Android Gradle Plugin 9.3.1; the stale maintenance branch's unrelated AGP downgrade was not carried into 2.12.4.
+- Dependabot PR #14 (`actions/setup-python` v6 → v7) was merged with the Python 3.13 CI contract unchanged.
+- Superseded/non-mergeable PR #15 and the obsolete Gradle 9.7 PR #4 were closed after release-safe hardening was salvaged into current `main`.
+
+### 2.12.4 granular commits
+
+- `b63b066c4ef1285b61cb84829d312e6ba097f360` — `release: set TempoTrack version 2.12.4`.
+- `8219d579a723be077d0672c4e8a615dc7c1181c2` — `ci: enforce release source version consistency`.
+- `98c619740129b2138efdde690d43240e04d65674` — `docs: align README with version 2.12.4`.
+- `c09ca8a80e50993f6e3a5108fd5d4e49fc79cdf1` — `docs: freeze changelog for 2.12.4`.
+- `140b2afc7b325dca8510290ff0929056c653142e` — `docs: add 2.12.4 release roadmap`.
+- `d9743d70c8841d2917f728fa467129d39b5ec5bf` — `docs: prepare 2.12.4 release procedure`.
+- `c5b4c6bec827b39f15a5ab1212a7c895761dcce1` — `docs: align CI docs with version 2.12.4`.
+- `533d5bb16cef76145985d79f7475a618b5b90ab0` — `ci: validate release metadata on main`.
+- `27d8586396adfd62e3bdf979f542ef815f25d3f9` — `build: add bounded Gradle wrapper retries`.
+- `2406e4dd62403f0c8b420b857438855b473fec22` — `tools: verify Gradle version alignment`.
+- `8b169ade48682e5cf5271eae3b10ef2b9dc4ae6f` — `ci: enforce Gradle version alignment`.
+- `d5a4c6efab5b53c4f47a5c3875d96b37bab1b4c4` — `docs: document Gradle alignment guard`.
+- `e761aa778581a65190602e14c7b2f96f3b58f2bf` — `ci: update Python setup action to v7` (squash merge of Dependabot PR #14).
+- `3c04252b0ef5c6f4410d8f65b6364b3b98dcaeb3` — `docs: add Gradle alignment verification`.
+- `7f3beb8b091eeab4c738a9e18d0674bad41205e0` — `docs: document Gradle drift guard`.
+- `ef7404b0ed4e93de5a024385238ed8542a29a669` — `docs: require Gradle alignment before releases`.
+- `e71498e87635bf053bfa7228cbc0969bbb471457` — `docs: expose Gradle alignment checks in README`.
+- `c1bba47cde8e34decf7e37caa2eac9dfea0c2ae3` — `docs: require Gradle alignment for contributions`.
+- `e03e6372e5618113580b5977774b6ba500228784` — `docs: add Gradle guard to PR checklist`.
+- `15003d835774fb1c4454f734ac7179437fc5b288` — `docs: record 2.12.4 toolchain hardening`.
+- `c926b96df486f50c836b3e8ef0de069f9541f9e9` — `docs: expand 2.12.4 release hardening roadmap`.
+
+The commit appending this checkpoint follows the list above and is the durable handoff for this continuation.
+
+### Verification observed during 2.12.4 preparation
+
+- Current repository metadata/source/documents were re-fetched through the connected GitHub interface before sequential writes.
+- The current `.github/workflows/ci.yml` was re-read after the setup-python v7 merge and still contains the release-metadata check plus Gradle/package/reference/Markdown guards.
+- The combined-status endpoint for the latest queried `main` commit exposed an empty status list. No CI success is inferred from that result.
+- PR #14 was observed mergeable and was merged; PR #15 and PR #4 were observed stale/superseded and closed rather than force-merged into the current release line.
+- No production Android signing credential was created, requested in source, or committed.
+- No signed APK/AAB, Desktop package, iOS framework result, checksum file, real-device result, or release screenshot is represented as verified by this continuation.
+- No `v2.12.4` tag or GitHub production release was created.
+
+### Current deterministic guard contract
+
+From a clean Git checkout:
+
+```bash
+python tools/check_gradle_version_alignment.py
+python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
+python tools/check_markdown_links.py
+```
+
+Then run the actual build/test/package matrix documented in `docs/testing.md` and `docs/release.md`.
+
+Configured checks are not evidence that a specific commit passed. Until their real results are observed, the corresponding roadmap boxes remain open.
+
+### Remaining 2.12.4 release gates
+
+1. Observe the complete current `main` CI matrix for shared/Desktop, Android, iOS, documentation, CodeQL, dependency review, and secret scanning as applicable.
+2. Observe the four deterministic repository/toolchain guards from a clean Git checkout.
+3. Run Android release lint/tests/builds and verify real APK/AAB metadata.
+4. Provision protected production Android signing secrets through authorized GitHub repository/environment settings; never commit them.
+5. Run Desktop test/package verification on Linux, Windows, and macOS hosts.
+6. Run iOS simulator tests and release framework linking on macOS/Xcode; manually verify document picker, activity sheet, cancellation, temporary-file cleanup, and lifecycle behavior.
+7. Complete Android target-device lifecycle/export/share/restore/accessibility checks and Desktop keyboard/mini-window/restart checks.
+8. After signed release builds exist, inspect every release artifact and generated SHA-256 checksum.
+9. Capture real release screenshots only from verified builds.
+10. Create/publish `v2.12.4` only after the preceding release gates are actually satisfied.
+
+### 2.12.4 state conclusion
+
+TempoTrack is now source-prepared for the 2.12.4 release line with stronger tag/source consistency checks, deterministic Gradle drift detection, hardened wrapper download policy, synchronized release/verification documentation, and a cleaner maintenance PR queue.
+
+The remaining work is intentionally dominated by observed CI/toolchain execution, private signing configuration, cross-platform packaging, real-device/native verification, artifact inspection, and real screenshots. Those tasks are environment/credential dependent and are not marked complete by repository edits alone.

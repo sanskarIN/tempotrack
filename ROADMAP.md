@@ -9,11 +9,15 @@
 - [x] Keep the canonical semantic tag contract at `v2.12.4` without leading-zero aliases.
 - [x] Retain Gradle 9.5.0, Compose Multiplatform 1.11.1, Android Gradle Plugin 9.3.1, Android SDK 37, and maintained Node 24-compatible action majors for this release line.
 - [x] Add bounded Gradle wrapper retry/backoff settings while retaining the pinned 9.5.0 distribution checksum and URL validation.
-- [x] Add a deterministic Gradle-version alignment guard and run it in main CI alongside release-metadata/source/documentation guards.
-- [x] Synchronize README, testing, release, build/CI, contribution, PR-template, changelog, and repository-reference guidance with the four deterministic repository/toolchain guards.
+- [x] Add a deterministic Gradle-version alignment guard and run it in main CI.
+- [x] Add `tools/check_release_metadata.py` as the single source/tag release-metadata contract.
+- [x] Replace duplicated CI/release semantic-version shell validation with the centralized release-metadata guard.
+- [x] Run release-metadata and Gradle-alignment guards on the exact tagged commit before Android/Desktop/iOS release jobs start.
+- [x] Synchronize README, setup, testing, release, build/CI, GitHub operations, maintainer, contribution, PR-template, changelog, roadmap, and repository-reference guidance with the five deterministic guards.
+- [x] Correct the stale maintainer version example to the current semantic Android mapping.
 - [x] Merge the maintained `actions/setup-python@v7` update and close stale/superseded Gradle maintenance pull requests that do not match the 2.12.4 baseline.
 - [ ] Observe the complete 2.12.4 CI/build/test matrix on supported runners before tagging.
-- [ ] Observe all repository-local documentation/source/toolchain guards from a clean checkout.
+- [ ] Observe all five repository-local deterministic guards from a clean checkout.
 - [ ] Provision protected production Android signing secrets before a distributable `v2.12.4` tag.
 - [ ] Inspect actual signed release artifacts and generated SHA-256 checksums.
 - [ ] Capture real release screenshots from verified builds.
@@ -80,7 +84,8 @@
 - [x] Add a deterministic Kotlin namespace guard for the `in.sanskar...` keyword-package syntax.
 - [x] Add a Git-backed repository-reference coverage guard so newly tracked files cannot silently remain undocumented.
 - [x] Add a deterministic Gradle wrapper/launcher/workflow alignment guard.
-- [x] Run the documentation/source/toolchain guards in CI and expose them in contributor/PR/release guidance.
+- [x] Add a deterministic release metadata/tag consistency guard.
+- [x] Run the deterministic guards in CI and expose them in contributor/PR/release guidance.
 - [x] Correct stale troubleshooting guidance for corrupt history and platform checkpoint recovery.
 - [ ] Observe a clean-checkout run of the complete deterministic guards in an execution environment with GitHub/network access.
 
@@ -93,6 +98,7 @@
 - [x] Scope Android signing secrets to only the workflow steps that require them.
 - [x] Require tag/source version and release-document consistency before release jobs run.
 - [x] Enforce the current Gradle pin across bootstrap and Gradle-bearing workflows from main CI.
+- [x] Run release metadata and Gradle alignment guards on the tagged commit before platform release builds.
 - [ ] Provision the actual production Android signing secrets in protected repository/environment settings before creating a distributable Android tag release.
 
 Roadmap items are not promises or release dates. Items that require private signing credentials, a macOS/Xcode host, physical/emulated devices, observed CI/clean-checkout execution, verified iOS picker/share behavior, or release screenshots remain intentionally open until they can be verified in the correct environment.

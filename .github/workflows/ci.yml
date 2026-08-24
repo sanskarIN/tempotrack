@@ -77,6 +77,33 @@ jobs:
           tools/check_markdown_links.py
           tools/check_kotlin_package_keywords.py
           tools/check_repository_reference.py
+      - name: Validate release metadata consistency
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(sed -n 's/^appVersion=//p' gradle.properties)"
+          VERSION_CODE="$(sed -n 's/^appVersionCode=//p' gradle.properties)"
+
+          if [[ ! "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "gradle.properties appVersion must be canonical MAJOR.MINOR.PATCH without leading zeros." >&2
+            exit 1
+          fi
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          if (( ${#MAJOR} > 6 || ${#MINOR} > 2 || ${#PATCH} > 2 )); then
+            echo "Application version components are too large for the Android versionCode mapping." >&2
+            exit 1
+          fi
+
+          EXPECTED_VERSION_CODE=$((10#$MAJOR * 10000 + 10#$MINOR * 100 + 10#$PATCH))
+          if [[ "$VERSION_CODE" != "$EXPECTED_VERSION_CODE" ]]; then
+            echo "appVersionCode=$VERSION_CODE does not match appVersion=$VERSION; expected $EXPECTED_VERSION_CODE." >&2
+            exit 1
+          fi
+
+          grep -Fq "Current release line: **$VERSION**" README.md
+          grep -Fq "## [$VERSION]" CHANGELOG.md
+          grep -Fq "## $VERSION —" ROADMAP.md
       - name: Validate Kotlin package keyword escaping
         run: python tools/check_kotlin_package_keywords.py
       - name: Validate tracked file documentation coverage

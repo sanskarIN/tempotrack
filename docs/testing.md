@@ -8,6 +8,24 @@
 
 Android Lint runs separately because it also checks manifests/resources and Android-specific correctness.
 
+## Release metadata consistency check
+
+Validate source version metadata and release-document markers before heavier builds:
+
+```bash
+python tools/check_release_metadata.py
+```
+
+The guard validates canonical `MAJOR.MINOR.PATCH` syntax, derives the expected Android `versionCode`, requires `gradle.properties` to match that mapping, requires the README current-release marker, requires a dated changelog heading, and requires a matching roadmap release section.
+
+For an actual tag candidate, validate the tag too:
+
+```bash
+python tools/check_release_metadata.py --tag v2.12.4
+```
+
+The tag form must be canonical `vMAJOR.MINOR.PATCH` and must exactly match `appVersion`. The release workflow runs this tagged form on the checked-out tag before any platform release build starts.
+
 ## Gradle toolchain alignment check
 
 Before dependency resolution or platform builds, verify that the repository has not drifted between different Gradle versions:
@@ -196,9 +214,10 @@ For a generated large history near supported limits, manually verify:
 
 ## Documentation checks
 
-Gradle alignment, repository-local Markdown destinations, Kotlin namespace syntax, and tracked-file documentation coverage are validated by:
+Release metadata, Gradle alignment, repository-local Markdown destinations, Kotlin namespace syntax, and tracked-file documentation coverage are validated by:
 
 ```bash
+python tools/check_release_metadata.py
 python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
@@ -210,6 +229,7 @@ The Markdown checker intentionally skips external URLs and focuses on links that
 ## Full local quality gate
 
 ```bash
+python tools/check_release_metadata.py
 python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py

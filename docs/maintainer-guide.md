@@ -46,10 +46,13 @@ Do not rename the runtime package merely to avoid the source escape unless there
 
 ## Repository quality commands
 
-Fast deterministic documentation/source guard:
+Run all deterministic repository guards before the heavier Gradle matrix:
 
 ```bash
+python tools/check_release_metadata.py
+python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
 
@@ -286,24 +289,27 @@ Add the manual case to [`accessibility.md`](accessibility.md) and [`testing.md`]
 Application versions currently come from `gradle.properties`:
 
 ```properties
-appVersion=1.0.0
-appVersionCode=1
+appVersion=2.12.4
+appVersionCode=21204
 ```
 
-Android consumes both. Desktop consumes `appVersion` for package metadata/About runtime property.
-
-Release workflow also validates semantic tag shape:
+The Android versionCode mapping is:
 
 ```text
-vMAJOR.MINOR.PATCH
+MAJOR * 10000 + MINOR * 100 + PATCH
 ```
+
+Android consumes both values. Desktop consumes `appVersion` for package metadata/About runtime property.
 
 Before changing versions:
 
-- decide whether this is a development bump or release bump;
-- update changelog/release notes;
-- keep Android versionCode monotonically increasing for store distribution;
-- ensure tag version and Gradle version agree according to the release workflow contract.
+1. Decide whether this is a development bump or release bump.
+2. Update `gradle.properties`.
+3. Update the README current-release marker, dated changelog release heading, and roadmap release section.
+4. Run `python tools/check_release_metadata.py`.
+5. Keep Android versionCode monotonically increasing for store distribution.
+6. For the intended release tag, run `python tools/check_release_metadata.py --tag vMAJOR.MINOR.PATCH`.
+7. Do not duplicate semantic-tag parsing in workflow shell; keep the contract centralized in `check_release_metadata.py`.
 
 ## Android release signing
 
@@ -332,7 +338,8 @@ Never:
 
 Use [`release.md`](release.md) as the canonical procedure. A maintainer should observe:
 
-- namespace/doc guards;
+- all five deterministic repository guards;
+- `check_release_metadata.py --tag` for the exact intended tag;
 - common tests;
 - Android unit/lint/release assembly + bundle;
 - Desktop test/compile/package on intended hosts;
@@ -390,4 +397,5 @@ Before merging/releasing a change, ask:
 - Are localized strings/accessibility semantics updated?
 - Are automated tests and manual test cases updated?
 - Is every new tracked file in `repository-reference.md`?
+- Does `check_release_metadata.py` still pass after release/version documentation changes?
 - Are claims in documentation based on observed verification?

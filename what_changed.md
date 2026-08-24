@@ -768,7 +768,7 @@ The authoritative current file inventory is `docs/repository-reference.md`; the 
 - `6ef47382e1c529683982295f0b295af27305fab7` — `fix: exclude generated Kotlin from ktlint`.
 - `2f4e95c97e06a2a97be6a0d123968a6e6e468d53` — `ci: use Android setup action v4`.
 - `a35f251c65ec6be152da9b09abb7d42b66112da5` — `ci: move primary actions to Node 24 majors`.
-- `028046785786eb245119dc21a9c5b63f04de9e10` — `ci: modernize CodeQL workflow actions`.
+- `028046785786eb245119dc21a9b09abb7d42b66112da5` — `ci: modernize CodeQL workflow actions`.
 - `7cee3f97508f0e2a71d8d9d32d7991ff1c716cdd` — `ci: modernize release workflow actions`.
 - `74bc855ad2c700fed25b793733d7926cc208cf1f` — `ci: modernize dependency review actions`.
 - `798fc6376d229fa94630e9b9b05db2e003dbc1fb` — `ci: modernize secret scan checkout`.
@@ -974,3 +974,92 @@ Configured checks are not evidence that a specific commit passed. Until their re
 TempoTrack is now source-prepared for the 2.12.4 release line with stronger tag/source consistency checks, deterministic Gradle drift detection, hardened wrapper download policy, synchronized release/verification documentation, and a cleaner maintenance PR queue.
 
 The remaining work is intentionally dominated by observed CI/toolchain execution, private signing configuration, cross-platform packaging, real-device/native verification, artifact inspection, and real screenshots. Those tasks are environment/credential dependent and are not marked complete by repository edits alone.
+
+---
+
+## Version 2.12.4 release-guard centralization checkpoint — 2026-08-24
+
+### Centralized release metadata contract
+
+- Added `tools/check_release_metadata.py` as the single repository-local implementation of the source/tag release metadata contract.
+- The guard validates canonical `MAJOR.MINOR.PATCH`, derives and range-checks Android `versionCode`, requires source `appVersionCode` to match the semantic mapping, requires README/dated CHANGELOG/ROADMAP release markers to agree, and optionally validates an exact `vMAJOR.MINOR.PATCH` tag.
+- Main CI now runs the source form directly instead of duplicating semantic-version parsing in workflow shell.
+- The tagged release workflow now runs `check_release_metadata.py --tag "$GITHUB_REF_NAME"` plus the Gradle-alignment guard on the exact tagged commit before Android/Desktop/iOS release jobs start.
+- The release workflow trigger remains broad `v*`, but non-canonical or stale/inconsistent tagged source is rejected by the deterministic guard before platform builds.
+
+### Five deterministic repository guards
+
+The current contributor/release baseline is:
+
+```bash
+python tools/check_release_metadata.py
+python tools/check_gradle_version_alignment.py
+python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
+python tools/check_markdown_links.py
+```
+
+For an exact release candidate, additionally run:
+
+```bash
+python tools/check_release_metadata.py --tag v2.12.4
+```
+
+README, setup, testing, release, build/CI, GitHub operations, maintainer guidance, CONTRIBUTING, the PR template, repository reference, CHANGELOG, ROADMAP, and the source-code reference were synchronized with this five-guard contract.
+
+### Documentation corrections completed
+
+- Corrected the stale maintainer version example from `appVersion=1.0.0` / `appVersionCode=1` to the current semantic mapping `2.12.4` / `21204`.
+- Removed stale GitHub-operations wording that described only three deterministic guards and regex-only tag validation.
+- The code reference now documents all five repository Python guards rather than only the Kotlin-package and Markdown checks.
+- Release guidance now explicitly says not to duplicate semantic-tag parsing in workflow shell; future release metadata rules belong in `check_release_metadata.py`.
+
+### Granular commits in this continuation
+
+- `3de7fd59faf7e73cddd0b78208cc4d0a945c81fd` — `tools: add release metadata consistency guard`.
+- `3a55ca74f13796d636061684cfa5fac9f442e277` — `docs: document release metadata guard`.
+- `a3aa33cd8e94ed68d742df148220ab22ab9e67bf` — `ci: centralize release metadata validation`.
+- `f6825ab488cf44ba7b08065b089c0ce7e4434bec` — `ci: run deterministic guards before release builds`.
+- `e6e4d0112269a38994f4b388c7d661ca43de35c6` — `docs: expose release metadata guard in README`.
+- `9c4f2a89b2c5b4360acad4c1977f68df640d20ca` — `docs: add release metadata verification guide`.
+- `5988498ab94f252a64886969f779564910250f5a` — `docs: centralize release guard procedure`.
+- `777f999b8b1fb7df9b8a3f4a04197533652d2f83` — `docs: require release metadata guard for contributions`.
+- `bf2222ec2cbdfe065a81db56f6b6ba122a088473` — `docs: add release metadata guard to PR checklist`.
+- `f45ac42c59abc59ebade9a5b4673fd44c8de7778` — `docs: document centralized release metadata guard`.
+- `ec190624c1bdc156f279575650984e64c5e414b2` — `docs: include all deterministic setup guards`.
+- `462c97c8f95fcbc5652f124c99b27c069e7157eb` — `docs: align GitHub operations with release guards`.
+- `cf843b61ee05d3543b26d386c77b57bc41efde47` — `docs: fix maintainer release verification guidance`.
+- `9e0395660e3c04910036365ffebb9baba507ef1f` — `docs: record centralized release metadata guard`.
+- `4027b3e142f5b938957ef74f50c79189bc403690` — `docs: expand 2.12.4 metadata hardening roadmap`.
+- `0421e9652bbdc5c06cada1f0518892ccab222321` — `docs: document all repository Python guards`.
+
+The commit appending this section follows the list above and is the durable handoff checkpoint for the release-guard centralization pass.
+
+### Verification observed in this continuation
+
+- At the start of this pass, repository searches returned no open issues and no open pull requests.
+- Indexed source search returned no `TODO`/`FIXME` leftovers and no stale `actions/setup-python@v6` usage.
+- Current source/configuration files were re-fetched before sequential writes requiring a fresh blob SHA.
+- The latest queried `main` combined-status endpoint returned an empty status list; no CI success is inferred from an empty result.
+- The connected GitHub interface did not expose a supported general Actions-run listing endpoint for the newest push commits.
+- A clean-archive execution attempt could not be completed because the execution environment could not obtain the GitHub archive. Therefore the five deterministic guards are configured and source-audited but are not marked as observed passing from a clean checkout in this continuation.
+- No production Android signing credential was created or committed.
+- No signed APK/AAB, Desktop package, iOS framework build result, checksum artifact, real-device result, or release screenshot is represented as verified here.
+- No `v2.12.4` tag or production GitHub Release was created.
+
+### Remaining 2.12.4 release gates
+
+1. Observe the complete current `main` CI matrix for shared/Desktop, Android, iOS, documentation, CodeQL, dependency review, and secret scanning as applicable.
+2. Observe all five deterministic repository guards from a clean Git checkout.
+3. Run Android release lint/tests/builds and verify actual APK/AAB version metadata.
+4. Provision protected production Android signing secrets using authorized repository/environment controls; never commit them.
+5. Verify Desktop packages on Linux, Windows, and macOS.
+6. Run iOS simulator tests and release-framework linking on macOS/Xcode and manually verify native document picker/activity sheet/cancellation/cleanup/lifecycle behavior.
+7. Complete Android target-device lifecycle/export/share/restore/accessibility checks and Desktop restart/mini-window/keyboard checks.
+8. Inspect every signed release artifact and generated SHA-256 checksum after real release builds exist.
+9. Capture release screenshots only from verified builds.
+10. Create/publish `v2.12.4` only after the preceding gates are actually satisfied.
+
+### State conclusion
+
+The remaining source-side release-engineering duplication identified in this pass has been removed. TempoTrack now has one deterministic release-metadata/tag contract, one deterministic Gradle-alignment contract, synchronized five-guard contributor/release documentation, and a tag workflow that validates both contracts before platform release builds. The remaining 2.12.4 work is verification, signing, cross-platform packaging, device/native testing, artifact inspection, and real screenshots rather than knowingly unfinished release-guard source work.

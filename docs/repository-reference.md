@@ -198,6 +198,7 @@ Kotlin source uses ``package `in`.sanskar...`` because `in` is a Kotlin keyword.
 | `tools/check_gradle_version_alignment.py` | Verifies the wrapper version/checksum/retry policy, Unix/Windows launcher fallback version, and every Gradle-bearing GitHub workflow stay aligned. | Run after any Gradle/toolchain workflow change; CI enforces it. |
 | `tools/check_kotlin_package_keywords.py` | Fails on unescaped `package in.sanskar...` / `import in.sanskar...` Kotlin source. | Required because `in` is a Kotlin keyword; CI runs it. |
 | `tools/check_markdown_links.py` | Checks deterministic repository-local Markdown link destinations. | External URLs are intentionally not treated as deterministic local checks. |
+| `tools/check_release_metadata.py` | Validates canonical `appVersion`/`appVersionCode`, README/CHANGELOG/ROADMAP release markers, and an optional semantic release tag. | Run on normal CI without `--tag`; release automation should pass the actual tag. |
 | `tools/check_repository_reference.py` | Compares `git ls-files` against exact backticked paths in this document and fails when any tracked file is undocumented. | Run whenever tracked files change; CI enforces complete file-documentation coverage. |
 
 ## Documentation files

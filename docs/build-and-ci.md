@@ -187,11 +187,27 @@ Desktop package metadata uses `appVersion`.
 These run without a full Gradle dependency resolution:
 
 ```bash
+python tools/check_release_metadata.py
 python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
+
+### Release metadata consistency check
+
+`tools/check_release_metadata.py` is the single implementation of the source/tag release contract. It verifies:
+
+- `appVersion` exists and uses canonical `MAJOR.MINOR.PATCH` syntax without leading-zero aliases;
+- `appVersionCode` is a positive decimal integer;
+- `MINOR` and `PATCH` fit the two-digit Android mapping;
+- the derived `MAJOR * 10000 + MINOR * 100 + PATCH` value remains in `1..2100000000`;
+- the source `appVersionCode` equals that derived value;
+- README identifies the same current release line;
+- `CHANGELOG.md` contains a dated heading for the same release;
+- `ROADMAP.md` contains a matching release section.
+
+With `--tag vMAJOR.MINOR.PATCH`, the guard additionally validates canonical tag syntax and requires the tag version to exactly match `appVersion`. Main CI runs the source form; the tag workflow runs the tagged form on the checked-out release commit.
 
 ### Gradle version alignment check
 
@@ -299,8 +315,8 @@ This verifies shared iOS framework linkage/simulator tests, not a complete signe
 Ubuntu + Python 3.13 using `actions/setup-python@v7`:
 
 ```text
-python -m py_compile tools/check_gradle_version_alignment.py tools/check_markdown_links.py tools/check_kotlin_package_keywords.py tools/check_repository_reference.py
-validate appVersion/appVersionCode plus README/CHANGELOG/ROADMAP release metadata consistency
+python -m py_compile tools/check_gradle_version_alignment.py tools/check_markdown_links.py tools/check_kotlin_package_keywords.py tools/check_release_metadata.py tools/check_repository_reference.py
+python tools/check_release_metadata.py
 python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
@@ -347,17 +363,18 @@ Review generated updates like any other dependency change; green compilation is 
 
 ## Release workflow
 
-`.github/workflows/release.yml` runs on tags matching the broad trigger `v*`, but the first job checks out the tagged source and strictly validates canonical tags equivalent to:
+`.github/workflows/release.yml` runs on tags matching the broad trigger `v*`. Its `validate-tag` job checks out the exact tagged commit, installs Python 3.13 with `actions/setup-python@v7`, then runs:
 
-```text
-^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$
+```bash
+python tools/check_release_metadata.py --tag "$GITHUB_REF_NAME"
+python tools/check_gradle_version_alignment.py
 ```
 
-Only canonical `vMAJOR.MINOR.PATCH` proceeds. The validation job then derives Android `versionCode`, reads `appVersion` and `appVersionCode` from `gradle.properties`, and fails if the source defaults do not exactly match the tag and mapping. It also requires the README current-release marker, a matching `CHANGELOG.md` section, and a matching `ROADMAP.md` release-hardening section before any Android/Desktop/iOS release job starts.
+The metadata guard rejects non-canonical tags, source/tag mismatches, invalid Android versionCode mappings, stale README release markers, missing dated changelog sections, and missing roadmap release sections. The Gradle guard verifies that wrapper/launcher/workflow Gradle pins still agree on the tagged commit. No platform release build begins unless both guards pass.
 
 Release concurrency is per tag and does **not** cancel an in-progress release.
 
-All platform release jobs use Gradle 9.5.0 through `gradle/actions/setup-gradle@v5`; main CI's Gradle-alignment guard protects that pin from drifting away from bootstrap and other Gradle-bearing workflow metadata before a release candidate is promoted.
+All platform release jobs use Gradle 9.5.0 through `gradle/actions/setup-gradle@v5`; the tag-level Gradle-alignment guard verifies that this pin still matches bootstrap and every other Gradle-bearing workflow before release jobs start.
 
 ### Android release job
 
@@ -440,7 +457,7 @@ Development defaults live in `gradle.properties`. For the 2.12.4 release line th
 
 Release jobs override `appVersion` from the semantic tag and derive Android `versionCode` from the same semantic components. For the intended 2.12.4 release tag, `v2.12.4` therefore remains versionName `2.12.4` / versionCode `21204`.
 
-The release validation job automatically rejects a tag when these source defaults or the required release-document markers disagree. For a release rehearsal or real release, still confirm generated application metadata and actual artifacts before public publishing.
+`tools/check_release_metadata.py` validates the same source relationship in normal CI and, with `--tag`, validates the exact tag/source relationship in the release workflow. For a release rehearsal or real release, still confirm generated application metadata and actual artifacts before public publishing.
 
 ## CI verification integrity
 
@@ -465,8 +482,9 @@ If the connected API/tool cannot expose a job result, record it as **not observe
 4. Add timeout/concurrency behavior when long/repeated jobs can waste runners.
 5. Pin to intentional action major versions.
 6. Keep build tool versions aligned with repository catalog/wrapper and update `tools/check_gradle_version_alignment.py` if another Gradle-bearing workflow is introduced.
-7. Update `testing.md`, `github.md`, this document, and PR template if contributors must satisfy a new requirement.
-8. If the check adds a tracked file, update `repository-reference.md` before enabling its coverage guard.
+7. Keep release metadata rules centralized in `tools/check_release_metadata.py`; do not add a second semantic-version parser to a workflow.
+8. Update `testing.md`, `github.md`, this document, and PR template if contributors must satisfy a new requirement.
+9. If the check adds a tracked file, update `repository-reference.md` before enabling its coverage guard.
 
 ## Related documentation
 

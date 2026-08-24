@@ -13,18 +13,25 @@ No unreleased changes are recorded after the 2.12.4 release-preparation freeze.
 ### Added
 
 - A deterministic `tools/check_gradle_version_alignment.py` guard now verifies wrapper version/checksum/retry policy, Unix/Windows fallback launchers, and every Gradle-bearing GitHub workflow remain aligned.
+- A deterministic `tools/check_release_metadata.py` guard now centralizes canonical application version syntax, Android `versionCode` derivation/range validation, README release marker, dated changelog heading, roadmap release section, and optional semantic release-tag validation.
 - Main CI now validates canonical application version metadata and requires `gradle.properties`, README, CHANGELOG, and ROADMAP to identify the same release line.
 
 ### Changed
 
 - Canonical application defaults are advanced to version 2.12.4 with Android development `versionCode` 21204.
-- Release-tag validation now checks that the semantic tag agrees with `gradle.properties` before any platform release build starts.
-- Release-tag validation also requires the README release marker, changelog release section, and roadmap release-hardening section to identify the same release version.
+- Main CI and tagged release validation now share `tools/check_release_metadata.py` instead of maintaining separate semantic-version parsing logic in workflow shell.
+- The tag workflow runs both release-metadata and Gradle-alignment guards on the exact tagged commit before Android/Desktop/iOS release jobs start.
+- Release-tag validation requires the semantic tag to agree with `gradle.properties`, the derived Android versionCode, the README release marker, a dated changelog section, and the roadmap release section.
 - Canonical tag examples and release documentation are aligned to the `v2.12.4` release line.
 - Gradle wrapper metadata retains Gradle 9.5.0 and its pinned distribution SHA-256 while adding bounded download retries and retry backoff.
-- README, testing, build/CI, release, contribution, pull-request, and repository-reference guidance now use the four deterministic repository/toolchain guards.
+- README, setup, testing, build/CI, GitHub operations, maintainer, release, contribution, pull-request, changelog, and repository-reference guidance now use the five deterministic repository/toolchain/release guards.
 - Documentation CI uses `actions/setup-python@v7` while preserving Python 3.13 verification.
 - Obsolete Gradle 9.7 and superseded Gradle-hardening pull requests were closed after the useful release-safe hardening was carried into current `main` without the stale version metadata or unrelated AGP downgrade.
+
+### Fixed
+
+- Corrected the maintainer version-change example from the obsolete `1.0.0` / `versionCode=1` pair to the current semantic Android mapping (`2.12.4` / `21204`).
+- Removed stale GitHub-operations wording that described only three deterministic guards and regex-only release-tag validation.
 
 ### Release status
 

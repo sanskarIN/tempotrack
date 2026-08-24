@@ -17,67 +17,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Validate release tag and source metadata
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Validate release metadata and toolchain alignment
         shell: bash
         run: |
           set -euo pipefail
-          if [[ ! "$GITHUB_REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
-            echo "Release tags must use canonical vMAJOR.MINOR.PATCH without leading zeros, for example v2.12.4." >&2
-            exit 1
-          fi
-
-          VERSION="${GITHUB_REF_NAME#v}"
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-
-          if (( ${#MAJOR} > 6 || ${#MINOR} > 2 || ${#PATCH} > 2 )); then
-            echo "Release version components are too large for the Android versionCode mapping." >&2
-            exit 1
-          fi
-
-          MAJOR_DEC=$((10#$MAJOR))
-          MINOR_DEC=$((10#$MINOR))
-          PATCH_DEC=$((10#$PATCH))
-
-          if (( MINOR_DEC > 99 || PATCH_DEC > 99 )); then
-            echo "Android release mapping requires MINOR and PATCH to be between 0 and 99." >&2
-            exit 1
-          fi
-
-          VERSION_CODE=$((MAJOR_DEC * 10000 + MINOR_DEC * 100 + PATCH_DEC))
-          if (( VERSION_CODE < 1 || VERSION_CODE > 2100000000 )); then
-            echo "Derived Android versionCode $VERSION_CODE is outside the supported 1..2100000000 range." >&2
-            exit 1
-          fi
-
-          SOURCE_VERSION="$(sed -n 's/^appVersion=//p' gradle.properties)"
-          SOURCE_VERSION_CODE="$(sed -n 's/^appVersionCode=//p' gradle.properties)"
-
-          if [[ "$SOURCE_VERSION" != "$VERSION" ]]; then
-            echo "gradle.properties appVersion=$SOURCE_VERSION does not match release tag $VERSION." >&2
-            exit 1
-          fi
-
-          if [[ "$SOURCE_VERSION_CODE" != "$VERSION_CODE" ]]; then
-            echo "gradle.properties appVersionCode=$SOURCE_VERSION_CODE does not match derived release versionCode $VERSION_CODE." >&2
-            exit 1
-          fi
-
-          if ! grep -Fq "Current release line: **$VERSION**" README.md; then
-            echo "README.md current release line does not identify $VERSION." >&2
-            exit 1
-          fi
-
-          if ! grep -Fq "## [$VERSION]" CHANGELOG.md; then
-            echo "CHANGELOG.md does not contain a release section for $VERSION." >&2
-            exit 1
-          fi
-
-          if ! grep -Fq "## $VERSION —" ROADMAP.md; then
-            echo "ROADMAP.md does not contain a release-hardening section for $VERSION." >&2
-            exit 1
-          fi
-
-          echo "Validated $GITHUB_REF_NAME -> Android versionCode $VERSION_CODE with synchronized source metadata"
+          python tools/check_release_metadata.py --tag "$GITHUB_REF_NAME"
+          python tools/check_gradle_version_alignment.py
 
   android:
     needs: validate-tag

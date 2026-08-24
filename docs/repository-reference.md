@@ -38,7 +38,7 @@ When a file is added, renamed, or removed, update this reference in the same cha
 | `.github/ISSUE_TEMPLATE/feature_request.yml` | Structured feature proposals. | Encourage problem/use-case descriptions, not only implementation requests. |
 | `.github/dependabot.yml` | Automated dependency update configuration. | Review cadence/ecosystems when build tooling changes. |
 | `.github/pull_request_template.md` | Pull-request quality/security/documentation checklist. | Keep required checks synchronized with `docs/testing.md`. |
-| `.github/workflows/ci.yml` | Main Android/Desktop/shared/iOS/documentation CI matrix. | Includes Kotlin package-keyword, repository-reference, and Markdown guards; keep tool versions aligned with Gradle/version catalog. |
+| `.github/workflows/ci.yml` | Main Android/Desktop/shared/iOS/documentation CI matrix. | Includes release-metadata, Gradle-alignment, Kotlin package-keyword, repository-reference, and Markdown guards; keep tool versions aligned with Gradle/version catalog. |
 | `.github/workflows/codeql.yml` | CodeQL static analysis. | Maintain least-privilege permissions and supported build behavior. |
 | `.github/workflows/dependency-review.yml` | Pull-request dependency risk review. | Runs only where dependency diffs are available. |
 | `.github/workflows/release.yml` | Semantic-tag build/package/checksum/publish workflow. | Android release requires protected signing secrets; release tags must remain strict semantic versions. |
@@ -49,7 +49,7 @@ When a file is added, renamed, or removed, update this reference in the same cha
 | File | Responsibility | Maintenance notes |
 |---|---|---|
 | `gradle/libs.versions.toml` | Central dependency/plugin/SDK version catalog. | Update versions here first; verify compatibility across Android, Desktop, and Kotlin/Native. |
-| `gradle/wrapper/gradle-wrapper.properties` | Pins the Gradle distribution URL and SHA-256. | Current project expects Gradle 9.5.0; regenerate wrapper artifacts only from a trusted installation. |
+| `gradle/wrapper/gradle-wrapper.properties` | Pins the Gradle distribution URL/SHA-256 plus bounded download retry/backoff policy. | Current project expects Gradle 9.5.0; regenerate wrapper artifacts only from a trusted installation. |
 
 `gradle/wrapper/gradle-wrapper.jar` is intentionally absent in the current repository state and therefore is not a tracked file. The launchers require an installed Gradle 9.5.0 when the standard wrapper JAR is unavailable.
 
@@ -195,6 +195,7 @@ Kotlin source uses ``package `in`.sanskar...`` because `in` is a Kotlin keyword.
 
 | File | Responsibility | Maintenance notes |
 |---|---|---|
+| `tools/check_gradle_version_alignment.py` | Verifies the wrapper version/checksum/retry policy, Unix/Windows launcher fallback version, and every Gradle-bearing GitHub workflow stay aligned. | Run after any Gradle/toolchain workflow change; CI enforces it. |
 | `tools/check_kotlin_package_keywords.py` | Fails on unescaped `package in.sanskar...` / `import in.sanskar...` Kotlin source. | Required because `in` is a Kotlin keyword; CI runs it. |
 | `tools/check_markdown_links.py` | Checks deterministic repository-local Markdown link destinations. | External URLs are intentionally not treated as deterministic local checks. |
 | `tools/check_repository_reference.py` | Compares `git ls-files` against exact backticked paths in this document and fails when any tracked file is undocumented. | Run whenever tracked files change; CI enforces complete file-documentation coverage. |

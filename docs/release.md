@@ -9,7 +9,7 @@ Default development values live in `gradle.properties`:
 - `appVersion`
 - `appVersionCode`
 
-Android and Desktop package builds read these properties. On a canonical `vMAJOR.MINOR.PATCH` tag, the release workflow removes the leading `v` and passes the tag version to Gradle. Numeric version components do not use leading zeros, so tags such as `v02.0.12`, `v2.00.12`, and `v2.0.012` are rejected. Android release versionCode is derived deterministically as:
+Android and Desktop package builds read these properties. On a canonical `vMAJOR.MINOR.PATCH` tag, the release workflow removes the leading `v` and passes the tag version to Gradle. Numeric version components do not use leading zeros, so tags such as `v02.12.4`, `v2.012.4`, and `v2.12.04` are rejected. Android release versionCode is derived deterministically as:
 
 ```text
 MAJOR * 10000 + MINOR * 100 + PATCH
@@ -17,24 +17,24 @@ MAJOR * 10000 + MINOR * 100 + PATCH
 
 For that mapping, MINOR and PATCH must each be between 0 and 99, and the resulting Android versionCode must remain in the supported `1..2100000000` range. This keeps source defaults and tagged Android artifacts on the same monotonic versioning scheme instead of tying install ordering to an unrelated workflow run number.
 
-The release workflow rejects tags that do not exactly match canonical `vMAJOR.MINOR.PATCH`, validates the Android mapping, and serializes release runs per tag.
+The release workflow rejects tags that do not exactly match canonical `vMAJOR.MINOR.PATCH`, validates the Android mapping, and serializes release runs per tag. It also checks the checked-out source before any platform release build starts: `gradle.properties` must match the tag and derived versionCode, the README current-release marker must match the version, `CHANGELOG.md` must contain the release section, and `ROADMAP.md` must contain the matching release-hardening section.
 
-## Version 2.0.12 release line
+## Version 2.12.4 release line
 
 The repository defaults for this release line are:
 
 ```properties
-appVersion=2.0.12
-appVersionCode=20012
+appVersion=2.12.4
+appVersionCode=21204
 ```
 
 The intended semantic release tag is:
 
 ```text
-v2.0.12
+v2.12.4
 ```
 
-The tag maps to Android versionCode `20012`, matching the source-tree default. Do not create or promote that tag until the release-candidate checks described below are actually observed green and required Android signing secrets are configured.
+The tag maps to Android versionCode `21204`, matching the source-tree default. Do not create or promote that tag until the release-candidate checks described below are actually observed green and required Android signing secrets are configured.
 
 Before a release, also update:
 
@@ -49,7 +49,7 @@ Before a release, also update:
 
 Do not create a release from a machine silently using another Gradle version. Either use the exact fallback version or generate the standard wrapper JAR from a trusted Gradle 9.5.0 installation before the release-candidate audit.
 
-A Gradle-wrapper upgrade is not part of the 2.0.12 release freeze unless its wrapper properties, launcher/bootstrap assumptions, CI Gradle installation, documentation, and full build matrix are updated and verified together.
+A Gradle-wrapper upgrade is not part of the 2.12.4 release freeze unless its wrapper properties, launcher/bootstrap assumptions, CI Gradle installation, documentation, and full build matrix are updated and verified together.
 
 ## Pre-release gate
 
@@ -98,9 +98,11 @@ Before tagging:
 5. Confirm new security/privacy behavior is reflected in `SECURITY.md`, `PRIVACY.md`, and `security-model.md`.
 6. Confirm contributor/build/release commands match actual Gradle/CI configuration.
 7. Confirm `CHANGELOG.md` contains a dated section for the intended release version.
-8. Confirm `gradle.properties`, README release marker, changelog release section, intended tag, and Android versionCode mapping all identify the same release.
+8. Confirm `gradle.properties`, README release marker, changelog release section, roadmap release-hardening section, intended tag, and Android versionCode mapping all identify the same release.
 9. Confirm `what_changed.md` records observed verification and unresolved environment-gated work.
 10. Do not publish placeholder screenshots as real release captures.
+
+The tag workflow repeats the version-consistency portion of this audit automatically. That automation is a guard against stale metadata; it does not replace build, device, signing, accessibility, lifecycle, or artifact inspection evidence.
 
 ## Android signing
 
@@ -147,7 +149,7 @@ The workflow retains these build outputs as artifacts and collects installer fil
 
 The macOS release job runs the iOS simulator tests, links `TempoTrackShared` for arm64, archives the framework as a ZIP, and uploads it as a release artifact.
 
-The framework now includes the Compose controller plus native document-picker export and activity-sheet sharing bridges. A containing Xcode app is still responsible for application signing, lifecycle/container integration, bundle metadata, device testing, and App Store packaging.
+The framework includes the Compose controller plus native document-picker export and activity-sheet sharing bridges. A containing Xcode app is still responsible for application signing, lifecycle/container integration, bundle metadata, device testing, and App Store packaging.
 
 ## GitHub Release publishing
 
@@ -163,23 +165,23 @@ The build jobs use read-only repository permissions. Only the final publish job 
 
 ## Tag
 
-For this release line, create annotated tag `v2.0.12` only after the pre-release gate is green, production Android signing secrets are configured for a distributable Android release, and release notes are ready.
+For this release line, create annotated tag `v2.12.4` only after the pre-release gate is green, production Android signing secrets are configured for a distributable Android release, and release notes are ready.
 
 Do not create a release tag merely to test whether configuration might work; use a release-candidate branch/PR first so failures can be fixed without publishing release semantics.
 
 ## Release notes
 
-Use the dated `## [2.0.12] - 2026-08-19` section in `CHANGELOG.md` as the source of truth for 2.0.12 release notes. Copy only the release-relevant items and include known limitations. Do not claim a platform has been tested unless it was actually built/run.
+Use the dated `## [2.12.4] - 2026-08-24` section in `CHANGELOG.md` as the source of truth for 2.12.4 release notes. Copy only the release-relevant items and include known limitations. Do not claim a platform has been tested unless it was actually built/run.
 
 For Android, do not describe artifacts as production-ready unless the signed tag workflow has succeeded. For iOS, clearly distinguish the reusable framework from a signed/packaged App Store application.
 
-At minimum, 2.0.12 release notes should identify:
+At minimum, 2.12.4 release notes should identify:
 
 - local-first stopwatch/history/data-portability scope;
-- reliability and recovery hardening;
+- reliability and recovery hardening inherited from the existing implementation;
 - Android/Desktop/iOS framework/platform support boundaries;
 - the current Kotlin/Compose/AGP/Gradle toolchain;
-- security/release automation improvements;
+- stricter release source/tag consistency validation;
 - any verification or signing limitations that remain at publication time.
 
 ## Verification record

@@ -768,7 +768,7 @@ The authoritative current file inventory is `docs/repository-reference.md`; the 
 - `6ef47382e1c529683982295f0b295af27305fab7` — `fix: exclude generated Kotlin from ktlint`.
 - `2f4e95c97e06a2a97be6a0d123968a6e6e468d53` — `ci: use Android setup action v4`.
 - `a35f251c65ec6be152da9b09abb7d42b66112da5` — `ci: move primary actions to Node 24 majors`.
-- `028046785786eb245119dc21a9b09abb7d42b66112da5` — `ci: modernize CodeQL workflow actions`.
+- `028046785786eb245119dc21a9c5b63f04de9e10` — `ci: modernize CodeQL workflow actions`.
 - `7cee3f97508f0e2a71d8d9d32d7991ff1c716cdd` — `ci: modernize release workflow actions`.
 - `74bc855ad2c700fed25b793733d7926cc208cf1f` — `ci: modernize dependency review actions`.
 - `798fc6376d229fa94630e9b9b05db2e003dbc1fb` — `ci: modernize secret scan checkout`.
@@ -849,7 +849,7 @@ Direct shell verification observed during this continuation:
 - `e67f0ae247bd30b5c000eedb45a9d6563919ada8` — `docs: document 2.0.12 build metadata`.
 - `2ab7e417213ca5db4242386231c0240b3308bc9d` — `docs: freeze changelog for 2.0.12`.
 - `7f2d497e3df20f28dca26149f2d5f42dd7f1a1e8` — `docs: prepare 2.0.12 release procedure`.
-- `df4b8be9cba0a97adca26149f2d5f42dd7f1a1e8` — `docs: add 2.0.12 release roadmap`.
+- `df4b8be9cba0a97adcaadfe1a60fd741e61ffc32` — `docs: add 2.0.12 release roadmap`.
 - `d7a6132eec55248c0d610aa6b32877de2ee091c3` — `fix: derive Android versionCode from release tag`.
 - `256c1c4a1392fa6cbff1c093bf3994a89430090e` — `docs: document semantic Android version codes`.
 - `7681c9bc28b2c712a192b489165c648cd4d2ebcd` — `docs: align CI docs with semantic version codes`.

@@ -601,6 +601,33 @@ See [`testing.md`](testing.md) for exact commands and the manual platform matrix
 
 ## Repository Python tools
 
+### `tools/check_release_metadata.py`
+
+Validates the release contract without invoking Gradle:
+
+- parses `appVersion` and `appVersionCode` from `gradle.properties`;
+- requires canonical `MAJOR.MINOR.PATCH` source syntax;
+- derives and range-checks Android `versionCode` as `MAJOR * 10000 + MINOR * 100 + PATCH`;
+- requires source versionCode to equal the derived value;
+- checks README current-release marker;
+- checks for a dated `CHANGELOG.md` heading for the same version;
+- checks for the same release section in `ROADMAP.md`;
+- with `--tag`, requires canonical `vMAJOR.MINOR.PATCH` and exact source/tag equality.
+
+Main CI runs the source form; release validation runs the tagged form on the checked-out tag.
+
+### `tools/check_gradle_version_alignment.py`
+
+Treats the Gradle version in `gradle/wrapper/gradle-wrapper.properties` as authoritative and validates:
+
+- distribution URL version;
+- pinned 64-character SHA-256;
+- positive wrapper retry/backoff settings;
+- Unix and Windows fallback launcher versions;
+- every `gradle-version` entry in workflows using `gradle/actions/setup-gradle`.
+
+This detects partial Gradle upgrades but does not replace Kotlin/AGP/Compose compatibility testing.
+
 ### `tools/check_kotlin_package_keywords.py`
 
 Walks Kotlin source under `shared/src`, `androidApp/src`, and `desktopApp/src`, failing if a left-trimmed line begins with unescaped:
@@ -609,6 +636,10 @@ Walks Kotlin source under `shared/src`, `androidApp/src`, and `desktopApp/src`, 
 - `import in.sanskar.`
 
 This catches a syntax error before a long Gradle platform build.
+
+### `tools/check_repository_reference.py`
+
+Uses `git ls-files` as the source of truth for tracked paths and fails when any tracked file is absent from `docs/repository-reference.md` as an exact backticked path. It must run from a real Git checkout.
 
 ### `tools/check_markdown_links.py`
 

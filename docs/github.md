@@ -19,16 +19,32 @@ Do not make a status check required until that workflow has successfully reporte
 
 ## Main CI expectations
 
-The checked-in CI matrix verifies four areas:
+The checked-in CI matrix verifies four job areas:
 
 - **shared-and-desktop** — shared/Desktop ktlint, shared tests, Desktop tests, Desktop compilation;
 - **android** — Android ktlint, JVM unit tests, Android Lint, debug assembly;
 - **ios-shared** — iOS simulator framework link and simulator target tests on macOS;
-- **documentation** — Python tool compilation, Kotlin keyword-package syntax, exhaustive tracked-file documentation coverage, and local Markdown links.
+- **documentation** — Python tool compilation plus release-metadata, Gradle-alignment, Kotlin keyword-package, exhaustive tracked-file documentation, and local Markdown-link guards.
 
 Superseded branch/PR CI runs are cancelled through workflow concurrency.
 
 A configured workflow is not proof that a particular commit passed. Use the actual Actions/check result before marking work verified.
+
+## Deterministic repository guard policy
+
+The contributor-facing baseline is five repository-local Python guards:
+
+```bash
+python tools/check_release_metadata.py
+python tools/check_gradle_version_alignment.py
+python tools/check_kotlin_package_keywords.py
+python tools/check_repository_reference.py
+python tools/check_markdown_links.py
+```
+
+`check_release_metadata.py` keeps source version metadata and release-document markers synchronized. `check_gradle_version_alignment.py` prevents partial Gradle upgrades across wrapper metadata, launchers, and workflows. The remaining guards protect Kotlin keyword-package syntax, exhaustive tracked-file documentation, and repository-local Markdown navigation.
+
+The pull-request template includes all five requirements explicitly.
 
 ## Repository documentation coverage policy
 
@@ -41,8 +57,6 @@ python tools/check_repository_reference.py
 ```
 
 The checker uses `git ls-files` and requires every tracked path to appear exactly in backticks in the reference. This means a PR that adds, renames, or removes a tracked file must update the reference in the same change.
-
-The pull-request template includes this requirement explicitly.
 
 ## Kotlin namespace policy
 
@@ -97,17 +111,20 @@ Keep this least-privilege separation when editing release automation.
 
 ## Release tag policy
 
-The workflow trigger accepts `v*` so GitHub starts the workflow, then the `validate-tag` job enforces exactly:
+The workflow trigger accepts `v*` so GitHub starts the workflow. The `validate-tag` job then checks out the exact tag and runs:
 
-```text
-vMAJOR.MINOR.PATCH
+```bash
+python tools/check_release_metadata.py --tag "$GITHUB_REF_NAME"
+python tools/check_gradle_version_alignment.py
 ```
 
-Examples accepted:
+The release-metadata guard enforces canonical `vMAJOR.MINOR.PATCH` syntax, source/tag equality, the Android versionCode mapping, the README release marker, a dated changelog release section, and a matching roadmap section. The Gradle guard ensures the tagged commit has one consistent Gradle pin across wrapper metadata, launchers, and workflows.
+
+Examples accepted when source metadata matches:
 
 ```text
 v1.0.0
-v2.3.4
+v2.12.4
 ```
 
 Examples rejected:
@@ -116,10 +133,11 @@ Examples rejected:
 v1
 v1.0
 v1.0.0-beta
+v02.12.4
 release-1.0.0
 ```
 
-If pre-release tags are desired later, change validation/release documentation intentionally rather than weakening the regex incidentally.
+If pre-release tags are desired later, change the release guard and documentation intentionally rather than weakening only the workflow trigger.
 
 ## Release artifacts
 
@@ -167,6 +185,7 @@ Recommended controls:
 - `1.0.0 — Reliable local stopwatch`
 - `1.1.0 — UX and platform polish`
 - `1.2.0 — Broader portability`
+- `2.12.4 — Release hardening`
 
 Create milestones only when work is actively planned; avoid placeholder dates that imply a commitment.
 
@@ -186,7 +205,7 @@ Security reports must follow `SECURITY.md`, not a public issue template.
 
 The repository PR template asks contributors to confirm:
 
-- three deterministic repository guards;
+- all five deterministic repository guards;
 - relevant tests/quality/builds;
 - manual platform checks where affected;
 - no secrets/private data/signing material;
@@ -211,7 +230,7 @@ Security reports must not be posted to Discussions; use `SECURITY.md`.
 
 Tag only after the release gate in [`release.md`](release.md) succeeds. The Android tag job requires signing secrets and produces both APK and AAB artifacts; Desktop runners package their native installers; the macOS job packages the iOS framework. The publish job collects supported artifacts, creates checksums, and attaches them to the GitHub Release.
 
-Base release notes on `CHANGELOG.md` plus `release-notes-template.md`. Never mark an artifact or platform as verified unless its build/test job actually completed successfully.
+Use the dated release section in `CHANGELOG.md` as the release-note source of truth. Never mark an artifact or platform as verified unless its build/test job actually completed successfully.
 
 ## Actions-result troubleshooting
 

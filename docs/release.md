@@ -17,7 +17,9 @@ MAJOR * 10000 + MINOR * 100 + PATCH
 
 For that mapping, MINOR and PATCH must each be between 0 and 99, and the resulting Android versionCode must remain in the supported `1..2100000000` range. This keeps source defaults and tagged Android artifacts on the same monotonic versioning scheme instead of tying install ordering to an unrelated workflow run number.
 
-The release workflow rejects tags that do not exactly match canonical `vMAJOR.MINOR.PATCH`, validates the Android mapping, and serializes release runs per tag. It also checks the checked-out source before any platform release build starts: `gradle.properties` must match the tag and derived versionCode, the README current-release marker must match the version, `CHANGELOG.md` must contain the release section, and `ROADMAP.md` must contain the matching release-hardening section.
+`tools/check_release_metadata.py` is the single repository-local implementation of the release metadata contract. Without arguments it validates source metadata and release-document markers. With `--tag vMAJOR.MINOR.PATCH`, it also requires the tag to be canonical and to match `appVersion` exactly.
+
+The release workflow runs that tagged guard plus `tools/check_gradle_version_alignment.py` on the checked-out tag before any Android/Desktop/iOS release build starts. Release runs are serialized per tag.
 
 ## Version 2.12.4 release line
 
@@ -58,13 +60,20 @@ A Gradle-wrapper upgrade is not part of the 2.12.4 release freeze unless its wra
 From a clean Git checkout, first verify deterministic repository integrity:
 
 ```bash
+python tools/check_release_metadata.py
 python tools/check_gradle_version_alignment.py
 python tools/check_kotlin_package_keywords.py
 python tools/check_repository_reference.py
 python tools/check_markdown_links.py
 ```
 
-The repository-reference check uses `git ls-files`; it ensures every tracked file is covered by `docs/repository-reference.md` before a release is declared fully documented.
+The release-metadata guard verifies the semantic source version, Android versionCode mapping, README release marker, dated changelog release heading, and roadmap release section. The repository-reference check uses `git ls-files`; it ensures every tracked file is covered by `docs/repository-reference.md` before a release is declared fully documented.
+
+For the exact tag candidate, additionally run:
+
+```bash
+python tools/check_release_metadata.py --tag v2.12.4
+```
 
 Then run the build/test gate:
 
@@ -94,18 +103,19 @@ Do not tag until the relevant supported-platform checks are actually green.
 
 Before tagging:
 
-1. Run all four repository-local Python guards.
-2. Confirm `README.md` and `docs/README.md` point to the current documentation set.
-3. Confirm every tracked file is present in `docs/repository-reference.md`.
-4. Confirm persistence/recovery/platform behavior matches `state-and-recovery.md`, `data-model-and-storage.md`, and `platforms.md`.
-5. Confirm new security/privacy behavior is reflected in `SECURITY.md`, `PRIVACY.md`, and `security-model.md`.
-6. Confirm contributor/build/release commands match actual Gradle/CI configuration.
-7. Confirm `CHANGELOG.md` contains a dated section for the intended release version.
-8. Confirm `gradle.properties`, README release marker, changelog release section, roadmap release-hardening section, intended tag, and Android versionCode mapping all identify the same release.
-9. Confirm `what_changed.md` records observed verification and unresolved environment-gated work.
-10. Do not publish placeholder screenshots as real release captures.
+1. Run all five repository-local Python guards.
+2. Run `check_release_metadata.py --tag` with the exact intended tag.
+3. Confirm `README.md` and `docs/README.md` point to the current documentation set.
+4. Confirm every tracked file is present in `docs/repository-reference.md`.
+5. Confirm persistence/recovery/platform behavior matches `state-and-recovery.md`, `data-model-and-storage.md`, and `platforms.md`.
+6. Confirm new security/privacy behavior is reflected in `SECURITY.md`, `PRIVACY.md`, and `security-model.md`.
+7. Confirm contributor/build/release commands match actual Gradle/CI configuration.
+8. Confirm `CHANGELOG.md` contains a dated section for the intended release version.
+9. Confirm `gradle.properties`, README release marker, changelog release section, roadmap release-hardening section, intended tag, and Android versionCode mapping all identify the same release.
+10. Confirm `what_changed.md` records observed verification and unresolved environment-gated work.
+11. Do not publish placeholder screenshots as real release captures.
 
-The tag workflow repeats the version-consistency portion of this audit automatically. That automation is a guard against stale metadata; it does not replace build, device, signing, accessibility, lifecycle, or artifact inspection evidence.
+The tag workflow repeats the release-metadata and Gradle-alignment portions of this audit automatically. That automation is a guard against stale metadata/toolchain drift; it does not replace build, device, signing, accessibility, lifecycle, or artifact inspection evidence.
 
 ## Android signing
 
@@ -184,7 +194,7 @@ At minimum, 2.12.4 release notes should identify:
 - reliability and recovery hardening inherited from the existing implementation;
 - Android/Desktop/iOS framework/platform support boundaries;
 - the current Kotlin/Compose/AGP/Gradle toolchain;
-- stricter release source/tag consistency validation;
+- deterministic release metadata and Gradle-alignment validation;
 - any verification or signing limitations that remain at publication time.
 
 ## Verification record
@@ -192,6 +202,7 @@ At minimum, 2.12.4 release notes should identify:
 For a release candidate, preserve the commit SHA and actual observable results for:
 
 - all repository-local Python guards;
+- tagged release-metadata validation;
 - shared tests;
 - Android unit/lint/release APK/AAB;
 - Desktop tests/packaging by host;
